@@ -1,14 +1,22 @@
 import React, { useRef, useEffect, useState, useContext } from 'react';
-import { X, Camera, Mic, Volume2, CheckCircle2, AlertCircle, RefreshCw } from 'lucide-react';
+import { X, Camera, Mic, Volume2, CheckCircle2, AlertCircle, RefreshCw, Lock, Eye, EyeOff } from 'lucide-react';
 import Select from '../Select';
 import { ThemeLanguageContext } from '../../context/ThemeLanguageContext';
+import API from '../../api';
 
 const RoomSettingsModal = ({
     onClose,
     videoDevices, selectedVideoDevice, switchCamera,
     audioDevices, selectedAudioDevice, switchAudio,
+    isHost, meeting,
 }) => {
     const { t } = useContext(ThemeLanguageContext);
+    const [activeTab, setActiveTab] = useState('devices');
+    const [newPassword, setNewPassword] = useState('');
+    const [showNewPw, setShowNewPw] = useState(false);
+    const [pwLoading, setPwLoading] = useState(false);
+    const [pwSuccess, setPwSuccess] = useState(false);
+    const [pwError, setPwError] = useState('');
     const previewRef = useRef(null);
     const streamRef = useRef(null);
     const [previewError, setPreviewError] = useState(false);
@@ -106,6 +114,23 @@ const RoomSettingsModal = ({
         startMicMonitor(val);
     };
 
+    const handlePasswordChange = async (e) => {
+        e.preventDefault();
+        setPwError(''); setPwSuccess(false);
+        if (!meeting?._id) return;
+        setPwLoading(true);
+        try {
+            await API.put(`/api/meetings/${meeting._id}/password`, { password: newPassword });
+            setPwSuccess(true);
+            setNewPassword('');
+            setTimeout(() => setPwSuccess(false), 3000);
+        } catch (err) {
+            setPwError(err.response?.data?.message || 'Failed to update password');
+        } finally {
+            setPwLoading(false);
+        }
+    };
+
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
             <div className="bg-white dark:bg-[#1e222d] border border-gray-200 dark:border-white/10 rounded-2xl w-full max-w-lg shadow-2xl relative overflow-hidden">
@@ -113,8 +138,12 @@ const RoomSettingsModal = ({
                 {/* Header */}
                 <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100 dark:border-white/8">
                     <div>
-                        <h2 className="text-base font-bold text-gray-900 dark:text-white">Qurilma sozlamalari</h2>
-                        <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">Kamera va mikrofonni sozlang</p>
+                        <h2 className="text-base font-bold text-gray-900 dark:text-white">
+                            {activeTab === 'devices' ? 'Qurilma sozlamalari' : 'Xona sozlamalari'}
+                        </h2>
+                        <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+                            {activeTab === 'devices' ? 'Kamera va mikrofonni sozlang' : "Xona sozlamalarini o'zgartiring"}
+                        </p>
                     </div>
                     <button
                         onClick={onClose}
@@ -124,6 +153,70 @@ const RoomSettingsModal = ({
                     </button>
                 </div>
 
+                {/* Tab bar */}
+                {isHost && (
+                    <div className="flex gap-1 px-4 pt-3">
+                        {[
+                            { id: 'devices', label: 'Qurilmalar', icon: <Camera size={13} /> },
+                            { id: 'room',    label: 'Xona',       icon: <Lock size={13} /> },
+                        ].map(tab => (
+                            <button key={tab.id} onClick={() => setActiveTab(tab.id)}
+                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all
+                                    ${activeTab === tab.id
+                                        ? 'bg-blue-500/15 text-blue-500 dark:bg-blue-500/20 dark:text-blue-400'
+                                        : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5'}`}>
+                                {tab.icon} {tab.label}
+                            </button>
+                        ))}
+                    </div>
+                )}
+
+                {activeTab === 'room' && isHost ? (
+                    <div className="p-6 space-y-5">
+                        {/* Password change */}
+                        <div>
+                            <div className="flex items-center gap-2 mb-3">
+                                <div className="w-6 h-6 rounded-lg bg-amber-100 dark:bg-amber-500/15 flex items-center justify-center">
+                                    <Lock size={13} className="text-amber-600 dark:text-amber-400" />
+                                </div>
+                                <span className="text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wide">Parolni o'zgartirish</span>
+                            </div>
+                            <p className="text-[11px] text-gray-500 dark:text-gray-500 mb-4">
+                                Yangi parol kiriting yoki xonani ochiq qilish uchun bo'sh qoldiring.
+                            </p>
+                            <form onSubmit={handlePasswordChange} className="space-y-3">
+                                <div className="relative">
+                                    <input
+                                        type={showNewPw ? 'text' : 'password'}
+                                        value={newPassword}
+                                        onChange={e => setNewPassword(e.target.value)}
+                                        placeholder="Yangi parol (bo'sh = ochiq xona)"
+                                        className="w-full bg-gray-50 dark:bg-[#161b22] border border-gray-200 dark:border-white/8 rounded-xl px-4 pr-10 py-2.5 text-sm text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-600 focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20 transition-all"
+                                    />
+                                    <button type="button" onClick={() => setShowNewPw(v => !v)}
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
+                                        {showNewPw ? <EyeOff size={15} /> : <Eye size={15} />}
+                                    </button>
+                                </div>
+                                {pwError && (
+                                    <p className="flex items-center gap-1 text-[11px] text-red-500">
+                                        <AlertCircle size={12} /> {pwError}
+                                    </p>
+                                )}
+                                {pwSuccess && (
+                                    <p className="flex items-center gap-1 text-[11px] text-emerald-500">
+                                        <CheckCircle2 size={12} /> Parol muvaffaqiyatli yangilandi
+                                    </p>
+                                )}
+                                <button type="submit" disabled={pwLoading}
+                                    className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-semibold py-2.5 rounded-xl text-sm transition-colors shadow-lg shadow-blue-500/20">
+                                    {pwLoading ? 'Saqlanmoqda...' : 'Saqlash'}
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                ) : (
+                <>
                 <div className="p-6 space-y-6">
                     {/* Camera section */}
                     <div>
@@ -245,6 +338,8 @@ const RoomSettingsModal = ({
                         Saqlash
                     </button>
                 </div>
+                </>
+                )}
             </div>
         </div>
     );

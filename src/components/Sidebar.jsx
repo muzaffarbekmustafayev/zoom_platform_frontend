@@ -26,15 +26,15 @@ const Sidebar = ({
         <>
             {/* Mobile Sidebar Overlay */}
             {isSidebarOpen && (
-                <div 
-                    className="fixed inset-0 bg-gray-900/50 dark:bg-gray-900/80 z-40 md:hidden transition-opacity" 
+                <div
+                    className="fixed inset-0 bg-black/50 dark:bg-black/70 z-40 md:hidden transition-opacity"
                     onClick={() => setIsSidebarOpen(false)}
                 />
             )}
 
             {/* Classic Sidebar */}
-            <aside className={`fixed inset-y-0 left-0 z-50 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col shrink-0 transition-[transform,width] duration-300 ease-in-out md:relative md:translate-x-0 ${isCollapsed ? 'md:w-16' : 'md:w-60'} w-64 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-                <div className={`h-16 flex items-center border-b border-gray-200 dark:border-gray-700 ${isCollapsed ? 'px-3 justify-center md:justify-between' : 'px-6 justify-between'}`}>
+            <aside className={`fixed inset-y-0 left-0 z-50 bg-white dark:bg-[#161B22] border-r border-gray-200 dark:border-white/8 flex flex-col shrink-0 transition-[transform,width] duration-300 ease-in-out md:relative md:translate-x-0 ${isCollapsed ? 'md:w-16' : 'md:w-60'} w-64 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+                <div className={`h-16 flex items-center border-b border-gray-200 dark:border-white/8 ${isCollapsed ? 'px-3 justify-center md:justify-between' : 'px-6 justify-between'}`}>
                     <h1 className="text-xl font-bold text-gray-900 dark:text-white flex items-center min-w-0">
                         <div className={`w-8 h-8 bg-blue-600 rounded flex items-center justify-center ${isCollapsed ? '' : 'mr-3'}`}>
                             <span className="text-white text-lg font-bold">{titleInitial || title[0]}</span>
@@ -68,7 +68,7 @@ const Sidebar = ({
                                         else if (setActiveTab) setActiveTab(item.id);
                                     }}
                                     title={isCollapsed ? item.label : undefined}
-                                    className={`w-full flex items-center text-sm font-medium rounded-xl transition-colors border-l-2 ${isCollapsed ? 'justify-center px-2 py-3' : 'px-3 py-2.5'} ${isActive ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400' : 'border-transparent text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white'}`}
+                                    className={`w-full flex items-center text-sm font-medium rounded-xl transition-colors border-l-2 ${isCollapsed ? 'justify-center px-2 py-3' : 'px-3 py-2.5'} ${isActive ? 'border-blue-600 bg-blue-50 dark:bg-blue-500/15 text-blue-700 dark:text-blue-400' : 'border-transparent text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/6 hover:text-gray-900 dark:hover:text-white'}`}
                                 >
                                     {item.icon}
                                     {!isCollapsed && <span className="ml-3 truncate">{item.label}</span>}
@@ -84,7 +84,7 @@ const Sidebar = ({
                     )}
                 </div>
 
-                <div className="p-4 border-t border-gray-200 dark:border-gray-700">
+                <div className="p-4 border-t border-gray-200 dark:border-white/8">
                     {userInfo && (
                         <div className={`mb-4 ${isCollapsed ? 'flex justify-center' : 'flex items-center'}`}>
                             <div className="w-10 h-10 bg-gradient-to-br from-blue-600 via-cyan-500 to-emerald-400 rounded-full flex items-center justify-center text-sm font-semibold text-white shadow-lg shadow-blue-500/20 shrink-0">
@@ -101,7 +101,7 @@ const Sidebar = ({
                     <button
                         onClick={handleLogout}
                         title={isCollapsed ? t('sign_out') : undefined}
-                        className={`border border-gray-300 dark:border-gray-600 rounded-xl shadow-sm text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors ${isCollapsed ? 'w-full flex items-center justify-center px-2 py-2.5' : 'w-full py-2.5 px-4'}`}
+                        className={`border border-gray-200 dark:border-white/10 rounded-xl shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-[#1e2430] hover:bg-gray-50 dark:hover:bg-white/8 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors ${isCollapsed ? 'w-full flex items-center justify-center px-2 py-2.5' : 'w-full py-2.5 px-4'}`}
                     >
                         {isCollapsed ? (
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>

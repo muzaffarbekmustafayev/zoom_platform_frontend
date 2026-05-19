@@ -4,7 +4,7 @@ const ConfirmModal = ({ open, message, onConfirm, onCancel, confirmText = 'OK', 
     if (!open) return null;
     return (
         <div className="fixed inset-0 z-[9998] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-            <div className="bg-white dark:bg-gray-900 w-full max-w-sm rounded-2xl p-6 shadow-2xl border border-gray-100 dark:border-gray-800">
+            <div className="bg-white dark:bg-[#161B22] w-full max-w-sm rounded-2xl p-6 shadow-2xl border border-gray-100 dark:border-white/10">
                 <p className="text-gray-800 dark:text-gray-100 font-medium text-base leading-relaxed mb-6">{message}</p>
                 <div className="flex justify-end gap-3">
                     <button

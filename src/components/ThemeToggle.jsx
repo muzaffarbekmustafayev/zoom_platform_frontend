@@ -52,7 +52,7 @@ const ThemeToggle = ({ compact = false }) => {
                 aria-pressed={isDark}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200
                     ${isDark
-                        ? 'bg-[#2d3748] text-blue-300 shadow-sm border border-white/10'
+                        ? 'bg-[#1e2430] text-blue-300 shadow-sm border border-white/10'
                         : 'text-gray-400 hover:text-gray-600'}`}
             >
                 <Moon size={13} />

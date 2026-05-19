@@ -22,10 +22,10 @@ const JoinView = ({ t }) => {
     };
     return (
         <div className="flex-1 flex flex-col items-center justify-center px-4 py-12 sm:py-16">
-            <div className="w-full max-w-md bg-white dark:bg-gray-800/90 backdrop-blur-md border border-gray-100 dark:border-gray-700/60 rounded-[2rem] p-8 sm:p-10 shadow-2xl shadow-gray-200/50 dark:shadow-black/20 text-center relative overflow-hidden">
+            <div className="w-full max-w-md bg-white dark:bg-[#161B22] backdrop-blur-md border border-gray-100 dark:border-white/8 rounded-[2rem] p-8 sm:p-10 shadow-2xl shadow-gray-200/50 dark:shadow-black/40 text-center relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none" />
                 <div className="mb-8 relative z-10">
-                    <div className="w-14 h-14 border border-gray-100 dark:border-gray-700 rounded-2xl flex items-center justify-center mx-auto mb-6 bg-gray-50 dark:bg-gray-800/80 shadow-inner">
+                    <div className="w-14 h-14 border border-gray-100 dark:border-white/10 rounded-2xl flex items-center justify-center mx-auto mb-6 bg-gray-50 dark:bg-white/5 shadow-inner">
                         <svg className="w-6 h-6 text-blue-500 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" /></svg>
                     </div>
                     <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2 tracking-tight">{t('join_meeting')}</h2>
@@ -35,10 +35,10 @@ const JoinView = ({ t }) => {
                     <div className="text-left">
                         <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 pl-1">{t('meeting_id_link')}</label>
                         <input autoFocus type="text" placeholder="123-456-789" value={roomID} onChange={e => setRoomID(e.target.value)}
-                            className="w-full bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-xl px-5 py-4 text-base font-medium text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all" />
+                            className="w-full bg-gray-50 dark:bg-[#1e2430] border border-gray-200 dark:border-white/8 rounded-xl px-5 py-4 text-base font-medium text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all" />
                     </div>
                     <button type="submit" disabled={!roomID.trim()}
-                        className={`w-full py-4 rounded-xl font-bold text-base transition-all ${roomID.trim() ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-500/30' : 'bg-gray-100 dark:bg-gray-800/80 text-gray-400 cursor-not-allowed border border-transparent'}`}>
+                        className={`w-full py-4 rounded-xl font-bold text-base transition-all ${roomID.trim() ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-500/30' : 'bg-gray-100 dark:bg-[#161B22] text-gray-400 cursor-not-allowed border border-transparent'}`}>
                         {t('join_now')}
                     </button>
                 </form>
@@ -63,7 +63,7 @@ const ScheduleView = ({ t, lang }) => {
     const navigate = useNavigate();
     const toast = useToast();
 
-    const inp = 'w-full bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2.5 text-sm text-gray-900 dark:text-white focus:outline-none focus:border-blue-500 focus:bg-white dark:focus:bg-gray-700 transition-all';
+    const inp = 'w-full bg-gray-50 dark:bg-[#1e2430] border border-gray-200 dark:border-white/8 rounded-lg px-4 py-2.5 text-sm text-gray-900 dark:text-white focus:outline-none focus:border-blue-500 focus:bg-white dark:focus:bg-[#272c3d] transition-all';
 
     const generatePin = () => {
         const arr = new Uint32Array(1);
@@ -107,7 +107,7 @@ const ScheduleView = ({ t, lang }) => {
     if (done) return (
         <div className="flex-1 overflow-y-auto px-4 py-8 sm:py-10">
             <div className="w-full max-w-lg mx-auto">
-                <div className="bg-white dark:bg-gray-800/60 border border-gray-100 dark:border-gray-700/60 rounded-2xl p-8 text-center shadow-sm">
+                <div className="bg-white dark:bg-[#161B22] border border-gray-100 dark:border-white/8 rounded-2xl p-8 text-center shadow-sm">
                     <div className="w-14 h-14 bg-green-100 dark:bg-green-900/30 rounded-2xl flex items-center justify-center mx-auto mb-4">
                         <svg className="w-7 h-7 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
                     </div>
@@ -116,7 +116,7 @@ const ScheduleView = ({ t, lang }) => {
                     </h3>
                     <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">{done.title}</p>
 
-                    <div className="bg-gray-50 dark:bg-gray-900/50 rounded-xl px-4 py-3 mb-4 flex items-center justify-between">
+                    <div className="bg-gray-50 dark:bg-[#1e2430] rounded-xl px-4 py-3 mb-4 flex items-center justify-between">
                         <span className="text-sm font-mono text-gray-700 dark:text-gray-300">{done.code}</span>
                         <button onClick={() => { navigator.clipboard.writeText(done.code); toast.success(t('pw_copied')); }}
                             className="text-xs text-blue-600 dark:text-blue-400 font-semibold hover:underline">
@@ -138,7 +138,7 @@ const ScheduleView = ({ t, lang }) => {
                     )}
 
                     <div className="flex gap-3">
-                        <button onClick={reset} className="flex-1 py-2.5 text-sm font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-colors">
+                        <button onClick={reset} className="flex-1 py-2.5 text-sm font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/8 rounded-xl transition-colors">
                             {lang === 'uz' ? 'Yangi' : lang === 'ru' ? 'Новое' : 'New'}
                         </button>
                         <button onClick={() => navigate(`/room/${done.code}`)}
@@ -160,7 +160,7 @@ const ScheduleView = ({ t, lang }) => {
                 </div>
 
                 <form onSubmit={handleSubmit}>
-                    <div className="bg-white dark:bg-gray-800/60 border border-gray-100 dark:border-gray-700/60 rounded-xl overflow-hidden divide-y divide-gray-100 dark:divide-gray-700/60">
+                    <div className="bg-white dark:bg-[#161B22] border border-gray-100 dark:border-white/8 rounded-xl overflow-hidden divide-y divide-gray-100 dark:divide-white/8">
 
                         {/* Topic */}
                         <div className="flex flex-col sm:grid sm:grid-cols-[140px_1fr] gap-2 sm:gap-4 items-start px-4 sm:px-6 py-4">
@@ -213,12 +213,12 @@ const ScheduleView = ({ t, lang }) => {
                             </label>
                             <div className="grid grid-cols-2 gap-2 w-full">
                                 <button type="button" onClick={() => { setRoomType('public'); setPassword(''); }}
-                                    className={`flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-semibold border-2 transition-all ${roomType === 'public' ? 'bg-blue-50 dark:bg-blue-900/30 border-blue-500 text-blue-600 dark:text-blue-400' : 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:border-blue-300'}`}>
+                                    className={`flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-semibold border-2 transition-all ${roomType === 'public' ? 'bg-blue-50 dark:bg-blue-900/30 border-blue-500 text-blue-600 dark:text-blue-400' : 'bg-gray-50 dark:bg-[#161B22] border-gray-200 dark:border-white/8 text-gray-500 dark:text-gray-400 hover:border-blue-300'}`}>
                                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
                                     {lang === 'uz' ? 'Ommaviy' : lang === 'ru' ? 'Публичный' : 'Public'}
                                 </button>
                                 <button type="button" onClick={() => setRoomType('private')}
-                                    className={`flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-semibold border-2 transition-all ${roomType === 'private' ? 'bg-purple-50 dark:bg-purple-900/30 border-purple-500 text-purple-600 dark:text-purple-400' : 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:border-purple-300'}`}>
+                                    className={`flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-semibold border-2 transition-all ${roomType === 'private' ? 'bg-purple-50 dark:bg-purple-900/30 border-purple-500 text-purple-600 dark:text-purple-400' : 'bg-gray-50 dark:bg-[#161B22] border-gray-200 dark:border-white/8 text-gray-500 dark:text-gray-400 hover:border-purple-300'}`}>
                                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
                                     {lang === 'uz' ? 'Shaxsiy' : lang === 'ru' ? 'Приватный' : 'Private'}
                                 </button>
@@ -254,7 +254,7 @@ const ScheduleView = ({ t, lang }) => {
                                         </div>
                                         {/* Copy */}
                                         <button type="button" onClick={copyPassword} disabled={!password}
-                                            className="px-3 py-2.5 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-40 text-gray-600 dark:text-gray-300 rounded-lg transition-colors">
+                                            className="px-3 py-2.5 bg-gray-100 dark:bg-white/10 hover:bg-gray-200 dark:hover:bg-white/15 disabled:opacity-40 text-gray-600 dark:text-gray-300 rounded-lg transition-colors">
                                             {copied
                                                 ? <svg className="w-4 h-4 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
                                                 : <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
@@ -282,7 +282,7 @@ const ScheduleView = ({ t, lang }) => {
 
                     <div className="mt-5 flex justify-end gap-3">
                         <button type="button" onClick={reset}
-                            className="px-5 py-2.5 text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors">
+                            className="px-5 py-2.5 text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/6 rounded-lg transition-colors">
                             {lang === 'uz' ? 'Bekor qilish' : lang === 'ru' ? 'Отмена' : 'Cancel'}
                         </button>
                         <button type="submit" disabled={loading || !isPasswordValid}
@@ -297,53 +297,247 @@ const ScheduleView = ({ t, lang }) => {
     );
 };
 
-// ─── Landing View (Unauthenticated Dashboard) ─────────────────────────────────
-const LandingView = ({ t, lang }) => (
-    <div className="flex-1 overflow-y-auto bg-white dark:bg-gray-900">
-        <div className="max-w-6xl mx-auto px-6 py-16 sm:py-24 flex flex-col items-center text-center">
-            <h1 className="text-5xl sm:text-6xl font-extrabold text-gray-900 dark:text-white tracking-tight mb-6">
-                Welcome to <span className="text-blue-600">{APP_NAME}</span> Platform
-            </h1>
-            <p className="text-lg sm:text-xl text-gray-600 dark:text-gray-300 max-w-3xl mb-10 leading-relaxed">
-                {lang === 'uz' ? 'Zamonaviy, tezkor va xavfsiz video uchrashuvlar tizimi. Barcha loyiha a\'zolari va mehmonlar bilan uzluksiz aloqada bo\'ling.' : 
-                 lang === 'ru' ? 'Современная, быстрая и безопасная система видеоконференций. Оставайтесь на связи со всеми участниками проекта и гостями.' : 
-                 'Modern, fast, and secure video conferencing system. Stay connected with all project members and guests seamlessly.'}
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4">
-                <Link to="/login" className="px-8 py-3.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold transition-all shadow-lg shadow-blue-600/30 hover:shadow-blue-600/50 active:scale-95">
-                    {lang === 'uz' ? 'Tizimga kirish' : lang === 'ru' ? 'Войти' : 'Log in'}
-                </Link>
-                <Link to="/register" className="px-8 py-3.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-900 dark:text-white rounded-xl font-bold transition-all active:scale-95">
-                    {lang === 'uz' ? 'Ro\'yxatdan o\'tish' : lang === 'ru' ? 'Регистрация' : 'Sign Up'}
-                </Link>
-            </div>
-            
-            <div className="mt-24 grid grid-cols-1 md:grid-cols-3 gap-8 w-full text-left">
-                <div className="p-8 bg-gray-50 dark:bg-gray-800/50 rounded-3xl border border-gray-100 dark:border-gray-700/50">
-                    <div className="w-14 h-14 bg-blue-100 dark:bg-blue-900/50 rounded-2xl flex items-center justify-center mb-6 text-blue-600 dark:text-blue-400">
-                        <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+// ─── Landing View (Unauthenticated) ───────────────────────────────────────────
+const landingTxt = {
+    uz: {
+        badge: 'Hozir mavjud · Bepul',
+        h1a: 'Video uchrashuvlar,',
+        h1b: "hech qachon bu qadar oson bo'lmagan.",
+        sub: "HD sifatli video, ekran ulashish va xavfsiz xonalar bilan jamoangiz bilan istalgan joydan ulaning.",
+        cta: 'Bepul boshlash',
+        ctaLogin: 'Kirish',
+        sm: '50K+', sml: 'Uchrashuv',
+        su: '10K+', sul: 'Foydalanuvchi',
+        ss: '99.9%', ssl: 'Ishonchlilik',
+        ftitle: 'Nima uchun SamMeet?',
+        f: [
+            { t: 'HD Video', d: "Kristal toza video va ovoz. Ulanish tezligingizga moslashadi.", c: 'blue' },
+            { t: 'Xavfsizlik', d: "So'nggi pog'ona shifrlash bilan uchrashuvlaringiz himoyalangan.", c: 'emerald' },
+            { t: 'Ekran ulashish', d: "Bir tugma bilan ekranizni baham ko'ring va samaraliroq ishlang.", c: 'violet' },
+            { t: "Tezkor qo'shilish", d: "Dastur o'rnatmasdan brauzer orqali sekundlar ichida qo'shiling.", c: 'orange' },
+        ],
+        htitle: 'Qanday ishlaydi?',
+        h: [
+            { n: '01', t: 'Hisob oching', d: "Bepul ro'yxatdan o'ting. Email yoki Google orqali." },
+            { n: '02', t: 'Xona yarating', d: "Ommaviy yoki shaxsiy xona. Parol o'rnating." },
+            { n: '03', t: "Qo'shiling", d: "Kod ulashing — mehmonlaringiz bir zumda qo'shiladi." },
+        ],
+        ctaTitle: 'Bugun boshlang',
+        ctaSub: "Ro'yxatdan o'tish bepul va bir daqiqa davom etadi.",
+        ctaBtn: 'Hisob yaratish',
+        footer: 'Zamonaviy video aloqa platformasi',
+    },
+    ru: {
+        badge: 'Доступно сейчас · Бесплатно',
+        h1a: 'Видеовстречи,',
+        h1b: 'никогда не было так просто.',
+        sub: 'Подключайтесь к команде из любой точки мира с HD видео, показом экрана и защищёнными комнатами.',
+        cta: 'Начать бесплатно',
+        ctaLogin: 'Войти',
+        sm: '50K+', sml: 'Встреч',
+        su: '10K+', sul: 'Пользователей',
+        ss: '99.9%', ssl: 'Надёжность',
+        ftitle: 'Почему SamMeet?',
+        f: [
+            { t: 'HD Качество', d: 'Кристально чистое видео и звук. Адаптируется к скорости соединения.', c: 'blue' },
+            { t: 'Безопасность', d: 'Встречи защищены сквозным шифрованием по умолчанию.', c: 'emerald' },
+            { t: 'Показ экрана', d: 'Делитесь экраном одним кликом и работайте эффективнее.', c: 'violet' },
+            { t: 'Быстрое подключение', d: 'Подключайтесь через браузер за секунды — без установки.', c: 'orange' },
+        ],
+        htitle: 'Как это работает?',
+        h: [
+            { n: '01', t: 'Создайте аккаунт', d: 'Зарегистрируйтесь бесплатно через email или Google.' },
+            { n: '02', t: 'Создайте комнату', d: 'Публичная или приватная. Установите пароль.' },
+            { n: '03', t: 'Пригласите команду', d: 'Поделитесь кодом — гости подключатся мгновенно.' },
+        ],
+        ctaTitle: 'Начните сегодня',
+        ctaSub: 'Регистрация бесплатна и займёт одну минуту.',
+        ctaBtn: 'Создать аккаунт',
+        footer: 'Современная платформа видеосвязи',
+    },
+    en: {
+        badge: 'Available now · Free',
+        h1a: 'Video meetings,',
+        h1b: 'simpler than ever.',
+        sub: 'Connect with your team from anywhere with HD video, screen sharing, and secure rooms.',
+        cta: 'Get started free',
+        ctaLogin: 'Log in',
+        sm: '50K+', sml: 'Meetings',
+        su: '10K+', sul: 'Users',
+        ss: '99.9%', ssl: 'Uptime',
+        ftitle: `Why ${APP_NAME}?`,
+        f: [
+            { t: 'HD Quality', d: 'Crystal clear video and audio that adapts to your connection speed.', c: 'blue' },
+            { t: 'Secure & Private', d: 'Meetings are protected with end-to-end encryption by default.', c: 'emerald' },
+            { t: 'Screen Sharing', d: 'Share your screen in one click and collaborate more effectively.', c: 'violet' },
+            { t: 'Instant Join', d: 'Join through the browser in seconds — no downloads required.', c: 'orange' },
+        ],
+        htitle: 'How it works',
+        h: [
+            { n: '01', t: 'Create an account', d: 'Sign up for free with your email or Google.' },
+            { n: '02', t: 'Start a room', d: 'Create public or private rooms with optional passwords.' },
+            { n: '03', t: 'Invite your team', d: 'Share the code — guests join instantly from any device.' },
+        ],
+        ctaTitle: 'Start for free today',
+        ctaSub: 'Signing up takes less than a minute.',
+        ctaBtn: 'Create account',
+        footer: 'Modern video communication platform',
+    },
+};
+
+const featureColors = {
+    blue:    { bg: 'bg-blue-100 dark:bg-blue-500/12',    icon: 'text-blue-600 dark:text-blue-400',    border: 'group-hover:border-blue-200 dark:group-hover:border-blue-500/30' },
+    emerald: { bg: 'bg-emerald-100 dark:bg-emerald-500/12', icon: 'text-emerald-600 dark:text-emerald-400', border: 'group-hover:border-emerald-200 dark:group-hover:border-emerald-500/30' },
+    violet:  { bg: 'bg-violet-100 dark:bg-violet-500/12',  icon: 'text-violet-600 dark:text-violet-400',  border: 'group-hover:border-violet-200 dark:group-hover:border-violet-500/30' },
+    orange:  { bg: 'bg-orange-100 dark:bg-orange-500/12',  icon: 'text-orange-600 dark:text-orange-400',  border: 'group-hover:border-orange-200 dark:group-hover:border-orange-500/30' },
+};
+
+const featureIcons = [
+    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>,
+    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>,
+    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>,
+    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>,
+];
+
+const LandingView = ({ t, lang }) => {
+    const l = landingTxt[lang] || landingTxt.en;
+    return (
+        <div className="bg-white dark:bg-[#0b0e14] overflow-x-hidden">
+
+            {/* ── Hero ── */}
+            <section className="relative flex items-center justify-center min-h-[calc(100vh-56px)] overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-white to-violet-50 dark:from-[#0b0e14] dark:via-[#0b0e14] dark:to-[#0d0b14]" />
+                <div className="absolute top-0 right-0 w-[700px] h-[700px] bg-blue-300/20 dark:bg-blue-500/8 rounded-full blur-3xl -translate-y-1/3 translate-x-1/4 pointer-events-none" />
+                <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-violet-300/15 dark:bg-violet-500/6 rounded-full blur-3xl translate-y-1/3 -translate-x-1/4 pointer-events-none" />
+                <div className="absolute inset-0 opacity-[0.018] dark:opacity-[0.035]"
+                    style={{ backgroundImage: 'linear-gradient(#6366f1 1px,transparent 1px),linear-gradient(90deg,#6366f1 1px,transparent 1px)', backgroundSize: '64px 64px' }} />
+
+                <div className="relative z-10 w-full max-w-5xl mx-auto px-6 py-20 sm:py-28 flex flex-col items-center text-center">
+                    <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/25 rounded-full mb-8">
+                        <span className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse" />
+                        <span className="text-xs font-semibold text-blue-600 dark:text-blue-400 tracking-wide">{l.badge}</span>
                     </div>
-                    <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">High Quality Video</h3>
-                    <p className="text-gray-600 dark:text-gray-400 leading-relaxed">Experience crystal clear video calls with adaptive streaming technology.</p>
-                </div>
-                <div className="p-8 bg-gray-50 dark:bg-gray-800/50 rounded-3xl border border-gray-100 dark:border-gray-700/50">
-                    <div className="w-14 h-14 bg-emerald-100 dark:bg-emerald-900/50 rounded-2xl flex items-center justify-center mb-6 text-emerald-600 dark:text-emerald-400">
-                        <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+
+                    <h1 className="text-5xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight leading-[1.1] mb-6">
+                        <span className="text-gray-900 dark:text-white">{l.h1a}</span>
+                        <br />
+                        <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-600 via-blue-500 to-violet-600 dark:from-blue-400 dark:via-blue-300 dark:to-violet-400">
+                            {l.h1b}
+                        </span>
+                    </h1>
+
+                    <p className="text-lg sm:text-xl text-gray-500 dark:text-gray-400 max-w-2xl leading-relaxed mb-10">
+                        {l.sub}
+                    </p>
+
+                    <div className="flex flex-col sm:flex-row items-center gap-3">
+                        <Link to="/register"
+                            className="px-8 py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg shadow-blue-600/30 hover:shadow-blue-600/50 transition-all active:scale-95 text-sm">
+                            {l.cta}
+                        </Link>
+                        <Link to="/login"
+                            className="px-8 py-3.5 bg-white dark:bg-white/6 hover:bg-gray-50 dark:hover:bg-white/10 border border-gray-200 dark:border-white/10 text-gray-700 dark:text-gray-200 font-bold rounded-xl transition-all active:scale-95 text-sm flex items-center gap-1.5">
+                            {l.ctaLogin}
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
+                        </Link>
                     </div>
-                    <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">Secure & Private</h3>
-                    <p className="text-gray-600 dark:text-gray-400 leading-relaxed">Your meetings are protected with end-to-end encryption by default.</p>
-                </div>
-                <div className="p-8 bg-gray-50 dark:bg-gray-800/50 rounded-3xl border border-gray-100 dark:border-gray-700/50">
-                    <div className="w-14 h-14 bg-orange-100 dark:bg-orange-900/50 rounded-2xl flex items-center justify-center mb-6 text-orange-600 dark:text-orange-400">
-                        <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+
+                    {/* Stats */}
+                    <div className="flex items-center justify-center gap-10 sm:gap-16 mt-16 pt-10 border-t border-gray-100 dark:border-white/8 w-full">
+                        {[
+                            { val: l.sm, label: l.sml },
+                            { val: l.su, label: l.sul },
+                            { val: l.ss, label: l.ssl },
+                        ].map((s, i) => (
+                            <div key={i} className="text-center">
+                                <div className="text-2xl sm:text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight">{s.val}</div>
+                                <div className="text-xs text-gray-400 dark:text-gray-500 mt-1 font-medium">{s.label}</div>
+                            </div>
+                        ))}
                     </div>
-                    <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">Team Collaboration</h3>
-                    <p className="text-gray-600 dark:text-gray-400 leading-relaxed">Easily share screens and collaborate with your entire team in real-time.</p>
                 </div>
-            </div>
+            </section>
+
+            {/* ── Features ── */}
+            <section className="py-20 sm:py-28 px-6 bg-gray-50 dark:bg-[#080a0f]">
+                <div className="max-w-5xl mx-auto">
+                    <div className="text-center mb-14">
+                        <h2 className="text-3xl sm:text-4xl font-extrabold text-gray-900 dark:text-white tracking-tight mb-3">{l.ftitle}</h2>
+                        <div className="w-12 h-1 bg-gradient-to-r from-blue-500 to-violet-500 rounded-full mx-auto" />
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                        {l.f.map((f, i) => {
+                            const c = featureColors[f.c];
+                            return (
+                                <div key={i} className={`group p-6 bg-white dark:bg-[#111318] rounded-2xl border border-gray-100 dark:border-white/6 hover:shadow-lg dark:hover:shadow-black/30 transition-all ${c.border}`}>
+                                    <div className={`w-12 h-12 ${c.bg} rounded-xl flex items-center justify-center mb-5 ${c.icon}`}>
+                                        {featureIcons[i]}
+                                    </div>
+                                    <h3 className="text-base font-bold text-gray-900 dark:text-white mb-2">{f.t}</h3>
+                                    <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">{f.d}</p>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+            </section>
+
+            {/* ── How it works ── */}
+            <section className="py-20 sm:py-28 px-6 bg-white dark:bg-[#0b0e14]">
+                <div className="max-w-4xl mx-auto">
+                    <div className="text-center mb-14">
+                        <h2 className="text-3xl sm:text-4xl font-extrabold text-gray-900 dark:text-white tracking-tight mb-3">{l.htitle}</h2>
+                        <div className="w-12 h-1 bg-gradient-to-r from-blue-500 to-violet-500 rounded-full mx-auto" />
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
+                        {/* Connector line */}
+                        <div className="hidden md:block absolute top-8 left-[calc(16.66%+16px)] right-[calc(16.66%+16px)] h-px bg-gradient-to-r from-blue-200 to-violet-200 dark:from-blue-900/50 dark:to-violet-900/50" />
+                        {l.h.map((step, i) => (
+                            <div key={i} className="flex flex-col items-center text-center relative">
+                                <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-violet-600 rounded-2xl flex items-center justify-center mb-5 shadow-lg shadow-blue-500/25 relative z-10">
+                                    <span className="text-xl font-extrabold text-white">{step.n}</span>
+                                </div>
+                                <h3 className="text-base font-bold text-gray-900 dark:text-white mb-2">{step.t}</h3>
+                                <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed max-w-[220px]">{step.d}</p>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </section>
+
+            {/* ── CTA Banner ── */}
+            <section className="py-16 sm:py-20 px-6 bg-gradient-to-br from-blue-600 via-blue-700 to-violet-700 relative overflow-hidden">
+                <div className="absolute inset-0 opacity-[0.07]"
+                    style={{ backgroundImage: 'linear-gradient(rgba(255,255,255,1) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,1) 1px,transparent 1px)', backgroundSize: '40px 40px' }} />
+                <div className="absolute -top-32 -right-32 w-80 h-80 bg-white/10 rounded-full blur-3xl pointer-events-none" />
+                <div className="absolute -bottom-32 -left-32 w-80 h-80 bg-violet-400/20 rounded-full blur-3xl pointer-events-none" />
+                <div className="relative z-10 max-w-2xl mx-auto text-center">
+                    <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight mb-4">{l.ctaTitle}</h2>
+                    <p className="text-blue-100/80 text-base mb-8">{l.ctaSub}</p>
+                    <Link to="/register"
+                        className="inline-flex items-center gap-2 px-8 py-3.5 bg-white hover:bg-blue-50 text-blue-700 font-bold rounded-xl shadow-xl shadow-black/20 transition-all active:scale-95 text-sm">
+                        {l.ctaBtn}
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
+                    </Link>
+                </div>
+            </section>
+
+            {/* ── Footer ── */}
+            <footer className="py-8 px-6 bg-gray-50 dark:bg-[#080a0f] border-t border-gray-100 dark:border-white/6">
+                <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div className="flex items-center gap-2.5">
+                        <div className="w-7 h-7 bg-blue-600 rounded-lg flex items-center justify-center">
+                            <span className="text-white font-black text-xs">{APP_NAME[0]}</span>
+                        </div>
+                        <span className="font-bold text-gray-800 dark:text-white text-sm tracking-tight">{APP_NAME}</span>
+                        <span className="text-gray-400 dark:text-gray-600 text-xs">— {l.footer}</span>
+                    </div>
+                    <p className="text-xs text-gray-400 dark:text-gray-600">© {new Date().getFullYear()} {APP_NAME}. All rights reserved.</p>
+                </div>
+            </footer>
         </div>
-    </div>
-);
+    );
+};
 
 const HomeView = ({ t, lang, userInfo, onNav, history = [] }) => {
     const [meetingTitle, setMeetingTitle] = useState('');
@@ -600,7 +794,7 @@ const HomeView = ({ t, lang, userInfo, onNav, history = [] }) => {
                                     placeholder={t('meeting_topic')}
                                     value={meetingTitle}
                                     onChange={e => setMeetingTitle(e.target.value)}
-                                    className="w-full bg-gray-50/50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700/50 rounded-2xl px-6 py-5 text-lg font-semibold text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all shadow-inner"
+                                    className="w-full bg-gray-50/50 dark:bg-[#1e2430] border border-gray-200 dark:border-white/8 rounded-2xl px-6 py-5 text-lg font-semibold text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all shadow-inner"
                                 />
                             </div>
 
@@ -610,7 +804,7 @@ const HomeView = ({ t, lang, userInfo, onNav, history = [] }) => {
                                     onClick={() => { setRoomType('public'); setRoomPassword(''); }}
                                     className={`p-4 rounded-2xl font-bold text-sm transition-all border-2 ${roomType === 'public' 
                                         ? 'bg-blue-50 dark:bg-blue-900/30 border-blue-500 text-blue-600 dark:text-blue-400' 
-                                        : 'bg-gray-50/50 dark:bg-gray-900/50 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-blue-300'
+                                        : 'bg-gray-50/50 dark:bg-[#1e2430] border-gray-200 dark:border-white/8 text-gray-600 dark:text-gray-400 hover:border-blue-300'
                                     }`}
                                 >
                                     <div className="flex items-center justify-center gap-2">
@@ -622,7 +816,7 @@ const HomeView = ({ t, lang, userInfo, onNav, history = [] }) => {
                                     onClick={() => { setRoomType('private'); if (!roomPassword) generatePassword(); }}
                                     className={`p-4 rounded-2xl font-bold text-sm transition-all border-2 ${roomType === 'private'
                                         ? 'bg-purple-50 dark:bg-purple-900/30 border-purple-500 text-purple-600 dark:text-purple-400' 
-                                        : 'bg-gray-50/50 dark:bg-gray-900/50 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-purple-300'
+                                        : 'bg-gray-50/50 dark:bg-[#1e2430] border-gray-200 dark:border-white/8 text-gray-600 dark:text-gray-400 hover:border-purple-300'
                                     }`}
                                 >
                                     <div className="flex items-center justify-center gap-2">
@@ -652,14 +846,14 @@ const HomeView = ({ t, lang, userInfo, onNav, history = [] }) => {
                                                 onChange={e => setRoomPassword(e.target.value.replace(/\D/g, '').slice(0, 6))}
                                                 inputMode="numeric"
                                                 maxLength={6}
-                                                className="flex-1 bg-gray-50/50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700/50 rounded-2xl px-6 py-4 text-base font-mono tracking-widest text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:border-purple-500 focus:ring-4 focus:ring-purple-500/10 transition-all shadow-inner"
+                                                className="flex-1 bg-gray-50/50 dark:bg-[#1e2430] border border-gray-200 dark:border-white/8 rounded-2xl px-6 py-4 text-base font-mono tracking-widest text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:border-purple-500 focus:ring-4 focus:ring-purple-500/10 transition-all shadow-inner"
                                             />
                                             
                                             {/* Show/Hide Toggle */}
                                             <button
                                                 type="button"
                                                 onClick={() => setShowPassword(!showPassword)}
-                                                className="px-3 py-3 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-100/50 dark:hover:bg-gray-800/50 rounded-xl transition-all"
+                                                className="px-3 py-3 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-100/50 dark:hover:bg-white/6/50 rounded-xl transition-all"
                                                 title={showPassword ? 'Hide' : 'Show'}
                                             >
                                                 {showPassword ? (
@@ -707,7 +901,7 @@ const HomeView = ({ t, lang, userInfo, onNav, history = [] }) => {
                                                                     : passwordStrength.color === 'blue'
                                                                     ? 'bg-blue-500'
                                                                     : 'bg-green-500'
-                                                                : 'bg-gray-200 dark:bg-gray-700'
+                                                                : 'bg-gray-200 dark:bg-white/10'
                                                         }`}
                                                     />
                                                 ))}
@@ -742,7 +936,7 @@ const HomeView = ({ t, lang, userInfo, onNav, history = [] }) => {
                                             <button
                                                 type="button"
                                                 onClick={() => setRoomPassword('')}
-                                                className="px-4 py-3 bg-gray-100/50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 font-bold text-sm rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-all active:scale-95"
+                                                className="px-4 py-3 bg-gray-100/50 dark:bg-[#161B22]/70 border border-gray-200 dark:border-white/8 text-gray-600 dark:text-gray-400 font-bold text-sm rounded-xl hover:bg-gray-100 dark:hover:bg-white/6 transition-all active:scale-95"
                                             >
                                                 {lang === 'uz' ? 'Tozalash' : lang === 'ru' ? 'Очистить' : 'Clear'}
                                             </button>
@@ -754,7 +948,7 @@ const HomeView = ({ t, lang, userInfo, onNav, history = [] }) => {
                             {/* Action Buttons */}
                             <div className="flex gap-4 pt-4">
                                 <button onClick={resetNewMeeting}
-                                    className="px-8 py-4 text-sm font-bold text-gray-500 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700/50 rounded-2xl transition-all flex-1 active:scale-95">
+                                    className="px-8 py-4 text-sm font-bold text-gray-500 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-white/8/50 rounded-2xl transition-all flex-1 active:scale-95">
                                     {lang === 'uz' ? 'Bekor' : lang === 'ru' ? 'Отмена' : 'Cancel'}
                                 </button>
                                 <button onClick={handleCreateRoom} disabled={loading || (roomType === 'private' && (!roomPassword.trim() || !passwordStrength.valid))}
@@ -789,7 +983,7 @@ const HomeView = ({ t, lang, userInfo, onNav, history = [] }) => {
                         {/* Body */}
                         <div className="px-6 py-5 space-y-3">
                             {/* Meeting Code */}
-                            <div className="bg-gray-50 dark:bg-gray-900/60 border border-gray-200 dark:border-gray-700 rounded-2xl px-4 py-3 flex items-center justify-between gap-3">
+                            <div className="bg-gray-50 dark:bg-[#0b0e14]/60 border border-gray-200 dark:border-white/8 rounded-2xl px-4 py-3 flex items-center justify-between gap-3">
                                 <div>
                                     <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">
                                         {lang === 'uz' ? 'Xona kodi' : lang === 'ru' ? 'Код комнаты' : 'Room Code'}
@@ -798,7 +992,7 @@ const HomeView = ({ t, lang, userInfo, onNav, history = [] }) => {
                                 </div>
                                 <button
                                     onClick={() => { navigator.clipboard.writeText(createdRoom.code); setCodeCopied(true); setTimeout(() => setCodeCopied(false), 2000); }}
-                                    className={`shrink-0 w-10 h-10 rounded-xl flex items-center justify-center transition-all ${codeCopied ? 'bg-green-100 dark:bg-green-900/30 text-green-600' : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'}`}
+                                    className={`shrink-0 w-10 h-10 rounded-xl flex items-center justify-center transition-all ${codeCopied ? 'bg-green-100 dark:bg-green-900/30 text-green-600' : 'bg-gray-200 dark:bg-white/10 text-gray-600 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-white/15'}`}
                                 >
                                     {codeCopied
                                         ? <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7"/></svg>
@@ -839,7 +1033,7 @@ const HomeView = ({ t, lang, userInfo, onNav, history = [] }) => {
                                     navigator.clipboard.writeText(text);
                                     toast.success(lang === 'uz' ? 'Nusxalandi!' : lang === 'ru' ? 'Скопировано!' : 'Copied!');
                                 }}
-                                className="w-full py-2.5 text-xs font-bold text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 border border-dashed border-gray-300 dark:border-gray-600 rounded-xl hover:border-gray-400 dark:hover:border-gray-500 transition-all"
+                                className="w-full py-2.5 text-xs font-bold text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 border border-dashed border-gray-300 dark:border-white/12 rounded-xl hover:border-gray-400 dark:hover:border-white/25 transition-all"
                             >
                                 {lang === 'uz' ? '📋 Ikkalasini nusxalash' : lang === 'ru' ? '📋 Скопировать оба' : '📋 Copy both'}
                             </button>
@@ -848,7 +1042,7 @@ const HomeView = ({ t, lang, userInfo, onNav, history = [] }) => {
                         {/* Footer */}
                         <div className="px-6 pb-6 flex gap-3">
                             <button onClick={resetNewMeeting}
-                                className="flex-1 py-3 text-sm font-bold text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-2xl transition-colors">
+                                className="flex-1 py-3 text-sm font-bold text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/6 rounded-2xl transition-colors">
                                 {lang === 'uz' ? 'Yopish' : lang === 'ru' ? 'Закрыть' : 'Close'}
                             </button>
                             <button onClick={() => { resetNewMeeting(); navigate(`/room/${createdRoom.code}`); }}
@@ -1049,7 +1243,7 @@ const ProfileView = ({ t, lang, userInfo: authInfo }) => {
     const roleColors = {
         admin: 'bg-red-50 text-red-600 border-red-100 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800',
         user:  'bg-blue-50 text-blue-600 border-blue-100 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-800',
-        guest: 'bg-gray-100 text-gray-500 border-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700',
+        guest: 'bg-gray-100 text-gray-500 border-gray-200 dark:bg-[#161B22] dark:text-gray-400 dark:border-white/8',
     };
     const roleColor = roleColors[profile?.role] || roleColors.guest;
     const avatarInitial = profile?.name?.[0]?.toUpperCase() || '?';
@@ -1059,7 +1253,7 @@ const ProfileView = ({ t, lang, userInfo: authInfo }) => {
     const timeline = activity?.timeline || [];
 
     const getHeatmapColor = (level) => {
-        if (level === 0) return 'bg-gray-100 dark:bg-gray-800';
+        if (level === 0) return 'bg-gray-100 dark:bg-[#161B22]';
         if (level === 1) return 'bg-blue-200 dark:bg-blue-900/50';
         if (level === 2) return 'bg-blue-400 dark:bg-blue-700/60';
         if (level === 3) return 'bg-blue-600 dark:bg-blue-600';
@@ -1068,7 +1262,7 @@ const ProfileView = ({ t, lang, userInfo: authInfo }) => {
 
     if (loading) {
         return (
-            <div className="flex-1 flex flex-col items-center justify-center bg-white dark:bg-gray-900 gap-4">
+            <div className="flex-1 flex flex-col items-center justify-center bg-white dark:bg-[#0b0e14] gap-4">
                 <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
                 <p className="text-gray-500 font-medium">Loading profile...</p>
             </div>
@@ -1076,13 +1270,13 @@ const ProfileView = ({ t, lang, userInfo: authInfo }) => {
     }
 
     return (
-        <div className="flex-1 overflow-y-auto px-4 py-8 md:py-10 bg-gray-50 dark:bg-gray-950 relative">
+        <div className="flex-1 overflow-y-auto px-4 py-8 md:py-10 bg-gray-50 dark:bg-[#0b0e14] relative">
             {/* Edit Profile Slide-over */}
             {isEditing && (
                 <div className="fixed inset-0 z-50 flex">
                     <div className="flex-1 bg-black/40 backdrop-blur-sm" onClick={() => setIsEditing(false)} />
-                    <div className="w-full max-w-md bg-white dark:bg-gray-900 shadow-2xl flex flex-col overflow-hidden border-l border-gray-200 dark:border-gray-700">
-                        <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100 dark:border-gray-800 shrink-0">
+                    <div className="w-full max-w-md bg-white dark:bg-[#0b0e14] shadow-2xl flex flex-col overflow-hidden border-l border-gray-200 dark:border-white/8">
+                        <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100 dark:border-white/8 shrink-0">
                             <div>
                                 <h2 className="text-lg font-bold text-gray-900 dark:text-white">
                                     {lang === 'uz' ? 'Profilni tahrirlash' : lang === 'ru' ? 'Редактировать профиль' : 'Edit Profile'}
@@ -1091,13 +1285,13 @@ const ProfileView = ({ t, lang, userInfo: authInfo }) => {
                                     {lang === 'uz' ? 'Ma\'lumotlarni yangilang' : lang === 'ru' ? 'Обновите ваши данные' : 'Update your information'}
                                 </p>
                             </div>
-                            <button onClick={() => setIsEditing(false)} className="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 transition-colors">
+                            <button onClick={() => setIsEditing(false)} className="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-white/6 text-gray-400 transition-colors">
                                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"/></svg>
                             </button>
                         </div>
                         <form onSubmit={handleSaveProfile} className="flex-1 overflow-y-auto px-6 py-6 space-y-5">
                             {/* Avatar preview */}
-                            <div className="flex items-center gap-4 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-2xl border border-gray-100 dark:border-gray-700">
+                            <div className="flex items-center gap-4 p-4 bg-gray-50 dark:bg-[#161B22]/70 rounded-2xl border border-gray-100 dark:border-white/8">
                                 <div className="w-14 h-14 rounded-full bg-blue-600 flex items-center justify-center text-white text-2xl font-bold shrink-0">
                                     {(editForm.name || profile?.name || '?')[0]?.toUpperCase()}
                                 </div>
@@ -1111,13 +1305,13 @@ const ProfileView = ({ t, lang, userInfo: authInfo }) => {
                                     {lang === 'uz' ? 'Ism' : lang === 'ru' ? 'Имя' : 'Name'}
                                 </label>
                                 <input type="text" value={editForm.name} onChange={(e) => setEditForm({...editForm, name: e.target.value})}
-                                    className="w-full px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all" required />
+                                    className="w-full px-4 py-3 border border-gray-200 dark:border-white/8 rounded-xl bg-gray-50 dark:bg-[#161B22]/70 text-gray-900 dark:text-white text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all" required />
                             </div>
                             <div>
                                 <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Bio</label>
                                 <textarea value={editForm.bio} onChange={(e) => setEditForm({...editForm, bio: e.target.value})} rows="3"
                                     placeholder={lang === 'uz' ? 'O\'zingiz haqingizda yozing...' : lang === 'ru' ? 'Напишите о себе...' : 'Write something about yourself...'}
-                                    className="w-full px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all resize-none" />
+                                    className="w-full px-4 py-3 border border-gray-200 dark:border-white/8 rounded-xl bg-gray-50 dark:bg-[#161B22]/70 text-gray-900 dark:text-white text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all resize-none" />
                             </div>
                             <div>
                                 <div className="flex justify-between items-center mb-2">
@@ -1132,12 +1326,12 @@ const ProfileView = ({ t, lang, userInfo: authInfo }) => {
                                 </div>
                                 <div className="space-y-2">
                                     {editForm.links.map((link, idx) => (
-                                        <div key={idx} className="flex gap-2 items-center p-3 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-700">
+                                        <div key={idx} className="flex gap-2 items-center p-3 bg-gray-50 dark:bg-[#161B22]/70 rounded-xl border border-gray-100 dark:border-white/8">
                                             <div className="flex-1 flex gap-2">
                                                 <input type="text" placeholder="GitHub" value={link.title} onChange={(e) => updateLink(idx, 'title', e.target.value)}
-                                                    className="w-24 shrink-0 px-2.5 py-1.5 text-xs border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:border-blue-500 transition-all" />
+                                                    className="w-24 shrink-0 px-2.5 py-1.5 text-xs border border-gray-200 dark:border-white/8 rounded-lg bg-white dark:bg-white/10 text-gray-900 dark:text-white focus:outline-none focus:border-blue-500 transition-all" />
                                                 <input type="url" placeholder="https://..." value={link.url} onChange={(e) => updateLink(idx, 'url', e.target.value)}
-                                                    className="flex-1 min-w-0 px-2.5 py-1.5 text-xs border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:border-blue-500 transition-all" />
+                                                    className="flex-1 min-w-0 px-2.5 py-1.5 text-xs border border-gray-200 dark:border-white/8 rounded-lg bg-white dark:bg-white/10 text-gray-900 dark:text-white focus:outline-none focus:border-blue-500 transition-all" />
                                             </div>
                                             <button type="button" onClick={() => removeLink(idx)} className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors shrink-0">
                                                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
@@ -1152,9 +1346,9 @@ const ProfileView = ({ t, lang, userInfo: authInfo }) => {
                                 </div>
                             </div>
                         </form>
-                        <div className="flex gap-3 px-6 py-4 border-t border-gray-100 dark:border-gray-800 shrink-0 bg-gray-50/50 dark:bg-gray-900">
+                        <div className="flex gap-3 px-6 py-4 border-t border-gray-100 dark:border-white/8 shrink-0 bg-gray-50/50 dark:bg-[#0b0e14]">
                             <button type="button" onClick={() => setIsEditing(false)}
-                                className="flex-1 py-3 text-sm font-semibold text-gray-600 dark:text-gray-400 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                                className="flex-1 py-3 text-sm font-semibold text-gray-600 dark:text-gray-400 bg-white dark:bg-[#161B22] border border-gray-200 dark:border-white/8 rounded-xl hover:bg-gray-50 dark:hover:bg-white/8 transition-colors">
                                 {lang === 'uz' ? 'Bekor' : lang === 'ru' ? 'Отмена' : 'Cancel'}
                             </button>
                             <button onClick={handleSaveProfile} disabled={saving}
@@ -1175,12 +1369,12 @@ const ProfileView = ({ t, lang, userInfo: authInfo }) => {
                 {/* 1. Left Sidebar (User details) */}
                 <div className="w-full md:w-72 lg:w-64 shrink-0 flex flex-col gap-4">
                     {/* Avatar Card */}
-                    <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 p-6 text-center">
+                    <div className="bg-white dark:bg-[#161B22] rounded-2xl border border-gray-100 dark:border-white/8 p-6 text-center">
                         <div className="relative inline-block mb-4">
-                            <div className="w-24 h-24 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-4xl font-bold text-white shadow-lg shadow-blue-500/20 ring-4 ring-white dark:ring-gray-800">
+                            <div className="w-24 h-24 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-4xl font-bold text-white shadow-lg shadow-blue-500/20 ring-4 ring-white dark:ring-[#161B22]">
                                 {avatarInitial}
                             </div>
-                            <div className="absolute -bottom-1 -right-1 w-8 h-8 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-full flex items-center justify-center text-base shadow-sm cursor-pointer hover:scale-110 transition-transform" title="Status">
+                            <div className="absolute -bottom-1 -right-1 w-8 h-8 bg-white dark:bg-[#161B22] border border-gray-200 dark:border-white/8 rounded-full flex items-center justify-center text-base shadow-sm cursor-pointer hover:scale-110 transition-transform" title="Status">
                                 🎯
                             </div>
                         </div>
@@ -1191,21 +1385,21 @@ const ProfileView = ({ t, lang, userInfo: authInfo }) => {
                         <p className="text-sm text-gray-600 dark:text-gray-400 mt-4 leading-relaxed text-left">
                             {profile?.bio || (lang === 'uz' ? 'Zamonaviy video aloqa tizimi ishqibozi.' : lang === 'ru' ? 'Энтузиаст современных систем видеосвязи.' : 'Enthusiast of modern video communication systems.')}
                         </p>
-                        <button onClick={openEdit} className="mt-4 w-full py-2 px-3 bg-gray-50 hover:bg-gray-100 dark:bg-gray-700/50 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl text-sm font-semibold text-gray-700 dark:text-gray-200 transition-colors flex items-center justify-center gap-2">
+                        <button onClick={openEdit} className="mt-4 w-full py-2 px-3 bg-gray-50 hover:bg-gray-100 dark:bg-white/6 dark:hover:bg-white/8 border border-gray-200 dark:border-white/12 rounded-xl text-sm font-semibold text-gray-700 dark:text-gray-200 transition-colors flex items-center justify-center gap-2">
                             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
                             {lang === 'uz' ? 'Profilni tahrirlash' : lang === 'ru' ? 'Редактировать' : 'Edit profile'}
                         </button>
                     </div>
 
                     {/* Stats row */}
-                    <div className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl p-3 text-center">
+                    <div className="bg-white dark:bg-[#161B22] border border-gray-100 dark:border-white/8 rounded-xl p-3 text-center">
                         <p className="text-xl font-bold text-gray-900 dark:text-white">{totalMeetings}</p>
                         <p className="text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mt-0.5 leading-tight">
                             {lang === 'uz' ? 'Uchrashuvlar' : lang === 'ru' ? 'Встреч' : 'Meetings'}
                         </p>
                     </div>
 
-                    <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 p-4">
+                    <div className="bg-white dark:bg-[#161B22] rounded-2xl border border-gray-100 dark:border-white/8 p-4">
                         <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-3">
                             {lang === 'uz' ? 'Ma\'lumotlar' : lang === 'ru' ? 'Информация' : 'Info'}
                         </p>
@@ -1239,14 +1433,14 @@ const ProfileView = ({ t, lang, userInfo: authInfo }) => {
                         {pinnedMeetings.length > 0 ? (
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 {pinnedMeetings.map((room, i) => (
-                                    <div key={i} className="p-4 border border-gray-200 dark:border-gray-700 rounded-xl hover:shadow-md dark:hover:border-gray-600 bg-white dark:bg-gray-800 transition-all flex flex-col h-32 justify-between group">
+                                    <div key={i} className="p-4 border border-gray-200 dark:border-white/8 rounded-xl hover:shadow-md dark:hover:border-white/20 bg-white dark:bg-[#161B22] transition-all flex flex-col h-32 justify-between group">
                                         <div>
                                             <div className="flex items-center justify-between mb-1">
                                                 <h3 onClick={() => navigate(`/room/${room.meetingCode}`)} className="text-sm font-bold text-blue-600 dark:text-blue-400 group-hover:underline cursor-pointer flex items-center gap-2 truncate">
                                                     <svg className="w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
                                                     {room.title}
                                                 </h3>
-                                                <span className={`text-[10px] px-2 py-0.5 rounded-full border ${!room.password ? 'border-gray-200 text-gray-500 dark:border-gray-600 dark:text-gray-400' : 'border-amber-200 text-amber-600 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-800/50'}`}>
+                                                <span className={`text-[10px] px-2 py-0.5 rounded-full border ${!room.password ? 'border-gray-200 text-gray-500 dark:border-white/12 dark:text-gray-400' : 'border-amber-200 text-amber-600 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-800/50'}`}>
                                                     {!room.password ? 'Public' : 'Private'}
                                                 </span>
                                             </div>
@@ -1258,7 +1452,7 @@ const ProfileView = ({ t, lang, userInfo: authInfo }) => {
                                             <button onClick={() => navigate(`/room/${room.meetingCode}`)} className="text-xs font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/20 dark:text-blue-400 dark:hover:bg-blue-900/40 px-3 py-1.5 rounded-md transition-colors">
                                                 Start Meeting
                                             </button>
-                                            <button onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/room/${room.meetingCode}`); }} className="text-xs font-semibold text-gray-500 bg-gray-50 hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 px-3 py-1.5 rounded-md transition-colors">
+                                            <button onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/room/${room.meetingCode}`); }} className="text-xs font-semibold text-gray-500 bg-gray-50 hover:bg-gray-100 dark:bg-[#161B22] dark:text-gray-400 dark:hover:bg-white/8 px-3 py-1.5 rounded-md transition-colors">
                                                 Copy Link
                                             </button>
                                         </div>
@@ -1266,7 +1460,7 @@ const ProfileView = ({ t, lang, userInfo: authInfo }) => {
                                 ))}
                             </div>
                         ) : (
-                            <div className="text-center py-10 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-dashed border-gray-200 dark:border-gray-700">
+                            <div className="text-center py-10 bg-gray-50 dark:bg-[#161B22]/70 rounded-xl border border-dashed border-gray-200 dark:border-white/8">
                                 <p className="text-sm text-gray-500">No pinned rooms yet.</p>
                             </div>
                         )}
@@ -1277,7 +1471,7 @@ const ProfileView = ({ t, lang, userInfo: authInfo }) => {
                         <h2 className="text-base font-semibold text-gray-900 dark:text-white mb-2">
                             {lang === 'uz' ? `So'nggi yildagi ${totalMeetings} ta uchrashuv` : `${totalMeetings} meetings in the last year`}
                         </h2>
-                        <div className="border border-gray-200 dark:border-gray-700 rounded-xl p-4 md:p-6 bg-white dark:bg-gray-800">
+                        <div className="border border-gray-200 dark:border-white/8 rounded-xl p-4 md:p-6 bg-white dark:bg-[#161B22]">
                             <div className="flex gap-1 overflow-x-auto pb-2 custom-scrollbar">
                                 {heatmapWeeks.map((week, wIdx) => (
                                     <div key={wIdx} className="flex flex-col gap-1 shrink-0">
@@ -1305,11 +1499,11 @@ const ProfileView = ({ t, lang, userInfo: authInfo }) => {
                                 {lang === 'uz' ? 'Faollik xronologiyasi' : 'Activity timeline'}
                             </h2>
                             
-                            <div className="relative border-l border-gray-200 dark:border-gray-700 ml-3 pb-8">
+                            <div className="relative border-l border-gray-200 dark:border-white/8 ml-3 pb-8">
                                 {timeline.length > 0 ? timeline.map((block, i) => (
                                     <div key={i} className="mb-6 relative">
-                                        <div className="absolute -left-[5.5px] top-1 w-2.5 h-2.5 bg-white dark:bg-gray-900 rounded-full" />
-                                        <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider pl-4 bg-white dark:bg-gray-900 inline-block pr-2 relative -top-1">
+                                        <div className="absolute -left-[5.5px] top-1 w-2.5 h-2.5 bg-white dark:bg-[#0b0e14] rounded-full" />
+                                        <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider pl-4 bg-white dark:bg-[#0b0e14] inline-block pr-2 relative -top-1">
                                             {block.month}
                                         </h3>
                                         <div className="pl-6 pt-4 space-y-4">
@@ -1340,8 +1534,8 @@ const ProfileView = ({ t, lang, userInfo: authInfo }) => {
                         <div className="hidden sm:block w-24">
                             <div className="sticky top-20 flex flex-col gap-1">
                                 <button className="text-sm text-left px-3 py-1.5 rounded-md font-semibold text-white bg-blue-600">{new Date().getFullYear()}</button>
-                                <button className="text-sm text-left px-3 py-1.5 rounded-md text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">{new Date().getFullYear()-1}</button>
-                                <button className="text-sm text-left px-3 py-1.5 rounded-md text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">{new Date().getFullYear()-2}</button>
+                                <button className="text-sm text-left px-3 py-1.5 rounded-md text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/6 transition-colors">{new Date().getFullYear()-1}</button>
+                                <button className="text-sm text-left px-3 py-1.5 rounded-md text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/6 transition-colors">{new Date().getFullYear()-2}</button>
                             </div>
                         </div>
                     </div>
@@ -1405,7 +1599,7 @@ const HistoryView = ({ t, lang, userInfo, history, onDelete, onUpdate }) => {
     });
 
     return (
-        <div className="flex-1 overflow-y-auto px-4 py-8 sm:py-10 bg-gray-50 dark:bg-gray-900/50">
+        <div className="flex-1 overflow-y-auto px-4 py-8 sm:py-10 bg-gray-50 dark:bg-[#1e2430]">
             <div className="w-full max-w-4xl mx-auto">
                 <div className="flex items-center justify-between mb-6 gap-4 flex-wrap">
                     <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
@@ -1428,19 +1622,19 @@ const HistoryView = ({ t, lang, userInfo, history, onDelete, onUpdate }) => {
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         placeholder={lang === 'uz' ? 'Meeting nomi yoki code qidiring' : 'Search by meeting title or code'}
-                        className="w-full rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-3 text-sm text-gray-900 dark:text-white outline-none focus:border-blue-500"
+                        className="w-full rounded-2xl border border-gray-200 dark:border-white/8 bg-white dark:bg-[#161B22] px-4 py-3 text-sm text-gray-900 dark:text-white outline-none focus:border-blue-500"
                     />
                     <input
                         type="date"
                         value={dateFilter}
                         onChange={(e) => setDateFilter(e.target.value)}
-                        className="w-full rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-3 text-sm text-gray-900 dark:text-white outline-none focus:border-blue-500"
+                        className="w-full rounded-2xl border border-gray-200 dark:border-white/8 bg-white dark:bg-[#161B22] px-4 py-3 text-sm text-gray-900 dark:text-white outline-none focus:border-blue-500"
                     />
                 </div>
                 {filteredHistory.length > 0 ? (
-                    <div className="bg-white dark:bg-gray-800 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden divide-y divide-gray-50 dark:divide-gray-700/50">
+                    <div className="bg-white dark:bg-[#161B22] rounded-3xl border border-gray-100 dark:border-white/8 shadow-sm overflow-hidden divide-y divide-gray-50 dark:divide-white/8">
                         {filteredHistory.map(m => (
-                            <div key={m._id} className="p-5 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors group cursor-pointer" onClick={() => editingId !== m._id && navigate(`/room/${m.meetingCode}`)}>
+                            <div key={m._id} className="p-5 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-white/8/30 transition-colors group cursor-pointer" onClick={() => editingId !== m._id && navigate(`/room/${m.meetingCode}`)}>
                                 <div className="flex items-center gap-4 flex-1">
                                     <div className="w-12 h-12 rounded-2xl bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0">
                                         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
@@ -1454,15 +1648,15 @@ const HistoryView = ({ t, lang, userInfo, history, onDelete, onUpdate }) => {
                                                     value={editTitle} 
                                                     onChange={e => setEditTitle(e.target.value)}
                                                     onKeyDown={e => e.key === 'Enter' && handleSave(e, m._id)}
-                                                    className="bg-white dark:bg-gray-900 border border-blue-500 rounded-lg px-3 py-1.5 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                                                    className="bg-white dark:bg-[#0b0e14] border border-blue-500 rounded-lg px-3 py-1.5 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                                                 />
                                                 <button onClick={(e) => handleSave(e, m._id)} className="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-semibold hover:bg-blue-700 transition-colors">Saqlash</button>
-                                                <button onClick={(e) => { e.stopPropagation(); setEditingId(null); }} className="px-3 py-1.5 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-lg text-xs font-semibold hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">Bekor</button>
+                                                <button onClick={(e) => { e.stopPropagation(); setEditingId(null); }} className="px-3 py-1.5 bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-300 rounded-lg text-xs font-semibold hover:bg-gray-200 dark:hover:bg-white/15 transition-colors">Bekor</button>
                                             </div>
                                         ) : (
                                             <>
                                                 <h3 className="font-bold text-gray-900 dark:text-white text-base group-hover:text-blue-600 transition-colors">{m.title}</h3>
-                                                <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mt-0.5">{new Date(m.createdAt).toLocaleString()} • ID: <span className="font-mono bg-gray-100 dark:bg-gray-800 px-1 rounded">{m.meetingCode}</span></p>
+                                                <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mt-0.5">{new Date(m.createdAt).toLocaleString()} • ID: <span className="font-mono bg-gray-100 dark:bg-[#161B22] px-1 rounded">{m.meetingCode}</span></p>
                                             </>
                                         )}
                                     </div>
@@ -1470,7 +1664,7 @@ const HistoryView = ({ t, lang, userInfo, history, onDelete, onUpdate }) => {
                                 
                                 {editingId !== m._id && (
                                     <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity shrink-0 ml-4">
-                                        <button onClick={(e) => { e.stopPropagation(); onUpdate(m._id, m.title, { isPinned: !m.isPinned }); }} className={`px-3 py-2 text-xs font-semibold rounded-lg transition-colors ${m.isPinned ? 'text-amber-700 bg-amber-50 dark:bg-amber-900/30 dark:text-amber-300' : 'text-gray-500 bg-gray-100 dark:bg-gray-700 dark:text-gray-300'}`} title="Pin">
+                                        <button onClick={(e) => { e.stopPropagation(); onUpdate(m._id, m.title, { isPinned: !m.isPinned }); }} className={`px-3 py-2 text-xs font-semibold rounded-lg transition-colors ${m.isPinned ? 'text-amber-700 bg-amber-50 dark:bg-amber-900/30 dark:text-amber-300' : 'text-gray-500 bg-gray-100 dark:bg-white/10 dark:text-gray-300'}`} title="Pin">
                                             {m.isPinned ? 'Unpin' : 'Pin'}
                                         </button>
                                         <button onClick={(e) => { e.stopPropagation(); navigate(`/room/${m.meetingCode}`); }} className="px-3 py-2 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors" title="Rejoin">
@@ -1488,8 +1682,8 @@ const HistoryView = ({ t, lang, userInfo, history, onDelete, onUpdate }) => {
                         ))}
                     </div>
                 ) : (
-                    <div className="text-center py-24 bg-white dark:bg-gray-800/80 backdrop-blur-md rounded-[2rem] border border-gray-100 dark:border-gray-700/50 shadow-sm">
-                        <div className="w-16 h-16 bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                    <div className="text-center py-24 bg-white dark:bg-[#161B22] backdrop-blur-md rounded-[2rem] border border-gray-100 dark:border-white/8 shadow-sm">
+                        <div className="w-16 h-16 bg-gray-50 dark:bg-[#161B22] border border-gray-100 dark:border-white/8 rounded-2xl flex items-center justify-center mx-auto mb-4">
                             <svg className="w-8 h-8 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                         </div>
                         <p className="text-base font-medium text-gray-500 dark:text-gray-400 mb-5">
@@ -1598,7 +1792,7 @@ const Dashboard = () => {
             <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">{t('recent_meetings')}</p>
             <div className="space-y-0.5">
                 {history.slice(0, 5).map(m => (
-                    <div key={m._id} onClick={() => navigate(`/room/${m.meetingCode}`)} className="group px-2 py-2 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer flex justify-between items-center transition-colors">
+                    <div key={m._id} onClick={() => navigate(`/room/${m.meetingCode}`)} className="group px-2 py-2 rounded-md hover:bg-gray-50 dark:hover:bg-white/8/50 cursor-pointer flex justify-between items-center transition-colors">
                         <div className="min-w-0 flex-1">
                             <p className="text-sm font-medium text-gray-700 dark:text-gray-300 group-hover:text-blue-600 truncate">{m.title}</p>
                             <p className="text-xs text-gray-400">{new Date(m.createdAt).toLocaleDateString()}</p>
@@ -1633,7 +1827,7 @@ const Dashboard = () => {
         <div className="flex flex-col h-screen bg-gray-50 dark:bg-[#0d1117] text-gray-800 dark:text-gray-200 font-sans overflow-hidden transition-colors">
 
             {/* ── Navbar ───────────────────────────────────────────────────── */}
-            <header className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border-b border-gray-200/60 dark:border-gray-800/60 h-14 flex items-center justify-between px-4 md:px-6 sticky top-0 z-40 shrink-0">
+            <header className="bg-white/80 dark:bg-[#0b0e14]/90 backdrop-blur-xl border-b border-gray-200/60 dark:border-white/8 h-14 flex items-center justify-between px-4 md:px-6 sticky top-0 z-40 shrink-0">
 
                 {/* Left: Logo + Nav */}
                 <div className="flex items-center gap-2 lg:gap-6">
@@ -1646,7 +1840,7 @@ const Dashboard = () => {
                     </button>
 
                     {/* Separator */}
-                    <div className="w-px h-5 bg-gray-200 dark:bg-gray-700/60 hidden md:block" />
+                    <div className="w-px h-5 bg-gray-200 dark:bg-white/8 hidden md:block" />
 
                     {/* Desktop Nav links */}
                     <nav className="hidden md:flex items-center gap-0.5">
@@ -1655,7 +1849,7 @@ const Dashboard = () => {
                                 className={`px-3.5 py-1.5 text-[13px] font-semibold rounded-lg transition-all duration-200 ${
                                     view === link.id
                                         ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30'
-                                        : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800/60'
+                                        : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/6/60'
                                 }`}>
                                 {link.label}
                             </button>
@@ -1673,7 +1867,7 @@ const Dashboard = () => {
                         </button>
                     )}
 
-                    <div className="w-px h-4 bg-gray-200 dark:bg-gray-700/60 hidden sm:block" />
+                    <div className="w-px h-4 bg-gray-200 dark:bg-white/8 hidden sm:block" />
 
                     {/* Theme + Language */}
                     <div className="hidden sm:flex items-center gap-1.5">
@@ -1688,7 +1882,7 @@ const Dashboard = () => {
                                 onClick={() => setProfileMenuOpen(v => !v)}
                                 aria-haspopup="menu"
                                 aria-expanded={profileMenuOpen}
-                                className={`flex items-center gap-2 px-1.5 py-1 rounded-xl transition-colors ${profileMenuOpen ? 'bg-gray-100 dark:bg-gray-800' : 'hover:bg-gray-100 dark:hover:bg-gray-800'}`}
+                                className={`flex items-center gap-2 px-1.5 py-1 rounded-xl transition-colors ${profileMenuOpen ? 'bg-gray-100 dark:bg-[#161B22]' : 'hover:bg-gray-100 dark:hover:bg-white/6'}`}
                             >
                                 <div className="w-7 h-7 bg-gradient-to-br from-blue-500 to-purple-600 text-white rounded-full flex items-center justify-center text-[11px] font-bold shrink-0">
                                     {userInfo?.name?.[0]?.toUpperCase()}
@@ -1696,26 +1890,26 @@ const Dashboard = () => {
                                 <svg className={`w-3 h-3 text-gray-400 hidden sm:block transition-transform ${profileMenuOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7" /></svg>
                             </button>
                             {profileMenuOpen && (
-                                <div role="menu" className="absolute right-0 top-full mt-2 w-52 bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-800 overflow-hidden z-50">
-                                    <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/60">
+                                <div role="menu" className="absolute right-0 top-full mt-2 w-52 bg-white dark:bg-[#0b0e14] rounded-2xl shadow-2xl border border-gray-100 dark:border-white/8 overflow-hidden z-50">
+                                    <div className="px-4 py-3 border-b border-gray-100 dark:border-white/8 bg-gray-50 dark:bg-[#161B22]">
                                         <p className="text-sm font-bold text-gray-900 dark:text-white truncate">{userInfo?.name}</p>
                                         <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{userInfo?.email}</p>
                                     </div>
-                                    <button onClick={() => { setProfileMenuOpen(false); setView('profile'); }} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                                    <button onClick={() => { setProfileMenuOpen(false); setView('profile'); }} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/6 transition-colors">
                                         <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
                                         {lang === 'uz' ? 'Profil' : lang === 'ru' ? 'Профиль' : 'Profile'}
                                     </button>
                                     {isAdmin && (
-                                        <button onClick={() => { setProfileMenuOpen(false); navigate('/admin'); }} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                                        <button onClick={() => { setProfileMenuOpen(false); navigate('/admin'); }} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/6 transition-colors">
                                             <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><circle cx="12" cy="12" r="3" /></svg>
                                             Admin Panel
                                         </button>
                                     )}
-                                    <div className="sm:hidden flex items-center justify-between px-4 py-2 border-t border-gray-100 dark:border-gray-800">
+                                    <div className="sm:hidden flex items-center justify-between px-4 py-2 border-t border-gray-100 dark:border-white/8">
                                         <LanguageToggle compact />
                                         <ThemeToggle compact />
                                     </div>
-                                    <div className="border-t border-gray-100 dark:border-gray-800">
+                                    <div className="border-t border-gray-100 dark:border-white/8">
                                         <button onClick={() => { setProfileMenuOpen(false); handleLogout(); }} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
                                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
                                             {t('sign_out')}
@@ -1726,7 +1920,7 @@ const Dashboard = () => {
                         </div>
                     ) : (
                         <div className="flex items-center gap-2 ml-1">
-                            <Link to="/login" className="px-3.5 py-1.5 text-xs font-semibold text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors">
+                            <Link to="/login" className="px-3.5 py-1.5 text-xs font-semibold text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-white/6 rounded-lg transition-colors">
                                 {lang === 'uz' ? 'Kirish' : lang === 'ru' ? 'Войти' : 'Log in'}
                             </Link>
                             <Link to="/register" className="px-3.5 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-all shadow-sm">
@@ -1737,7 +1931,7 @@ const Dashboard = () => {
 
                     {/* Mobile hamburger */}
                     {userInfo && (
-                        <button onClick={() => setMobileMenuOpen(v => !v)} className="md:hidden p-1.5 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" aria-label="Menu">
+                        <button onClick={() => setMobileMenuOpen(v => !v)} className="md:hidden p-1.5 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/6 transition-colors" aria-label="Menu">
                             {mobileMenuOpen
                                 ? <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
                                 : <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
@@ -1749,20 +1943,20 @@ const Dashboard = () => {
 
             {/* ── Mobile nav dropdown ──────────────────────────────────────── */}
             {mobileMenuOpen && userInfo && (
-                <div className="md:hidden bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 px-3 py-2 z-30 shrink-0 shadow-lg">
+                <div className="md:hidden bg-white dark:bg-[#0b0e14] border-b border-gray-200 dark:border-white/8 px-3 py-2 z-30 shrink-0 shadow-lg">
                     {navLinks.map(link => (
                         <button key={link.id}
                             onClick={() => { setView(link.id); setMobileMenuOpen(false); }}
                             className={`w-full text-left px-3 py-2.5 text-sm font-medium rounded-lg mb-0.5 transition-colors ${
                                 view === link.id
                                     ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20'
-                                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'
+                                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/6'
                             }`}>
                             {link.label}
                         </button>
                     ))}
                     <button onClick={() => { setView('join'); setMobileMenuOpen(false); }}
-                        className={`w-full text-left px-3 py-2.5 text-sm font-medium rounded-lg mb-0.5 transition-colors ${view === 'join' ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'}`}>
+                        className={`w-full text-left px-3 py-2.5 text-sm font-medium rounded-lg mb-0.5 transition-colors ${view === 'join' ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/6'}`}>
                         {t('join_meeting')}
                     </button>
                 </div>

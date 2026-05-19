@@ -24,7 +24,7 @@ const TopHeader = ({ title, subtitle, isSidebarOpen, setIsSidebarOpen, actionBut
     ];
 
     return (
-        <header className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border-b border-gray-100 dark:border-gray-800 px-3 xs:px-4 md:px-8 h-16 flex items-center justify-between sticky top-0 z-30 transition-all shadow-sm">
+        <header className="bg-white/90 dark:bg-[#0b0e14]/95 backdrop-blur-md border-b border-gray-100 dark:border-white/8 px-3 xs:px-4 md:px-8 h-16 flex items-center justify-between sticky top-0 z-30 transition-all shadow-sm dark:shadow-black/20">
 
             {/* Left: mobile menu + page title */}
             <div className="flex items-center gap-2 xs:gap-3 min-w-0">
@@ -69,7 +69,7 @@ const TopHeader = ({ title, subtitle, isSidebarOpen, setIsSidebarOpen, actionBut
                         </svg>
                     </button>
                     {hostDropdownOpen && (
-                        <div className="absolute right-0 mt-1.5 w-48 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-lg shadow-lg shadow-gray-200/60 dark:shadow-black/30 py-1 z-50 animate-in fade-in slide-in-from-top-1 duration-150">
+                        <div className="absolute right-0 mt-1.5 w-48 bg-white dark:bg-[#161B22] border border-gray-100 dark:border-white/10 rounded-lg shadow-lg shadow-gray-200/60 dark:shadow-black/50 py-1 z-50 animate-in fade-in slide-in-from-top-1 duration-150">
                             {[
                                 { id: 'host_video', label: lang === 'uz' ? 'Video uchrashuv' : lang === 'ru' ? 'Видеовстреча' : 'Video Meeting' },
                                 { id: 'host_audio', label: lang === 'uz' ? 'Faqat ovoz' : lang === 'ru' ? 'Только аудио' : 'Audio Only' },
@@ -78,7 +78,7 @@ const TopHeader = ({ title, subtitle, isSidebarOpen, setIsSidebarOpen, actionBut
                                 <button
                                     key={item.id}
                                     onClick={() => { onNavAction && onNavAction(item.id); setHostDropdownOpen(false); }}
-                                    className="w-full text-left px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/60 transition-colors"
+                                    className="w-full text-left px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/6 transition-colors"
                                 >
                                     {item.label}
                                 </button>
@@ -88,7 +88,7 @@ const TopHeader = ({ title, subtitle, isSidebarOpen, setIsSidebarOpen, actionBut
                 </div>
 
                 {/* Divider */}
-                <div className="w-px h-6 bg-gray-200 dark:bg-gray-700 hidden xs:block" />
+                <div className="w-px h-6 bg-gray-200 dark:bg-white/10 hidden xs:block" />
 
                 {/* Language + Theme — compact on mobile, full on xs+ */}
                 <div className="flex items-center gap-1.5 xs:gap-2">

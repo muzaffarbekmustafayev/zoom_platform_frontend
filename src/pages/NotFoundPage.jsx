@@ -8,7 +8,7 @@ const NotFoundPage = () => {
     const { t } = useContext(ThemeLanguageContext);
 
     return (
-        <div className="min-h-screen bg-white dark:bg-gray-950 flex items-center justify-center p-4">
+        <div className="min-h-screen bg-white dark:bg-[#0b0e14] flex items-center justify-center p-4">
             <div className="text-center max-w-md">
                 {/* 404 Title */}
                 <div className="mb-8">
@@ -52,7 +52,7 @@ const NotFoundPage = () => {
                 </button>
 
                 {/* Decorative elements */}
-                <div className="mt-12 pt-8 border-t border-gray-200 dark:border-gray-800">
+                <div className="mt-12 pt-8 border-t border-gray-200 dark:border-white/8">
                     <p className="text-xs text-gray-400 dark:text-gray-600">
                         {t('meeting_id_link')}:
                     </p>

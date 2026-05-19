@@ -3,161 +3,140 @@ import { Paperclip, Send, X, Pencil, Trash2, CheckCheck, MessageSquare, FileText
 import { ThemeLanguageContext } from '../context/ThemeLanguageContext';
 
 // ── Avatar color from username hash ────────────────────────────────────────────
-const AVATAR_COLORS = [
-    { bg: 'bg-blue-500',   text: 'text-white' },
-    { bg: 'bg-violet-500', text: 'text-white' },
-    { bg: 'bg-emerald-500',text: 'text-white' },
-    { bg: 'bg-amber-500',  text: 'text-white' },
-    { bg: 'bg-rose-500',   text: 'text-white' },
-    { bg: 'bg-cyan-500',   text: 'text-white' },
-    { bg: 'bg-indigo-500', text: 'text-white' },
-    { bg: 'bg-fuchsia-500',text: 'text-white' },
+const PALETTE = [
+    '#3b82f6', '#8b5cf6', '#10b981', '#f59e0b',
+    '#ef4444', '#06b6d4', '#6366f1', '#ec4899',
 ];
-
-const getAvatarColor = (name = '') => {
-    let hash = 0;
-    for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
-    return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
+const getColor = (name = '') => {
+    let h = 0;
+    for (let i = 0; i < name.length; i++) h = name.charCodeAt(i) + ((h << 5) - h);
+    return PALETTE[Math.abs(h) % PALETTE.length];
 };
 
 const getInitials = (name = '') =>
-    name
-        .split(' ')
-        .filter(w => w && /^[a-zA-Z\u0400-\u04FF\u0100-\u024F]/.test(w))
-        .map(w => w[0])
-        .join('')
-        .slice(0, 2)
-        .toUpperCase() || '?';
+    name.split(' ').filter(Boolean).map(w => w[0]).join('').slice(0, 2).toUpperCase() || '?';
 
-// ── Date Badge ─────────────────────────────────────────────────────────────────
-const DateBadge = ({ label }) => (
-    <div className="flex items-center gap-3 my-4 px-2">
-        <div className="flex-1 h-px bg-gray-200 dark:bg-white/8" />
-        <span className="text-[10px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-widest select-none px-1">
-            {label}
-        </span>
-        <div className="flex-1 h-px bg-gray-200 dark:bg-white/8" />
-    </div>
-);
-
-// ── Sender Avatar ──────────────────────────────────────────────────────────────
-const Avatar = ({ name, size = 'sm' }) => {
-    const color = getAvatarColor(name);
-    const initials = getInitials(name);
-    const sz = size === 'sm' ? 'w-7 h-7 text-[10px]' : 'w-8 h-8 text-xs';
+// ── Avatar ─────────────────────────────────────────────────────────────────────
+const Avatar = ({ name }) => {
+    const color = getColor(name);
     return (
-        <div className={`${sz} ${color.bg} ${color.text} rounded-full flex items-center justify-center font-bold shrink-0 select-none`}>
-            {initials}
+        <div
+            className="w-7 h-7 rounded-full flex items-center justify-center text-white font-bold text-[10px] shrink-0 select-none shadow-sm"
+            style={{ background: `linear-gradient(135deg, ${color}cc, ${color})` }}
+        >
+            {getInitials(name)}
         </div>
     );
 };
 
+// ── Date separator ─────────────────────────────────────────────────────────────
+const DateBadge = ({ label }) => (
+    <div className="flex items-center gap-2 my-5 px-2 select-none">
+        <div className="flex-1 h-px bg-gray-200 dark:bg-white/[0.06]" />
+        <span className="text-[10px] font-semibold text-gray-400 dark:text-gray-600 uppercase tracking-widest bg-white dark:bg-transparent px-1">
+            {label}
+        </span>
+        <div className="flex-1 h-px bg-gray-200 dark:bg-white/[0.06]" />
+    </div>
+);
+
 // ── Message Bubble ─────────────────────────────────────────────────────────────
 const MessageBubble = ({ msg, isOwn, prevMsg, onEdit, onDelete, canAct }) => {
-    const { t, theme } = useContext(ThemeLanguageContext);
+    const { t } = useContext(ThemeLanguageContext);
     const [hovered, setHovered] = useState(false);
-
-    // Show avatar only when sender changes (group messages)
     const senderChanged = !prevMsg || prevMsg.userName !== msg.userName || prevMsg.type === 'date';
 
     return (
         <div
-            className={`flex flex-col ${isOwn ? 'items-end' : 'items-start'} group
-                ${senderChanged ? 'mt-3' : 'mt-0.5'}`}
+            className={`flex flex-col ${isOwn ? 'items-end' : 'items-start'} ${senderChanged ? 'mt-4' : 'mt-1'}`}
             onMouseEnter={() => setHovered(true)}
             onMouseLeave={() => setHovered(false)}
         >
-            {/* Sender name — only on first message in group */}
+            {/* Sender name */}
             {!isOwn && senderChanged && (
-                <div className="flex items-center gap-2 mb-1.5 ml-9">
-                    <span className="text-[11px] font-semibold text-blue-700 dark:text-blue-400 select-none">
+                <div className="flex items-center gap-2 mb-1 ml-9">
+                    <span className="text-[11px] font-bold select-none" style={{ color: getColor(msg.userName) }}>
                         {msg.userName}
                     </span>
                 </div>
             )}
 
-            <div className={`flex items-end gap-2 max-w-[85%] sm:max-w-[78%] ${isOwn ? 'flex-row-reverse' : 'flex-row'}`}>
-                {/* Avatar (left for others, right for own — only on last in group) */}
-                {!isOwn ? (
-                    <div className="w-7 shrink-0">
-                        {senderChanged && <Avatar name={msg.userName} size="sm" />}
-                    </div>
-                ) : (
-                    <div className="w-7 shrink-0" />
-                )}
+            <div className={`flex items-end gap-2 max-w-[82%] ${isOwn ? 'flex-row-reverse' : 'flex-row'}`}>
 
-                {/* Actions (own messages) */}
+                {/* Avatar */}
+                <div className="w-7 shrink-0 mb-0.5">
+                    {!isOwn && senderChanged && <Avatar name={msg.userName} />}
+                </div>
+
+                {/* Actions */}
                 {isOwn && canAct && !msg.file && (
-                    <div className={`flex items-center gap-0.5 self-center transition-all duration-150
-                        ${hovered ? 'opacity-100 translate-x-0' : 'opacity-0 pointer-events-none translate-x-2'}`}>
+                    <div className={`flex items-center gap-0.5 self-end mb-1 transition-all duration-150
+                        ${hovered ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
                         <button
                             onClick={() => onEdit(msg._id, msg.text)}
                             className="p-1.5 rounded-lg text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-500/10 transition-colors"
                             title={t('chat_edit')}
                         >
-                            <Pencil size={12} />
+                            <Pencil size={11} />
                         </button>
                         <button
                             onClick={() => onDelete(msg._id)}
                             className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
                             title={t('chat_delete')}
                         >
-                            <Trash2 size={12} />
+                            <Trash2 size={11} />
                         </button>
                     </div>
                 )}
 
                 {/* Bubble */}
-                <div
-                    className={`relative px-3.5 py-2.5 text-sm leading-relaxed transition-all
-                        ${isOwn
-                            ? 'bg-blue-600 rounded-2xl rounded-tr-sm shadow-md shadow-blue-500/20'
-                            : 'border rounded-2xl rounded-tl-sm shadow-sm'
-                        }`}
-                    style={isOwn ? { color: '#ffffff' } : {
-                        backgroundColor: theme === 'dark' ? '#272c3d' : '#ffffff',
-                        borderColor: theme === 'dark' ? 'rgba(255,255,255,0.1)' : '#e5e7eb',
-                        color: theme === 'dark' ? '#f1f5f9' : '#111827',
-                    }}
-                >
-                    {/* File message */}
-                    {msg.file ? (
-                        <div className="flex items-center gap-3 py-0.5 min-w-[160px]">
-                            <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0
-                                ${isOwn ? 'bg-white/20' : 'bg-blue-50 dark:bg-blue-500/15'}`}>
-                                <FileText size={16} className={isOwn ? 'text-white' : 'text-blue-600 dark:text-blue-400'} />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                                <p className="text-[11px] font-semibold truncate mb-1" style={{ color: 'inherit' }}>
-                                    {msg.file.name}
-                                </p>
-                                <a
-                                    href={msg.file.data}
-                                    download={msg.file.name}
-                                    className={`text-[10px] font-medium underline underline-offset-2 transition-colors
-                                        ${isOwn ? 'text-blue-200 hover:text-white' : 'text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300'}`}
-                                >
-                                    {t('chat_download')}
-                                </a>
-                            </div>
-                        </div>
-                    ) : (
-                        <span className="break-words whitespace-pre-wrap" style={{ color: 'inherit' }}>
-                            {msg.text}
-                        </span>
-                    )}
-
-                    {/* Time + read status */}
-                    <div
-                        className="flex items-center gap-1 mt-1.5 justify-end select-none"
-                        style={{ color: isOwn ? 'rgba(191,219,254,0.8)' : (theme === 'dark' ? '#9ca3af' : '#6b7280') }}
-                    >
-                        <span className="text-[9px] font-medium">{msg.time}</span>
-                        {isOwn && <CheckCheck size={11} />}
+                {isOwn ? (
+                    <div className="relative px-3.5 py-2 text-sm leading-relaxed rounded-[18px] rounded-tr-[5px] shadow-md"
+                        style={{ background: 'linear-gradient(135deg, #2563eb, #3b82f6)', color: '#fff' }}>
+                        {msg.file ? <FileMsgContent msg={msg} isOwn /> : (
+                            <span className="break-words whitespace-pre-wrap">{msg.text}</span>
+                        )}
+                        <TimeRow isOwn time={msg.time} />
                     </div>
-                </div>
+                ) : (
+                    <div className="relative px-3.5 py-2 text-sm leading-relaxed rounded-[18px] rounded-tl-[5px] shadow-sm
+                        bg-white dark:bg-[#1e2836] border border-gray-200 dark:border-white/[0.07]
+                        text-gray-800 dark:text-gray-100">
+                        {msg.file ? <FileMsgContent msg={msg} isOwn={false} /> : (
+                            <span className="break-words whitespace-pre-wrap">{msg.text}</span>
+                        )}
+                        <TimeRow isOwn={false} time={msg.time} />
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+};
 
-                {/* Actions (others' messages — future: react) */}
+const TimeRow = ({ isOwn, time }) => (
+    <div className={`flex items-center justify-end gap-1 mt-1 select-none`}>
+        <span className="text-[9px] font-medium" style={{ opacity: 0.6 }}>{time}</span>
+        {isOwn && <CheckCheck size={10} style={{ opacity: 0.7 }} />}
+    </div>
+);
+
+const FileMsgContent = ({ msg, isOwn }) => {
+    const { t } = useContext(ThemeLanguageContext);
+    return (
+        <div className="flex items-center gap-3 py-0.5 min-w-[160px]">
+            <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${isOwn ? 'bg-white/20' : 'bg-blue-50 dark:bg-blue-500/15'}`}>
+                <FileText size={16} className={isOwn ? 'text-white' : 'text-blue-600 dark:text-blue-400'} />
+            </div>
+            <div className="flex-1 min-w-0">
+                <p className="text-[11px] font-semibold truncate mb-1">{msg.file.name}</p>
+                <a
+                    href={msg.file.data}
+                    download={msg.file.name}
+                    className={`text-[10px] font-medium underline underline-offset-2 transition-colors
+                        ${isOwn ? 'text-blue-200 hover:text-white' : 'text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300'}`}
+                >
+                    {t('chat_download')}
+                </a>
             </div>
         </div>
     );
@@ -168,22 +147,20 @@ const ChatPanel = ({
     messages, newMessage, setNewMessage, sendMessage,
     editingMessageId, setEditingMessageId, handleFileUpload,
     deleteChatMessage, startEditingMessage, onClose,
-    roomUsers, currentUserName, canChat, meetingTitle,
+    roomUsers, currentUserName, canChat,
 }) => {
-    const { t, theme } = useContext(ThemeLanguageContext);
+    const { t } = useContext(ThemeLanguageContext);
     const messagesEndRef = useRef(null);
     const inputRef = useRef(null);
     const bodyRef = useRef(null);
     const [atBottom, setAtBottom] = useState(true);
 
-    // Group with date labels
-    const groupedMessages = messages.reduce((acc, msg, idx) => {
+    const grouped = messages.reduce((acc, msg, idx) => {
         if (idx === 0) acc.push({ type: 'date', label: t('chat_today') });
         acc.push({ type: 'msg', ...msg });
         return acc;
     }, []);
 
-    // Auto-scroll only when at bottom
     useEffect(() => {
         if (atBottom) messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages, atBottom]);
@@ -202,17 +179,25 @@ const ChatPanel = ({
     const onlineCount = roomUsers?.length ?? 0;
 
     return (
-        <div className="flex flex-col h-full bg-white dark:bg-[#0d0f15] text-gray-800 dark:text-gray-100 select-text transition-colors">
+        <div className="flex flex-col h-full bg-gray-50 dark:bg-[#0b0f17] text-gray-800 dark:text-gray-100 select-text">
 
             {/* ── Header ── */}
-            <div className="shrink-0 flex items-center justify-between px-4 h-14 border-b border-gray-100 dark:border-white/6">
-                <h2 className="text-sm font-semibold text-gray-900 dark:text-white">
-                    {t('ctl_chat')} <span className="text-gray-400 dark:text-gray-500 font-medium">({onlineCount})</span>
-                </h2>
+            <div className="shrink-0 flex items-center justify-between px-4 h-14 bg-white dark:bg-[#0f1420] border-b border-gray-200 dark:border-white/[0.07] shadow-sm">
+                <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-xl bg-blue-600/10 dark:bg-blue-500/15 flex items-center justify-center">
+                        <MessageSquare size={15} className="text-blue-600 dark:text-blue-400" />
+                    </div>
+                    <div>
+                        <p className="text-sm font-bold text-gray-900 dark:text-white leading-none">{t('ctl_chat')}</p>
+                        <div className="flex items-center gap-1 mt-0.5">
+                            <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                            <span className="text-[10px] text-gray-400 dark:text-gray-500">{onlineCount} {t('online') || 'online'}</span>
+                        </div>
+                    </div>
+                </div>
                 <button
                     onClick={onClose}
-                    className="w-7 h-7 flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-700 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/8 transition-colors"
-                    title={t('chat_close')}
+                    className="w-8 h-8 flex items-center justify-center rounded-xl text-gray-400 hover:text-gray-700 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/8 transition-colors"
                 >
                     <X size={16} />
                 </button>
@@ -222,23 +207,20 @@ const ChatPanel = ({
             <div
                 ref={bodyRef}
                 onScroll={handleScroll}
-                className="flex-1 overflow-y-auto px-3 py-2 flex flex-col custom-scrollbar bg-gray-100 dark:bg-[#0d0f15]"
+                className="flex-1 overflow-y-auto px-3 py-3 flex flex-col custom-scrollbar"
             >
-                {groupedMessages.length === 0 ? (
-                    <div className="flex-1 flex flex-col items-center justify-center text-center py-16">
-                        <div className="w-16 h-16 rounded-2xl bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/8 flex items-center justify-center mb-4">
-                            <MessageSquare size={24} className="text-gray-400 dark:text-gray-600" />
+                {grouped.length === 0 ? (
+                    <div className="flex-1 flex flex-col items-center justify-center text-center py-16 select-none">
+                        <div className="w-16 h-16 rounded-2xl bg-blue-50 dark:bg-blue-500/10 border border-blue-100 dark:border-blue-500/15 flex items-center justify-center mb-4 shadow-sm">
+                            <MessageSquare size={24} className="text-blue-400 dark:text-blue-500" />
                         </div>
-                        <p className="text-gray-500 dark:text-gray-400 text-sm font-semibold">{t('chat_empty_title')}</p>
-                        <p className="text-gray-400 dark:text-gray-600 text-xs mt-1.5 leading-relaxed max-w-[180px]">
-                            {t('chat_empty_sub')}
-                        </p>
+                        <p className="text-gray-600 dark:text-gray-300 text-sm font-bold">{t('chat_empty_title')}</p>
+                        <p className="text-gray-400 dark:text-gray-500 text-xs mt-1.5 leading-relaxed max-w-[180px]">{t('chat_empty_sub')}</p>
                     </div>
                 ) : (
-                    groupedMessages.map((item, idx) => {
-                        if (item.type === 'date') return <DateBadge key={`date-${idx}`} label={item.label} />;
-                        // find the previous message (skip date separators)
-                        const prevItem = groupedMessages.slice(0, idx).reverse().find(i => i.type === 'msg');
+                    grouped.map((item, idx) => {
+                        if (item.type === 'date') return <DateBadge key={`d-${idx}`} label={item.label} />;
+                        const prevItem = grouped.slice(0, idx).reverse().find(i => i.type === 'msg');
                         return (
                             <MessageBubble
                                 key={item._id || idx}
@@ -257,11 +239,11 @@ const ChatPanel = ({
 
             {/* ── Edit banner ── */}
             {editingMessageId && (
-                <div className="mx-3 mb-1 px-3 py-2 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-xl flex items-center gap-2 shrink-0">
+                <div className="mx-3 mb-2 px-3 py-2.5 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-2xl flex items-center gap-2.5 shrink-0">
                     <div className="w-0.5 h-6 bg-amber-500 rounded-full shrink-0" />
                     <div className="flex-1 min-w-0">
-                        <p className="text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider">
-                            Xabar tahrirlash
+                        <p className="text-[10px] font-extrabold text-amber-600 dark:text-amber-400 uppercase tracking-wider">
+                            {t('chat_edit') || 'Tahrirlash'}
                         </p>
                         <p className="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">{newMessage}</p>
                     </div>
@@ -275,75 +257,61 @@ const ChatPanel = ({
             )}
 
             {/* ── Input footer ── */}
-            <div className="shrink-0 bg-white dark:bg-[#13161e] border-t border-gray-100 dark:border-white/6 px-3 py-2 sm:px-4 sm:py-2.5">
+            <div className="shrink-0 bg-white dark:bg-[#0f1420] border-t border-gray-200 dark:border-white/[0.07] px-3 py-3">
                 {canChat ? (
-                    <form onSubmit={sendMessage} className="flex items-center gap-1.5">
-                        {/* File attach */}
-                        <label
-                            className="p-2 rounded-xl text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-500/10 transition-colors cursor-pointer shrink-0"
-                            title={t('chat_attach')}
-                        >
-                            <input type="file" className="hidden" onChange={handleFileUpload} />
-                            <Paperclip size={17} />
-                        </label>
+                    <>
+                        <form onSubmit={sendMessage} className="flex items-center gap-2">
+                            {/* Attach */}
+                            <label className="w-9 h-9 flex items-center justify-center rounded-xl text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-500/10 transition-colors cursor-pointer shrink-0"
+                                title={t('chat_attach')}>
+                                <input type="file" className="hidden" onChange={handleFileUpload} />
+                                <Paperclip size={16} />
+                            </label>
 
-                        {/* Text input */}
-                        <div className="flex-1 relative">
-                            <input
-                                ref={inputRef}
-                                type="text"
-                                value={newMessage}
-                                onChange={(e) => setNewMessage(e.target.value)}
-                                placeholder={editingMessageId ? t('chat_input_edit_placeholder') : t('chat_input_placeholder')}
-                                style={{
-                                    color: theme === 'dark' ? '#f1f5f9' : '#111827',
-                                    backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.07)' : '#f3f4f6',
-                                }}
-                                className={`w-full rounded-xl px-4 py-2.5 text-sm border transition-all duration-150
-                                    placeholder:text-gray-400
-                                    focus:outline-none focus:ring-2
-                                    ${editingMessageId
-                                        ? 'border-amber-400 focus:ring-amber-400/25 focus:border-amber-500'
-                                        : 'border-gray-200 dark:border-white/8 focus:ring-blue-500/25 focus:border-blue-500'
+                            {/* Input pill */}
+                            <div className="flex-1 flex items-center bg-gray-100 dark:bg-[#1a2235] border border-gray-200 dark:border-white/[0.07] rounded-2xl px-4 py-2.5 gap-2 transition-all focus-within:border-blue-400 dark:focus-within:border-blue-500/50 focus-within:ring-2 focus-within:ring-blue-500/10">
+                                <input
+                                    ref={inputRef}
+                                    type="text"
+                                    value={newMessage}
+                                    onChange={e => setNewMessage(e.target.value)}
+                                    placeholder={editingMessageId ? t('chat_input_edit_placeholder') : t('chat_input_placeholder')}
+                                    className="flex-1 bg-transparent text-sm text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-600 outline-none"
+                                    onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) sendMessage(e); }}
+                                />
+                            </div>
+
+                            {/* Send */}
+                            <button
+                                type="submit"
+                                disabled={!newMessage.trim()}
+                                title={t('chat_send')}
+                                className={`w-9 h-9 flex items-center justify-center rounded-xl shrink-0 transition-all duration-150 active:scale-90
+                                    ${newMessage.trim()
+                                        ? editingMessageId
+                                            ? 'bg-amber-500 hover:bg-amber-600 text-white shadow-md shadow-amber-500/25'
+                                            : 'bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-600/25'
+                                        : 'bg-gray-100 dark:bg-white/5 text-gray-300 dark:text-gray-600 cursor-not-allowed'
                                     }`}
-                                onKeyDown={(e) => {
-                                    if (e.key === 'Enter' && !e.shiftKey) { sendMessage(e); }
-                                }}
-                            />
-                        </div>
+                            >
+                                <Send size={15} />
+                            </button>
+                        </form>
 
-                        {/* Send button */}
-                        <button
-                            type="submit"
-                            disabled={!newMessage.trim()}
-                            title={t('chat_send')}
-                            className={`p-2.5 rounded-xl shrink-0 transition-all duration-150 active:scale-95
-                                ${newMessage.trim()
-                                    ? editingMessageId
-                                        ? 'bg-amber-500 hover:bg-amber-600 text-white shadow-md shadow-amber-500/20'
-                                        : 'bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-500/20'
-                                    : 'bg-gray-100 dark:bg-white/5 text-gray-300 dark:text-gray-600 cursor-not-allowed'
-                                }`}
-                        >
-                            <Send size={16} className={newMessage.trim() ? '' : 'opacity-60'} />
-                        </button>
-                    </form>
+                        {/* Hint */}
+                        {!editingMessageId && (
+                            <p className="text-center text-[10px] text-gray-300 dark:text-gray-700 mt-2 select-none">
+                                {t('chat_send_hint')}
+                            </p>
+                        )}
+                    </>
                 ) : (
                     <div className="flex items-center justify-center gap-2 py-2">
-                        <div className="w-4 h-4 rounded-full bg-gray-100 dark:bg-white/8 flex items-center justify-center">
-                            <X size={8} className="text-gray-400" />
-                        </div>
+                        <div className="w-1.5 h-1.5 rounded-full bg-gray-300 dark:bg-gray-600" />
                         <p className="text-xs text-gray-400 dark:text-gray-500 font-medium">
-                            Mehmonlar faqat o'qishi mumkin
+                            {t('guest_readonly') || "Mehmonlar faqat o'qishi mumkin"}
                         </p>
                     </div>
-                )}
-
-                {/* Hint */}
-                {canChat && !editingMessageId && (
-                    <p className="text-center text-[10px] text-gray-400 dark:text-gray-700 mt-1.5 select-none">
-                        {t('chat_send_hint')}
-                    </p>
                 )}
             </div>
         </div>

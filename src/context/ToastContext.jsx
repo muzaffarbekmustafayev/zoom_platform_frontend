@@ -52,7 +52,7 @@ export const ToastProvider = ({ children }) => {
                 {toasts.map(({ id, message, type }) => (
                     <div
                         key={id}
-                        className="pointer-events-auto flex items-start gap-3 min-w-[280px] max-w-sm bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-2xl px-4 py-3 shadow-xl shadow-gray-200/50 dark:shadow-black/30 animate-in slide-in-from-right-4 fade-in duration-300"
+                        className="pointer-events-auto flex items-start gap-3 min-w-[280px] max-w-sm bg-white dark:bg-[#161B22] border border-gray-100 dark:border-white/10 rounded-2xl px-4 py-3 shadow-xl shadow-gray-200/50 dark:shadow-black/50 animate-in slide-in-from-right-4 fade-in duration-300"
                     >
                         <span className="mt-0.5 shrink-0">{ICONS[type]}</span>
                         <p className="text-sm font-medium text-gray-800 dark:text-gray-100 flex-1 leading-snug">{message}</p>
