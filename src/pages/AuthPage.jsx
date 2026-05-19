@@ -1,9 +1,8 @@
-import React, { useState, useContext, useEffect } from 'react';
+import React, { useState, useContext, useEffect, useRef } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import API from '../api';
 import { ThemeLanguageContext } from '../context/ThemeLanguageContext';
 import { useAuth } from '../context/AuthContext';
-import { useToast } from '../context/ToastContext';
 import { User, Mail, Lock, Eye, EyeOff, ArrowLeft, Video, Shield, Zap } from 'lucide-react';
 
 const APP_NAME = import.meta.env.VITE_APP_NAME || 'Meetra';
@@ -36,15 +35,11 @@ const txt = {
         signUp: 'Ro\'yxatdan o\'tish',
         or: 'yoki',
         google: 'Google',
-        guest: 'Mehmon sifatida',
         terms: 'Shartlarga roziman',
         back: 'Bosh sahifa',
         f1: 'HD video',
         f2: 'Xavfsiz',
         f3: 'Tezkor',
-        guestTitle: 'Mehmon sifatida kirish',
-        guestName: 'Ismingiz',
-        guestEmail: 'Email (ixtiyoriy)',
         cancel: 'Bekor',
         continue: 'Davom etish',
         forgotTitle: 'Parolni tiklash',
@@ -71,15 +66,11 @@ const txt = {
         signUp: 'Зарегистрироваться',
         or: 'или',
         google: 'Google',
-        guest: 'Как гость',
         terms: 'Принимаю условия',
         back: 'На главную',
         f1: 'HD видео',
         f2: 'Безопасно',
         f3: 'Быстро',
-        guestTitle: 'Войти как гость',
-        guestName: 'Ваше имя',
-        guestEmail: 'Email (необязательно)',
         cancel: 'Отмена',
         continue: 'Продолжить',
         forgotTitle: 'Сброс пароля',
@@ -106,15 +97,11 @@ const txt = {
         signUp: 'Create account',
         or: 'or',
         google: 'Google',
-        guest: 'Continue as guest',
         terms: 'I agree to the terms',
         back: 'Home',
         f1: 'HD video',
         f2: 'Secure',
         f3: 'Fast',
-        guestTitle: 'Continue as guest',
-        guestName: 'Your name',
-        guestEmail: 'Email (optional)',
         cancel: 'Cancel',
         continue: 'Continue',
         forgotTitle: 'Reset password',
@@ -125,36 +112,13 @@ const txt = {
     },
 };
 
-const GuestNameModal = ({ onConfirm, onCancel, l }) => {
-    const [n, setN] = useState('');
-    const [e, setE] = useState('');
-    return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-            <div className="bg-white dark:bg-[#161b22] w-full max-w-sm rounded-2xl p-6 shadow-2xl">
-                <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-1">{l.guestTitle}</h3>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mb-5">Tezkor kirish, ro'yxatdan o'tmasdan.</p>
-                <div className="space-y-3 mb-5">
-                    <input autoFocus type="text" placeholder={l.guestName} value={n} onChange={ev => setN(ev.target.value)}
-                        className="w-full px-4 py-3 bg-gray-50 dark:bg-[#0d1117] rounded-xl text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all" />
-                    <input type="email" placeholder={l.guestEmail} value={e} onChange={ev => setE(ev.target.value)}
-                        className="w-full px-4 py-3 bg-gray-50 dark:bg-[#0d1117] rounded-xl text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all" />
-                </div>
-                <div className="flex gap-3">
-                    <button onClick={onCancel} className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 transition-colors">{l.cancel}</button>
-                    <button onClick={() => n.trim() && onConfirm(n.trim(), e.trim())} disabled={!n.trim()}
-                        className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 transition-colors">{l.continue}</button>
-                </div>
-            </div>
-        </div>
-    );
-};
 
 const AuthPage = () => {
     const location = useLocation();
     const navigate = useNavigate();
-    const { lang } = useContext(ThemeLanguageContext);
+    const { lang, theme } = useContext(ThemeLanguageContext);
+    const isDark = theme === 'dark';
     const { login } = useAuth();
-    const toast = useToast();
     const l = txt[lang] || txt.en;
 
     const [isLogin, setIsLogin] = useState(location.pathname !== '/register');
@@ -168,8 +132,6 @@ const AuthPage = () => {
     const [forgotOpen, setForgotOpen] = useState(false);
     const [forgotEmail, setForgotEmail] = useState('');
     const [forgotStatus, setForgotStatus] = useState('');
-
-    const [guestOpen, setGuestOpen] = useState(false);
 
     useEffect(() => {
         setIsLogin(location.pathname !== '/register');
@@ -202,20 +164,6 @@ const AuthPage = () => {
         }
     };
 
-    const guestJoin = async (gName, gEmail) => {
-        setGuestOpen(false);
-        try {
-            const { data } = await API.post('/api/users/guest-login', {
-                name: gName,
-                email: gEmail || `guest+${crypto.randomUUID()}@guest.local`,
-            });
-            login(data);
-            navigate('/', { replace: true });
-        } catch (err) {
-            toast.error(err.response?.data?.message || 'Guest login failed');
-        }
-    };
-
     const forgotSubmit = async (e) => {
         e.preventDefault();
         setForgotStatus('sending');
@@ -242,41 +190,55 @@ const AuthPage = () => {
         }
     };
 
-    // Load Google Identity Services script
+    // Stable ref so the GSI callback is never stale across re-renders
+    const handleGoogleLoginRef = useRef(handleGoogleLogin);
+    useEffect(() => { handleGoogleLoginRef.current = handleGoogleLogin; });
+
     useEffect(() => {
+        const renderGoogleButton = () => {
+            if (!window.google) return;
+            window.google.accounts.id.initialize({
+                client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
+                callback: (response) => {
+                    if (response.credential) handleGoogleLoginRef.current(response.credential);
+                },
+                context: isLogin ? 'signin' : 'signup',
+                auto_select: false,
+                cancel_on_tap_outside: true,
+            });
+            const el = document.getElementById('google-signin-button');
+            if (el) {
+                el.innerHTML = '';
+                const width = Math.round(el.getBoundingClientRect().width) || 320;
+                window.google.accounts.id.renderButton(el, {
+                    type: 'standard',
+                    size: 'large',
+                    theme: isDark ? 'outline' : 'filled_blue',
+                    width: String(width),
+                    locale: lang === 'uz' ? 'en' : lang,
+                    text: isLogin ? 'signin_with' : 'signup_with',
+                });
+            }
+            window.google.accounts.id.prompt();
+        };
+
+        if (window.google) {
+            renderGoogleButton();
+            return;
+        }
+        const existing = document.getElementById('gsi-script');
+        if (existing) {
+            existing.addEventListener('load', renderGoogleButton, { once: true });
+            return;
+        }
         const script = document.createElement('script');
+        script.id = 'gsi-script';
         script.src = 'https://accounts.google.com/gsi/client';
         script.async = true;
-        script.onload = () => {
-            if (window.google) {
-                window.google.accounts.id.initialize({
-                    client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID || 'demo-client-id.apps.googleusercontent.com',
-                    callback: (response) => {
-                        if (response.credential) {
-                            handleGoogleLogin(response.credential);
-                        }
-                    }
-                });
-                // Render Google Sign-In button
-                const buttonElement = document.getElementById('google-signin-button');
-                if (buttonElement) {
-                    window.google.accounts.id.renderButton(buttonElement, {
-                        type: 'standard',
-                        size: 'large',
-                        theme: document.documentElement.classList.contains('dark') ? 'outline' : 'filled_blue',
-                        width: '100%',
-                        locale: lang === 'uz' ? 'en' : lang // Google doesn't support Uzbek
-                    });
-                }
-            }
-        };
+        script.defer = true;
+        script.onload = renderGoogleButton;
         document.body.appendChild(script);
-        return () => {
-            if (document.body.contains(script)) {
-                document.body.removeChild(script);
-            }
-        };
-    }, [lang]);
+    }, [lang, isDark, isLogin]);
 
     const inputCls = "w-full pl-11 pr-4 py-3.5 bg-gray-50 dark:bg-[#0d1117] rounded-xl text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-sm";
 
@@ -406,13 +368,7 @@ const AuthPage = () => {
                         </div>
 
                         {/* Social */}
-                        <div className="grid grid-cols-2 gap-3">
-                            <div id="google-signin-button" className="rounded-xl overflow-hidden flex items-center justify-center bg-white dark:bg-[#161b22]" style={{ minHeight: '44px' }} />
-                            <button type="button" onClick={() => setGuestOpen(true)}
-                                className="py-3 bg-white dark:bg-[#161b22] hover:bg-gray-100 dark:hover:bg-[#1c222d] rounded-xl text-xs font-semibold text-gray-700 dark:text-gray-200 transition-colors">
-                                {l.guest}
-                            </button>
-                        </div>
+                        <div id="google-signin-button" className="rounded-xl overflow-hidden flex items-center justify-center bg-white dark:bg-[#161b22]" style={{ minHeight: '44px' }} />
                     </form>
 
                     {/* Toggle */}
@@ -423,8 +379,6 @@ const AuthPage = () => {
                     </p>
                 </div>
             </div>
-
-            {guestOpen && <GuestNameModal onConfirm={guestJoin} onCancel={() => setGuestOpen(false)} l={l} />}
 
             {forgotOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">

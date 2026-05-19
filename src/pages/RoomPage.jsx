@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useMemo, useCallback, useContext } from 'react';
+import React, { useEffect, useRef, useState, useCallback, useContext } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import io from 'socket.io-client';
 import Peer from 'simple-peer';
@@ -32,17 +32,7 @@ const RoomPage = () => {
     const toast = useToast();
     const { confirm, modal: confirmModal } = useConfirm();
 
-    const userInfo = useMemo(() => {
-        if (authUser) return authUser;
-        // sessionStorage: tab yopilsa tozalanadi, reload da saqlanadi → bir marta ruhsat ishlaydi
-        const key = `guest-id-${roomID}`;
-        let guestId = sessionStorage.getItem(key);
-        if (!guestId) {
-            guestId = `guest-${crypto.randomUUID()}`;
-            sessionStorage.setItem(key, guestId);
-        }
-        return { name: 'Guest', _id: guestId, role: 'guest' };
-    }, [authUser, roomID]);
+    const userInfo = authUser;
 
     const [meeting, setMeeting] = useState(null);
     const [peers, setPeers] = useState([]);
@@ -78,7 +68,7 @@ const RoomPage = () => {
     const [requestPending, setRequestPending] = useState(false);
     const [toastMessage, setToastMessage] = useState(null);
     // Role system
-    const [myRole, setMyRole] = useState(null); // 'host'|'cohost'|'participant'|'guest'
+    const [myRole, setMyRole] = useState(null); // 'host'|'cohost'|'participant'
     const [waitingRoomUsers, setWaitingRoomUsers] = useState([]); // For host/cohost
     const waitingRoomUsersRef = useRef([]);
     const [isInWaitingRoom, setIsInWaitingRoom] = useState(false);
@@ -121,6 +111,8 @@ const RoomPage = () => {
     const messagesEndRef = useRef(null);
     // Ref-based socket to avoid module-level singleton issues
     const socketRef = useRef(null);
+    const joinStartedRef = useRef(false);
+    const initMediaRef = useRef(null); // exposes initMedia to password submit handler
     // Ref mirror of isSharingScreen to avoid stale closure in socket event handlers
     const isSharingScreenRef = useRef(false);
     const holdToTalkRef = useRef(false);
@@ -293,7 +285,9 @@ const RoomPage = () => {
     }, [waitingToasts]);
 
     useEffect(() => {
-        // Create socket on mount — avoid module-level singleton
+        // Reset join guard for each room session
+        joinStartedRef.current = false;
+
         const socket = io(import.meta.env.VITE_BACKEND_URL || 'http://localhost:5005', {
             auth: { token: userInfo?.token || null }
         });
@@ -308,12 +302,15 @@ const RoomPage = () => {
 
         const fetchMeeting = async (password = null) => {
             try {
-                const config = password ? { 
-                    params: { password } 
-                } : {};
+                const config = password ? { params: { password } } : {};
                 const { data } = await API.get(`/api/meetings/${roomID}`, config);
                 setMeeting(data);
                 setPasswordRequired(false);
+                // Initiate media + join-room only once per session
+                if (!joinStartedRef.current) {
+                    joinStartedRef.current = true;
+                    initMediaRef.current?.(password || '');
+                }
             } catch (error) {
                 if (error.response?.status === 403 && error.response?.data?.requiresPassword) {
                     setPasswordRequired(true);
@@ -325,7 +322,8 @@ const RoomPage = () => {
                 }
             }
         };
-        fetchMeeting();
+        const savedPw = sessionStorage.getItem(`room-pw-${roomID}`) || null;
+        fetchMeeting(savedPw);
 
         socket.on('chat-message', (message) => {
             setMessages((prev) => [...prev, message]);
@@ -394,6 +392,7 @@ const RoomPage = () => {
         socket.on('kicked', () => { toast.error(t('kicked_msg')); navigate('/'); });
         socket.on('blocked', () => { toast.error(t('blocked_msg')); navigate('/'); });
         socket.on('error-message', (msg) => { toast.error(msg); navigate('/'); });
+        socket.on('error', ({ message } = {}) => { if (message) toast.error(message); });
 
         socket.on('turn-updated', (data) => setCurrentTurnUserId(data.userId));
         socket.on('screen-sharing-started', (data) => setActiveSharingUser(data));
@@ -406,6 +405,15 @@ const RoomPage = () => {
 
         socket.on('role-updated', ({ role }) => {
             setMyRole(role);
+        });
+
+        socket.on('host-changed', ({ newHostUserId, newHostName }) => {
+            if (newHostUserId === userInfo._id) {
+                setMyRole('host');
+                toast.success(lang === 'uz' ? "Siz xona yetakchisi bo'ldingiz" : lang === 'ru' ? 'Вы стали организатором' : 'You are now the host');
+            } else {
+                toast.info(lang === 'uz' ? `${newHostName} yangi xona yetakchisi` : lang === 'ru' ? `${newHostName} — новый организатор` : `${newHostName} is now the host`);
+            }
         });
 
         socket.on('waiting-room', () => {
@@ -465,7 +473,7 @@ const RoomPage = () => {
         });
 
         socket.io.on('reconnect', () => {
-            socket.emit('reconnect-room', roomID, userInfo._id, userInfo.name, userInfo.role === 'guest' || userInfo._id?.startsWith('guest-'));
+            socket.emit('reconnect-room', roomID, userInfo._id, userInfo.name);
         });
 
         socket.on('user-joined', (payload) => {
@@ -483,18 +491,7 @@ const RoomPage = () => {
             if (item) item.peer.signal(payload.signal);
         });
 
-        const initMedia = async () => {
-            const isGuest = userInfo.role === 'guest' || userInfo._id?.startsWith('guest-');
-
-            // Guest: read-only mode — no camera/mic needed
-            if (isGuest) {
-                const emptyStream = new MediaStream();
-                setStream(emptyStream);
-                streamRef.current = emptyStream;
-                socket.emit('join-room', roomID, userInfo._id, userInfo.name, true, passwordInput);
-                return;
-            }
-
+        const initMedia = async (password = '') => {
             try {
                 const currentStream = await navigator.mediaDevices.getUserMedia({
                     video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: 'user' },
@@ -544,8 +541,7 @@ const RoomPage = () => {
                 streamRef.current = currentStream;
                 if (userVideo.current) userVideo.current.srcObject = currentStream;
 
-                socket.emit('join-room', roomID, userInfo._id, userInfo.name, false, passwordInput);
-                // Notify peers of restored state
+                socket.emit('join-room', roomID, userInfo._id, userInfo.name, password);
                 socket.emit('update-media-status', { roomId: roomID, micStatus: micEnabled, videoStatus: videoEnabled });
 
                 const devices = await navigator.mediaDevices.enumerateDevices();
@@ -578,10 +574,11 @@ const RoomPage = () => {
                 streamRef.current = emptyStream;
                 setIsMuted(true);
                 setIsVideoOff(true);
-                socket.emit('join-room', roomID, userInfo._id, userInfo.name, isGuest, passwordInput);
+                socket.emit('join-room', roomID, userInfo._id, userInfo.name, password);
             }
         };
-        initMedia();
+        // Expose initMedia so the password submit handler can call it
+        initMediaRef.current = initMedia;
 
         return () => {
             // leaveRoom allaqachon chaqirilgan bo'lsa (socketRef null), qayta yubormaymiz
@@ -1058,19 +1055,7 @@ const RoomPage = () => {
         setIsRecording(false);
     };
 
-    const checkGuestAction = async () => {
-        if (myRole === 'guest') {
-            const ok = await confirm(t('confirm_guest_login'));
-            if (ok) {
-                navigate('/login');
-            }
-            return true;
-        }
-        return false;
-    };
-
     const handleFileUpload = async (e) => {
-        if (await checkGuestAction()) return;
         const file = e.target.files[0];
         if (!file) return;
 
@@ -1093,7 +1078,6 @@ const RoomPage = () => {
 
     const sendMessage = async (e) => {
         e.preventDefault();
-        if (await checkGuestAction()) return;
         if (!canChat) { toast.warning(t('chat_disabled')); return; }
         
         if (editingMessageId) {
@@ -1153,8 +1137,8 @@ const RoomPage = () => {
     const isHost = myRole === 'host';
     const isCoHost = myRole === 'cohost';
     const canModerate = isHost || isCoHost;
-    const canRecord = myRole !== 'guest'; // Enable local recording for all non-guests
-    const canChat = myRole !== 'guest';
+    const canRecord = !!myRole;
+    const canChat = !!myRole;
 
     const admitUser = (targetSocketId) => {
         socketRef.current?.emit('admit-user', { roomId: roomID, targetSocketId });
@@ -1187,22 +1171,25 @@ const RoomPage = () => {
     const muteAll = () => { if (canModerate) socketRef.current?.emit('mute-all', { roomId: roomID }); };
     const endMeetingForAll = async () => {
         const ok = await confirm(t('confirm_end_meeting'));
-        if (ok) socketRef.current?.emit('end-meeting', { roomId: roomID });
+        if (ok) {
+            sessionStorage.removeItem(`room-pw-${roomID}`);
+            socketRef.current?.emit('end-meeting', { roomId: roomID });
+        }
     };
     const leaveRoom = () => {
-        // Tracks to'xtatish (kamera yorug'ligini o'chirish)
+        sessionStorage.removeItem(`room-pw-${roomID}`);
         if (streamRef.current) {
             streamRef.current.getTracks().forEach(t => t.stop());
             streamRef.current = null;
         }
         socketRef.current?.emit('leave-room');
         socketRef.current?.disconnect();
-        socketRef.current = null; // cleanup useEffect ni qayta ishlatmaslik uchun
+        socketRef.current = null;
         navigate('/');
     };
 
     const handleHoldToTalkStart = () => {
-        if (myRole === 'guest' || !isMuted || holdToTalkRef.current) return;
+        if (!isMuted || holdToTalkRef.current) return;
         const audioTrack = streamRef.current?.getAudioTracks?.()[0];
         if (!audioTrack) return;
         holdToTalkRef.current = true;
@@ -1223,7 +1210,7 @@ const RoomPage = () => {
 
     // Space bar hold-to-talk (chat yoki input fokusda bo'lmasa ishlaydi)
     useEffect(() => {
-        if (!myRole || myRole === 'guest') return;
+        if (!myRole) return;
         const onDown = (e) => {
             const tag = document.activeElement?.tagName;
             if (e.code === 'Space' && !e.repeat && tag !== 'INPUT' && tag !== 'TEXTAREA' && tag !== 'SELECT') {
@@ -1312,6 +1299,11 @@ const RoomPage = () => {
                 setMeeting(data);
                 setPasswordRequired(false);
                 setPasswordAttempts(0);
+                sessionStorage.setItem(`room-pw-${roomID}`, passwordInput);
+                if (!joinStartedRef.current) {
+                    joinStartedRef.current = true;
+                    initMediaRef.current?.(passwordInput);
+                }
             } catch (error) {
                 const newAttempts = passwordAttempts + 1;
                 setPasswordAttempts(newAttempts);
@@ -1991,7 +1983,6 @@ const RoomPage = () => {
                                                     <div className="flex items-center gap-1.5 mt-0.5">
                                                         {user.role === 'host' ? <span className="text-[9px] font-bold text-blue-400 uppercase tracking-wide">{t('role_host')}</span>
                                                         : user.role === 'cohost' ? <span className="text-[9px] font-bold text-emerald-400 uppercase tracking-wide">{t('role_cohost')}</span>
-                                                        : user.role === 'guest' ? <span className="text-[9px] font-medium text-gray-500 italic">{t('role_guest')}</span>
                                                         : <span className="text-[9px] font-medium text-gray-500 uppercase tracking-wide">{t('role_participant')}</span>}
                                                     </div>
                                                 </div>
