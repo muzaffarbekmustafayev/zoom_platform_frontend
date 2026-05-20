@@ -2,13 +2,16 @@ import React from 'react';
 import Select from '../components/Select';
 import { Icon, Ico } from './icons';
 
-const roleBadge = (role) => {
-    if (role === 'admin') return 'bg-purple-100 text-purple-700 dark:bg-purple-500/15 dark:text-purple-300';
-    if (role === 'guest') return 'bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300';
-    return 'bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300';
+
+const roleOptions = ['user', 'admin', 'guest'];
+
+const roleBgMap = {
+    admin: 'bg-purple-100 text-purple-700 dark:bg-purple-500/20 dark:text-purple-300 border-purple-200 dark:border-purple-500/30',
+    guest: 'bg-amber-100  text-amber-700  dark:bg-amber-500/20  dark:text-amber-300  border-amber-200  dark:border-amber-500/30',
+    user:  'bg-blue-100   text-blue-700   dark:bg-blue-500/20   dark:text-blue-300   border-blue-200   dark:border-blue-500/30',
 };
 
-const UsersTab = ({ users, search, role, status, onSearch, onRole, onStatus, onEdit, onBlock, onDelete, t }) => {
+const UsersTab = ({ users, search, role, status, onSearch, onRole, onStatus, onEdit, onBlock, onDelete, onRoleChange, t }) => {
     const filtered = users.filter(u => {
         const q = search.toLowerCase();
         return (!q || u.name?.toLowerCase().includes(q) || u.email?.toLowerCase().includes(q))
@@ -70,9 +73,15 @@ const UsersTab = ({ users, search, role, status, onSearch, onRole, onStatus, onE
                                         </div>
                                     </td>
                                     <td className="px-5 py-4">
-                                        <span className={`inline-flex px-2.5 py-0.5 rounded-full text-[11px] font-semibold ${roleBadge(u.role)}`}>
-                                            {u.role}
-                                        </span>
+                                        <select
+                                            value={u.role}
+                                            onChange={e => onRoleChange(u._id, e.target.value)}
+                                            className={`appearance-none cursor-pointer px-2.5 py-0.5 rounded-full text-[11px] font-semibold border transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500/30 ${roleBgMap[u.role] || roleBgMap.user}`}
+                                        >
+                                            {roleOptions.map(r => (
+                                                <option key={r} value={r}>{r}</option>
+                                            ))}
+                                        </select>
                                     </td>
                                     <td className="px-5 py-4">
                                         <div className="flex items-center gap-1.5">

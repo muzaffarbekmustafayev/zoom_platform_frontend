@@ -105,6 +105,17 @@ const AdminPage = () => {
         }
     };
 
+    const handleRoleChange = async (id, newRole) => {
+        setUsers(prev => prev.map(u => u._id === id ? { ...u, role: newRole } : u));
+        try {
+            await API.put(`/api/admin/users/${id}/role`, { role: newRole });
+            toast.success(t('role_updated') || 'Role updated');
+        } catch (err) {
+            fetchData();
+            toast.error(err.response?.data?.message || t('action_failed'));
+        }
+    };
+
     const openEdit = (u) => { setCurrentUser({ ...u, password: '' }); setEditMode(true);  setShowModal(true); };
     const openAdd  = ()  => { setCurrentUser(EMPTY_USER);             setEditMode(false); setShowModal(true); };
 
@@ -161,6 +172,7 @@ const AdminPage = () => {
                                     onEdit={openEdit}
                                     onBlock={toggleBlock}
                                     onDelete={handleDeleteUser}
+                                    onRoleChange={handleRoleChange}
                                     t={t}
                                 />
                             )}
