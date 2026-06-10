@@ -648,6 +648,7 @@ const HomeView = ({ t, lang, userInfo, onNav, history = [] }) => {
         {
             id: 'new',
             label: lang === 'uz' ? 'Yangi uchrashuv' : lang === 'ru' ? 'Новая встреча' : 'New Meeting',
+            desc: lang === 'uz' ? 'Darhol boshlash' : lang === 'ru' ? 'Начать сейчас' : 'Start instantly',
             color: 'bg-orange-500',
             shadow: 'shadow-orange-500/30',
             show: userInfo?.role !== 'admin',
@@ -655,7 +656,8 @@ const HomeView = ({ t, lang, userInfo, onNav, history = [] }) => {
         },
         {
             id: 'join',
-            label: lang === 'uz' ? 'Qo\'shilish' : lang === 'ru' ? 'Войти' : 'Join',
+            label: lang === 'uz' ? "Qo'shilish" : lang === 'ru' ? 'Войти' : 'Join',
+            desc: lang === 'uz' ? 'Kod bilan kirish' : lang === 'ru' ? 'По коду встречи' : 'Enter meeting code',
             color: 'bg-blue-600',
             shadow: 'shadow-blue-600/30',
             show: userInfo?.role !== 'admin',
@@ -664,6 +666,7 @@ const HomeView = ({ t, lang, userInfo, onNav, history = [] }) => {
         {
             id: 'schedule',
             label: lang === 'uz' ? 'Rejalashtirish' : lang === 'ru' ? 'Запланировать' : 'Schedule',
+            desc: lang === 'uz' ? 'Vaqt belgilash' : lang === 'ru' ? 'Назначить время' : 'Plan ahead',
             color: 'bg-emerald-500',
             shadow: 'shadow-emerald-500/30',
             show: true,
@@ -672,6 +675,7 @@ const HomeView = ({ t, lang, userInfo, onNav, history = [] }) => {
         {
             id: 'share',
             label: lang === 'uz' ? 'Ekran ulashish' : lang === 'ru' ? 'Показ экрана' : 'Share Screen',
+            desc: lang === 'uz' ? 'Ulashish bilan boshlash' : lang === 'ru' ? 'Запустить трансляцию' : 'Start with screen',
             color: 'bg-violet-600',
             shadow: 'shadow-violet-600/30',
             show: userInfo?.role !== 'admin',
@@ -695,7 +699,10 @@ const HomeView = ({ t, lang, userInfo, onNav, history = [] }) => {
         if (id === 'new') { setCreatedRoom(null); setShowNewMeeting(v => !v); return; }
         if (id === 'join') { onNav('join'); return; }
         if (id === 'schedule') { onNav('schedule'); return; }
-        if (id === 'share') { onNav('join'); return; }
+        if (id === 'share') {
+            setComingSoon({ show: true, name: lang === 'uz' ? 'Ekran ulashish' : lang === 'ru' ? 'Показ экрана' : 'Share Screen' });
+            return;
+        }
     };
 
     const recentThree = history.slice(0, 5);
@@ -757,19 +764,22 @@ const HomeView = ({ t, lang, userInfo, onNav, history = [] }) => {
 
             {/* ── Action buttons ───────────────────────────────────────────── */}
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+                <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
                     {actions.map(action => (
                         <button
                             key={action.id}
                             onClick={() => handleActionClick(action.id)}
-                            className="group flex flex-col items-center gap-3 p-5 sm:p-6 bg-white dark:bg-[#161b22] rounded-2xl hover:bg-gray-50 dark:hover:bg-[#1c222d] hover:shadow-lg dark:hover:shadow-black/40 transition-colors duration-200"
+                            className="group flex flex-col items-center gap-2.5 p-5 sm:p-6 bg-white dark:bg-[#161b22] rounded-2xl hover:bg-gray-50 dark:hover:bg-[#1c222d] hover:shadow-lg dark:hover:shadow-black/40 border border-transparent hover:border-gray-100 dark:hover:border-white/8 transition-all duration-200 active:scale-[0.97]"
                         >
-                            <div className={`w-14 h-14 ${action.color} shadow-lg ${action.shadow} rounded-2xl flex items-center justify-center`}>
+                            <div className={`w-14 h-14 ${action.color} shadow-lg ${action.shadow} rounded-2xl flex items-center justify-center group-hover:scale-105 transition-transform duration-200`}>
                                 <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     {action.icon}
                                 </svg>
                             </div>
-                            <span className="text-sm font-bold text-gray-800 dark:text-gray-100 text-center leading-tight">{action.label}</span>
+                            <div className="flex flex-col items-center gap-0.5">
+                                <span className="text-sm font-bold text-gray-800 dark:text-gray-100 text-center leading-tight">{action.label}</span>
+                                <span className="text-[11px] font-medium text-gray-400 dark:text-gray-500 text-center leading-tight">{action.desc}</span>
+                            </div>
                         </button>
                     ))}
                 </div>
@@ -1062,7 +1072,7 @@ const HomeView = ({ t, lang, userInfo, onNav, history = [] }) => {
             )}
 
             {/* ── Bottom content grid ──────────────────────────────────────── */}
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-10 grid grid-cols-1 lg:grid-cols-3 gap-5 sm:gap-6">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-10 grid grid-cols-1 tablet:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
 
                 {/* Recent Meetings — 2/3 */}
                 <div className="lg:col-span-2 bg-white dark:bg-[#161b22] rounded-2xl overflow-hidden">

@@ -3,6 +3,14 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* Tailwind v4 tailwind.config.js dagi screens'ni o'qimaydi — breakpoint'lar shu yerda
+   e'lon qilinishi shart, aks holda xs: va tablet: variantlari umuman ishlamaydi */
+@theme {
+  --breakpoint-xs: 30rem;      /* 480px */
+  --breakpoint-tablet: 48rem;  /* 768px */
+  --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+}
+
 :root {
   --primary: #0E71EB;
   --primary-hover: #0c61cc;

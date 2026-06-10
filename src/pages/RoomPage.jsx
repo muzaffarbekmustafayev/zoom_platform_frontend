@@ -15,8 +15,22 @@ import RoomHeader               from '../components/room/RoomHeader';
 import RoomVideoGrid            from '../components/room/RoomVideoGrid';
 import RoomParticipantsSidebar  from '../components/room/RoomParticipantsSidebar';
 import RoomPasswordModal        from '../components/room/RoomPasswordModal';
-import WaitingToasts            from '../components/room/WaitingToasts';
-import { WaitingRoom, AccessDenied } from '../components/room/RoomScreens';
+import RoomDocShare             from '../components/room/RoomDocShare';
+import { AccessDenied } from '../components/room/RoomScreens';
+
+// ── ICE configuration ──────────────────────────────────────────────────────────
+// STUN topadi, TURN esa NAT/firewall ortidagi foydalanuvchilar uchun relay —
+// TURN'siz ko'p tarmoqlarda media umuman ulanmaydi.
+const ICE_CONFIG = {
+    iceServers: [
+        { urls: import.meta.env.VITE_STUN_URL || 'stun:stun.l.google.com:19302' },
+        ...(import.meta.env.VITE_TURN_URL ? [{
+            urls: import.meta.env.VITE_TURN_URL,
+            username: import.meta.env.VITE_TURN_USERNAME,
+            credential: import.meta.env.VITE_TURN_CREDENTIAL,
+        }] : []),
+    ],
+};
 
 const RoomPage = () => {
     const { id: roomID } = useParams();
@@ -49,6 +63,8 @@ const RoomPage = () => {
     const [selectedVideoDevice, setSelectedVideoDevice] = useState('');
     const [isRecording, setIsRecording]       = useState(false);
     const [activeSharingUser, setActiveSharingUser] = useState(null);
+    const [screenStream, setScreenStream]     = useState(null); // sahnada ko'rsatiladigan ekran oqimi (lokal yoki remote)
+    const [docShareOpen, setDocShareOpen]     = useState(false); // fayl taqdimoti modali
     const [audioDevices, setAudioDevices]     = useState([]);
     const [selectedAudioDevice, setSelectedAudioDevice] = useState('');
     const [showSettings, setShowSettings]     = useState(false);
@@ -58,13 +74,8 @@ const RoomPage = () => {
     const [requestPending, setRequestPending] = useState(false);
     const [toastMessage, setToastMessage]     = useState(null);
     const [myRole, setMyRole]                 = useState(null);
-    const [waitingRoomUsers, setWaitingRoomUsers] = useState([]);
-    const [isInWaitingRoom, setIsInWaitingRoom] = useState(false);
-    const [waitingRoomDenied, setWaitingRoomDenied] = useState(false);
     const [passwordRequired, setPasswordRequired] = useState(false);
     const [accessDenied, setAccessDenied]     = useState(false);
-    const [waitingBadge, setWaitingBadge]     = useState(0);
-    const [waitingToasts, setWaitingToasts]   = useState([]);
     const [meetingElapsed, setMeetingElapsed] = useState('00:00:00');
     const [networkInfo, setNetworkInfo]       = useState({ label: 'Stable', ping: 32, tone: 'text-emerald-500' });
     const [viewMode, setViewMode]             = useState('speaker');
@@ -90,15 +101,16 @@ const RoomPage = () => {
     const rawMicTrackRef      = useRef(null);
     const localAnalyserRef    = useRef(null);
     const remoteAnalysersRef  = useRef({});
+    const sharedVadCtxRef     = useRef(null);
     const speakingRafRef      = useRef(null);
     const activeSpeakersRef   = useRef(new Set());
     const socketRef           = useRef(null);
     const joinStartedRef      = useRef(false);
     const initMediaRef        = useRef(null);
     const isSharingScreenRef  = useRef(false);
+    const activeSharingRef    = useRef(null);   // { socketId, streamId } — ekran oqimini kameradan ajratish uchun
+    const streamsByPeerRef    = useRef({});     // peerID → Map<streamId, MediaStream>
     const holdToTalkRef       = useRef(false);
-    const waitingRoomUsersRef = useRef([]);
-    const waitingToastRef     = useRef([]);
     const viewMenuRef         = useRef(null);
     const messagesEndRef      = useRef(null);
 
@@ -107,26 +119,6 @@ const RoomPage = () => {
         const s = Math.max(0, Math.floor(ms / 1000));
         return [Math.floor(s / 3600), Math.floor((s % 3600) / 60), s % 60]
             .map(n => String(n).padStart(2, '0')).join(':');
-    }, []);
-
-    const playNotificationSound = useCallback(() => {
-        try {
-            const Ctx = window.AudioContext || window.webkitAudioContext;
-            if (!Ctx) return;
-            const ctx = new Ctx();
-            const osc = ctx.createOscillator();
-            const gain = ctx.createGain();
-            osc.type = 'sine';
-            osc.frequency.value = 880;
-            gain.gain.setValueAtTime(0.0001, ctx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.08, ctx.currentTime + 0.02);
-            gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 1);
-            osc.connect(gain);
-            gain.connect(ctx.destination);
-            osc.start();
-            osc.stop(ctx.currentTime + 1);
-            osc.onended = () => ctx.close().catch(() => {});
-        } catch (_) {}
     }, []);
 
     const copyRoomID = useCallback(() => {
@@ -158,22 +150,31 @@ const RoomPage = () => {
         return () => clearInterval(id);
     }, [meeting?.startTime, formatDuration]);
 
+    // Bitta umumiy AudioContext — brauzerlar kontekst sonini cheklaydi (~6),
+    // har stream uchun alohida kontekst 7+ ishtirokchida VAD'ni buzadi.
     useEffect(() => {
         const Ctx = window.AudioContext || window.webkitAudioContext;
         if (!Ctx) return;
+        if (!sharedVadCtxRef.current) {
+            try { sharedVadCtxRef.current = new Ctx(); } catch (_) { return; }
+        }
+        const ctx = sharedVadCtxRef.current;
         const cur = remoteAnalysersRef.current;
         for (const sid of Object.keys(cur)) {
-            if (!remoteStreams[sid]) { cur[sid].ctx.close().catch(() => {}); delete cur[sid]; }
+            if (!remoteStreams[sid]) {
+                try { cur[sid].source.disconnect(); } catch (_) {}
+                delete cur[sid];
+            }
         }
         for (const [sid, s] of Object.entries(remoteStreams)) {
             if (cur[sid] || !s.getAudioTracks().length) continue;
             try {
-                const ctx = new Ctx();
                 const analyser = ctx.createAnalyser();
                 analyser.fftSize = 512;
                 analyser.smoothingTimeConstant = 0.4;
-                ctx.createMediaStreamSource(s).connect(analyser);
-                cur[sid] = { ctx, analyser };
+                const source = ctx.createMediaStreamSource(s);
+                source.connect(analyser);
+                cur[sid] = { source, analyser };
             } catch (_) {}
         }
     }, [remoteStreams]);
@@ -225,21 +226,13 @@ const RoomPage = () => {
         }
     }, [myRole]);
 
+    // Lokal preview doim kamerani ko'rsatadi — demonstratsiya paytida ham
+    // (ekran alohida oqim bo'lib sahnada ko'rsatiladi)
     useEffect(() => {
-        if (!waitingToasts.length) return;
-        const timers = waitingToasts.map(item => setTimeout(() => {
-            setWaitingToasts(prev => prev.filter(i => i.socketId !== item.socketId));
-        }, 30000));
-        return () => timers.forEach(clearTimeout);
-    }, [waitingToasts]);
-
-    useEffect(() => { setWaitingBadge(waitingRoomUsers.length); }, [waitingRoomUsers.length]);
-
-    useEffect(() => {
-        if (!isInWaitingRoom && stream && userVideo.current && !isSharingScreen) {
+        if (stream && userVideo.current) {
             userVideo.current.srcObject = stream;
         }
-    }, [isInWaitingRoom, stream, isSharingScreen]);
+    }, [stream, isSharingScreen]);
 
     useEffect(() => { isSharingScreenRef.current = isSharingScreen; }, [isSharingScreen]);
 
@@ -249,18 +242,6 @@ const RoomPage = () => {
             setTimeout(() => setToastMessage(null), 5000);
         }
     }, [activeSharingUser, userInfo._id]);
-
-    useEffect(() => {
-        if (!(myRole === 'host' || myRole === 'cohost')) return;
-        const prev = waitingToastRef.current || [];
-        const newUsers = waitingRoomUsers.filter(u => !prev.find(p => p.socketId === u.socketId));
-        waitingToastRef.current = waitingRoomUsers;
-        if (!newUsers.length) return;
-        newUsers.forEach(u => {
-            playNotificationSound();
-            setWaitingToasts(cur => cur.find(i => i.socketId === u.socketId) ? cur : [...cur, u]);
-        });
-    }, [myRole, playNotificationSound, waitingRoomUsers]);
 
     // Space-bar hold-to-talk
     useEffect(() => {
@@ -299,19 +280,65 @@ const RoomPage = () => {
     }
 
     // ── WebRTC peer helpers ───────────────────────────────────────────────────
+    // ── Remote stream'larni tasniflash: kamera yoki ekran? ────────────────────
+    // Har peer'dan bir nechta stream kelishi mumkin (kamera + demonstratsiya).
+    // Ekran oqimi screenStreamId (socket orqali e'lon qilinadi) bo'yicha ajratiladi.
+    function reclassifyStreams(peerID) {
+        const map = streamsByPeerRef.current[peerID];
+        if (!map) return;
+        const share = activeSharingRef.current;
+        let camera = null;
+        for (const s of map.values()) {
+            if (share && share.socketId === peerID && share.streamId && s.id === share.streamId) {
+                setScreenStream(s);
+            } else {
+                camera = s;
+            }
+        }
+        setRemoteStreams(prev => {
+            if (camera) return prev[peerID] === camera ? prev : { ...prev, [peerID]: camera };
+            // Kamera yo'q, lekin eski yozuv ekran oqimi bo'lib qolgan bo'lsa — olib tashlaymiz
+            if (share && share.socketId === peerID && prev[peerID]?.id === share.streamId) {
+                const next = { ...prev };
+                delete next[peerID];
+                return next;
+            }
+            return prev;
+        });
+    }
+
+    function registerRemoteStream(peerID, s) {
+        if (!streamsByPeerRef.current[peerID]) streamsByPeerRef.current[peerID] = new Map();
+        streamsByPeerRef.current[peerID].set(s.id, s);
+        reclassifyStreams(peerID);
+    }
+
+    // Yangi ulangan peer'ga, agar men demonstratsiya qilayotgan bo'lsam, ekranni ham yuboramiz
+    function attachScreenOnConnect(peer) {
+        peer.on('connect', () => {
+            if (isSharingScreenRef.current && screenStreamRef.current) {
+                try { peer.addStream(screenStreamRef.current); } catch (_) {}
+            }
+        });
+    }
+
+    // trickle: true — ICE kandidatlar tayyor bo'lishi bilan yuboriladi,
+    // ulanish bir necha soniyaga tezlashadi va muvaffaqiyat darajasi oshadi.
     function createPeer(userToSignal, callerID, stream, callerUserId, socket) {
-        const peer = new Peer({ initiator: true, trickle: false, stream });
+        const peer = new Peer({ initiator: true, trickle: true, stream, config: ICE_CONFIG });
         peer.on('signal', signal => socket.emit('sending-signal', { userToSignal, callerID, signal, callerUserId }));
-        peer.on('stream', s => setRemoteStreams(prev => ({ ...prev, [userToSignal]: s })));
+        peer.on('stream', s => registerRemoteStream(userToSignal, s));
         peer.on('error', () => toast.error(lang === 'uz' ? 'Ulanishda xatolik.' : lang === 'ru' ? 'Ошибка подключения.' : 'Connection error.'));
+        attachScreenOnConnect(peer);
         return peer;
     }
 
     function addPeer(incomingSignal, callerID, stream, socket) {
-        const peer = new Peer({ initiator: false, trickle: false, stream });
+        const peer = new Peer({ initiator: false, trickle: true, stream, config: ICE_CONFIG });
         peer.on('signal', signal => socket.emit('returning-signal', { signal, callerID }));
-        peer.on('stream', s => setRemoteStreams(prev => ({ ...prev, [callerID]: s })));
+        peer.on('stream', s => registerRemoteStream(callerID, s));
         peer.on('error', () => toast.error(lang === 'uz' ? 'Ulanishda xatolik.' : lang === 'ru' ? 'Ошибка подключения.' : 'Connection error.'));
+        attachScreenOnConnect(peer);
         peer.signal(incomingSignal);
         return peer;
     }
@@ -320,7 +347,13 @@ const RoomPage = () => {
     useEffect(() => {
         joinStartedRef.current = false;
         const socket = io(import.meta.env.VITE_BACKEND_URL || 'http://localhost:5005', {
-            auth: { token: userInfo?.token || null }
+            auth: { token: userInfo?.token || null },
+            // websocket'dan to'g'ridan-to'g'ri boshlash — long-polling upgrade bosqichi
+            // o'tkazib yuboriladi, ulanish/sinxronlashuv sezilarli tezlashadi
+            transports: ['websocket', 'polling'],
+            reconnectionDelay: 500,
+            reconnectionDelayMax: 3000,
+            timeout: 8000,
         });
         socketRef.current = socket;
         setMessages([]); setPeers([]); setShareRequests([]); setIsShareApproved(false); setRequestPending(false);
@@ -354,17 +387,23 @@ const RoomPage = () => {
             setTimeout(() => setHandRaisedUsers(p => p.filter(id => id !== userId)), 10000);
         });
         socket.on('update-user-list', users => setRoomUsers(users));
+        // Delta sinxronlashuv: mic/video holati o'zgarganda to'liq ro'yxat emas,
+        // faqat o'zgargan foydalanuvchi yangilanadi (katta xonada O(N²) → O(N))
+        socket.on('user-media-updated', ({ socketId, micStatus, videoStatus }) =>
+            setRoomUsers(prev => prev.map(u => u.socketId === socketId ? { ...u, micStatus, videoStatus } : u)));
         socket.on('share-request-received', ({ userId, userName, type, requesterSocketId }) =>
             setShareRequests(p => [...p, { userId: requesterSocketId || userId, userName, type }]));
         socket.on('share-request-result', ({ approved }) => {
             setRequestPending(false);
-            if (approved) setIsShareApproved(true);
-            else toast.warning(t('host_denied_share'));
+            if (approved) {
+                setIsShareApproved(true);
+                // getDisplayMedia foydalanuvchi bosishini talab qiladi — avtomatik ochib bo'lmaydi
+                toast.success(lang === 'uz' ? 'Ruxsat berildi — Demonstratsiya tugmasini bosing' : lang === 'ru' ? 'Разрешено — нажмите кнопку демонстрации' : 'Approved — click the share button');
+            } else toast.warning(t('host_denied_share'));
         });
         socket.on('force-stop-share', () => {
             if (isSharingScreenRef.current) {
-                stopScreenShareFn(screenStreamRef, audioContextRef, audioDestinationRef, peersRef, streamRef,
-                    socket, roomID, setActiveSharingUser, setIsSharingScreen, setIsShareApproved, setIsWaitingForPermission, isSharingScreenRef);
+                stopScreenShare();
                 toast.warning(t('host_stopped_share'));
             }
         });
@@ -373,34 +412,44 @@ const RoomPage = () => {
             if (p) p.peer.destroy();
             peersRef.current = peersRef.current.filter(p => p.peerID !== id);
             setPeers(peersRef.current);
+            delete streamsByPeerRef.current[id];
+            if (activeSharingRef.current?.socketId === id) {
+                activeSharingRef.current = null;
+                setActiveSharingUser(null);
+                setScreenStream(null);
+            }
         });
         socket.on('kicked',        () => { toast.error(t('kicked_msg'));  navigate('/'); });
         socket.on('blocked',       () => { toast.error(t('blocked_msg')); navigate('/'); });
         socket.on('error-message', msg => { toast.error(msg); navigate('/'); });
         socket.on('error',         ({ message } = {}) => { if (message) toast.error(message); });
+        socket.on('socket-error',  ({ event, message } = {}) => {
+            // Server demonstratsiyani rad etgan bo'lsa, lokal share holatini ham to'xtatamiz
+            if (event === 'start-screen-share' && isSharingScreenRef.current) stopScreenShare();
+            if (message) toast.warning(message);
+        });
         socket.on('turn-updated',         data => setCurrentTurnUserId(data.userId));
-        socket.on('screen-sharing-started', data => setActiveSharingUser(data));
-        socket.on('screen-sharing-stopped', () => setActiveSharingUser(null));
-        socket.on('your-role',    ({ role }) => { setMyRole(role); setIsInWaitingRoom(false); });
+        socket.on('screen-sharing-started', data => {
+            activeSharingRef.current = { socketId: data.socketId, streamId: data.screenStreamId || null };
+            setActiveSharingUser(data);
+            setPinnedSocketId(null); // yangi demonstratsiya — sahna default ekranga o'tadi
+            // Ekran oqimi e'londan oldin kelib, kamera sifatida saqlanib qolgan bo'lishi mumkin — qayta tasniflaymiz
+            if (data.socketId !== socket.id) reclassifyStreams(data.socketId);
+        });
+        socket.on('screen-sharing-stopped', () => {
+            const share = activeSharingRef.current;
+            if (share?.streamId && streamsByPeerRef.current[share.socketId]) {
+                streamsByPeerRef.current[share.socketId].delete(share.streamId);
+            }
+            activeSharingRef.current = null;
+            setActiveSharingUser(null);
+            setScreenStream(null);
+        });
+        socket.on('your-role',    ({ role }) => { setMyRole(role); });
         socket.on('role-updated', ({ role }) => setMyRole(role));
         socket.on('host-changed', ({ newHostUserId, newHostName }) => {
             if (newHostUserId === userInfo._id) { setMyRole('host'); toast.success(lang === 'uz' ? "Siz xona yetakchisi bo'ldingiz" : 'You are now the host'); }
             else toast.info(`${newHostName} ${lang === 'uz' ? 'yangi xona yetakchisi' : 'is now the host'}`);
-        });
-        socket.on('waiting-room',       () => setIsInWaitingRoom(true));
-        socket.on('waiting-room-denied', () => { setIsInWaitingRoom(false); setWaitingRoomDenied(true); });
-        socket.on('waiting-room-update', list => {
-            const incoming = list || [];
-            const prev = waitingRoomUsersRef.current;
-            if (incoming.length > prev.length) {
-                const nu = incoming.find(u => !prev.find(p => p.socketId === u.socketId));
-                if (nu) {
-                    toast.info(`✋ ${nu.userName || 'Foydalanuvchi'} kirishni so'ramoqda`);
-                    if (Notification.permission === 'granted') new Notification('Meetra', { body: `${nu.userName} kirishni so'ramoqda`, icon: '/vite.svg' });
-                }
-            }
-            waitingRoomUsersRef.current = incoming;
-            setWaitingRoomUsers(incoming);
         });
         socket.on('room-muted-all', () => {
             if (streamRef.current?.getAudioTracks()[0]?.enabled) {
@@ -412,19 +461,32 @@ const RoomPage = () => {
         });
         socket.on('meeting-ended', () => { toast.info(t('meeting_ended_msg')); navigate('/'); });
         socket.on('all-users', users => {
-            peersRef.current.forEach(p => p.peer?.destroy());
-            peersRef.current = [];
-            setRemoteStreams({});
-            const newPeers = users.map(u => {
+            // Diff: hammasini buzib qayta yaratmaymiz — faqat ketganlarni o'chirib,
+            // yangilariga ulanamiz. Reconnect'da video uzilib qolmaydi.
+            const valid = new Set(users.map(u => u.socketId));
+            peersRef.current.forEach(p => { if (!valid.has(p.peerID)) p.peer?.destroy(); });
+            peersRef.current = peersRef.current.filter(p => valid.has(p.peerID));
+            for (const sid of Object.keys(streamsByPeerRef.current)) {
+                if (!valid.has(sid)) delete streamsByPeerRef.current[sid];
+            }
+            setRemoteStreams(prev => {
+                const next = {};
+                for (const sid of Object.keys(prev)) if (valid.has(sid)) next[sid] = prev[sid];
+                return next;
+            });
+            users.forEach(u => {
+                if (peersRef.current.some(p => p.peerID === u.socketId)) return;
                 const peer = createPeer(u.socketId, socket.id, streamRef.current, userInfo._id, socket);
                 peersRef.current.push({ peerID: u.socketId, userId: u.userId, peer });
-                return { peerID: u.socketId, userId: u.userId, peer };
             });
-            setPeers(newPeers);
+            setPeers([...peersRef.current]);
         });
         socket.io.on('reconnect', () => socket.emit('reconnect-room', roomID, userInfo._id, userInfo.name));
         socket.on('user-joined', payload => {
-            if (peersRef.current.find(p => p.peerID === payload.callerID)) return;
+            // trickle rejimida bitta peer'dan bir nechta signal keladi —
+            // mavjud peer'ga forward qilamiz, tashlab yubormaymiz (aks holda ICE kandidatlar yo'qoladi)
+            const existing = peersRef.current.find(p => p.peerID === payload.callerID);
+            if (existing) { try { existing.peer.signal(payload.signal); } catch (_) {} return; }
             const peer = addPeer(payload.signal, payload.callerID, streamRef.current, socket);
             const obj = { peerID: payload.callerID, userId: payload.callerUserId, peer };
             peersRef.current.push(obj);
@@ -488,12 +550,14 @@ const RoomPage = () => {
         return () => {
             if (socketRef.current) { socket.emit('leave-room'); socket.disconnect(); socketRef.current = null; }
             if (speakingRafRef.current) cancelAnimationFrame(speakingRafRef.current);
-            Object.values(remoteAnalysersRef.current).forEach(({ ctx }) => ctx.close().catch(() => {}));
+            Object.values(remoteAnalysersRef.current).forEach(({ source }) => { try { source.disconnect(); } catch (_) {} });
             remoteAnalysersRef.current = {};
+            if (sharedVadCtxRef.current) { sharedVadCtxRef.current.close().catch(() => {}); sharedVadCtxRef.current = null; }
             localAnalyserRef.current = null;
             if (micAudioCtxRef.current) { micAudioCtxRef.current.close().catch(() => {}); micAudioCtxRef.current = null; }
             if (rawMicTrackRef.current) { rawMicTrackRef.current.stop(); rawMicTrackRef.current = null; }
             if (streamRef.current) { streamRef.current.getTracks().forEach(t => t.stop()); streamRef.current = null; }
+            if (screenStreamRef.current) { screenStreamRef.current.getTracks().forEach(t => t.stop()); screenStreamRef.current = null; }
             sessionStorage.removeItem(`mic-${roomID}`);
             sessionStorage.removeItem(`video-${roomID}`);
         };
@@ -565,67 +629,101 @@ const RoomPage = () => {
     };
 
     // ── Screen share ──────────────────────────────────────────────────────────
-    const stopScreenShareFn = (sRef, aCtxRef, aDestRef, pRef, stRef, socket, roomId, setAsh, setSh, setAppr, setWait, shRef) => {
-        const camTrack = stRef.current?.getVideoTracks()[0];
-        const micTrack = stRef.current?.getAudioTracks()[0];
-        const screenVid = sRef.current?.getVideoTracks()[0];
-        const mixedAud = aDestRef.current?.stream.getAudioTracks()[0];
-        pRef.current.forEach(({ peer }) => {
-            try {
-                if (peer.connected) {
-                    if (screenVid && camTrack) peer.replaceTrack(screenVid, camTrack, stRef.current);
-                    if (mixedAud && micTrack) peer.replaceTrack(mixedAud, micTrack, stRef.current);
-                    else if (!mixedAud && sRef.current?.getAudioTracks()[0] && micTrack) peer.replaceTrack(sRef.current.getAudioTracks()[0], micTrack, stRef.current);
-                }
-            } catch (e) { console.error('restoreTrack:', e); }
-        });
-        if (sRef.current) { sRef.current.getTracks().forEach(t => t.stop()); sRef.current = null; }
-        if (aCtxRef.current) { aCtxRef.current.close().catch(() => {}); aCtxRef.current = null; aDestRef.current = null; }
-        socket?.emit('stop-screen-share', { roomId });
-        setAsh(null);
-        if (userVideo.current) userVideo.current.srcObject = stRef.current;
-        if (shRef) shRef.current = false;
-        setSh(false); setAppr(false); setWait(false);
-    };
-
+    // Demonstratsiya ALOHIDA oqim sifatida yuboriladi (addStream) — kamera va
+    // mikrofon o'z holicha qoladi: prezenter gapira oladi, yuzi ham ko'rinadi.
     const stopScreenShare = () => {
         if (!isSharingScreenRef.current) return;
-        stopScreenShareFn(screenStreamRef, audioContextRef, audioDestinationRef, peersRef, streamRef,
-            socketRef.current, roomID, setActiveSharingUser, setIsSharingScreen, setIsShareApproved, setIsWaitingForPermission, isSharingScreenRef);
+        const screen = screenStreamRef.current;
+        peersRef.current.forEach(({ peer }) => {
+            try { if (screen && peer.connected) peer.removeStream(screen); } catch (e) { console.error('removeStream:', e); }
+        });
+        if (screen) screen.getTracks().forEach(t => t.stop());
+        screenStreamRef.current = null;
+        socketRef.current?.emit('stop-screen-share', { roomId: roomID });
+        activeSharingRef.current = null;
+        setActiveSharingUser(null);
+        setScreenStream(null);
+        isSharingScreenRef.current = false;
+        setIsSharingScreen(false); setIsShareApproved(false); setIsWaitingForPermission(false);
+    };
+
+    // Ruxsat darvozasi — ekran va fayl taqdimoti uchun umumiy
+    const ensureSharePermission = () => {
+        const isModeratorRole = myRole === 'host' || myRole === 'cohost';
+
+        // Oddiy ishtirokchi — avval moderator ruxsatini olishi shart
+        if (!isModeratorRole && !isShareApproved) {
+            if (requestPending) {
+                toast.info(lang === 'uz' ? "So'rov yuborilgan — host javobini kuting" : lang === 'ru' ? 'Запрос отправлен — дождитесь ответа' : 'Request sent — waiting for host');
+                return false;
+            }
+            setRequestPending(true);
+            socketRef.current?.emit('request-to-share', { roomId: roomID, userId: userInfo._id, userName: userInfo.name, type: 'screen' });
+            toast.info(lang === 'uz' ? "Demonstratsiya uchun hostdan ruxsat so'raldi" : lang === 'ru' ? 'Запрошено разрешение у организатора' : 'Asked the host for permission to share');
+            return false;
+        }
+
+        // Boshqa odam demonstratsiya qilayotgan bo'lsa: moderator uni siqib chiqaradi,
+        // oddiy ishtirokchi esa kutadi
+        if (activeSharingUser && activeSharingUser.socketId !== socketRef.current?.id && !isModeratorRole) {
+            toast.info(t('share_busy').replace('{name}', activeSharingUser.userName));
+            return false;
+        }
+        return true;
+    };
+
+    // Istalgan MediaStream'ni (ekran yoki hujjat-canvas) demonstratsiya sifatida uzatish
+    const startStreamShare = (mediaStream) => {
+        const socket = socketRef.current;
+        if (!socket || isSharingScreenRef.current) return false;
+        const sv = mediaStream.getVideoTracks()[0];
+        if (!sv) return false;
+        try { sv.contentHint = 'detail'; } catch (_) {}
+        screenStreamRef.current = mediaStream;
+
+        // Oqim ALOHIDA stream sifatida qo'shiladi — kamera/mikrofon tegilmaydi
+        peersRef.current.forEach(({ peer }) => {
+            const add = () => { try { peer.addStream(mediaStream); } catch (e) { console.error('addStream:', e); } };
+            if (!peer.connected) peer.once('connect', add); else add();
+        });
+        sv.onended = () => stopScreenShare();
+        socket.emit('start-screen-share', { roomId: roomID, userId: userInfo._id, userName: userInfo.name, screenStreamId: mediaStream.id });
+        activeSharingRef.current = { socketId: socket.id, streamId: mediaStream.id };
+        setActiveSharingUser({ socketId: socket.id, userId: userInfo._id, userName: userInfo.name });
+        setScreenStream(mediaStream);
+        setPinnedSocketId(null);
+        isSharingScreenRef.current = true;
+        setIsSharingScreen(true);
+        return true;
+    };
+
+    // Fayl taqdimoti (RoomDocShare canvas oqimi bilan chaqiradi)
+    const startDocShare = (canvasStream) => {
+        if (!ensureSharePermission()) return false;
+        return startStreamShare(canvasStream);
+    };
+
+    const openDocShare = () => {
+        if (isSharingScreen) { toast.info(lang === 'uz' ? "Avval joriy demonstratsiyani to'xtating" : lang === 'ru' ? 'Сначала остановите текущую демонстрацию' : 'Stop the current share first'); return; }
+        if (!ensureSharePermission()) return;
+        setDocShareOpen(true);
     };
 
     const toggleScreenShare = () => {
         if (isSharingScreen) { stopScreenShare(); return; }
         if (!navigator.mediaDevices?.getDisplayMedia) { toast.error(t('share_unsupported')); return; }
-        if (activeSharingUser && activeSharingUser.socketId !== socketRef.current?.id) {
-            toast.info(t('share_busy').replace('{name}', activeSharingUser.userName)); return;
-        }
+        if (!ensureSharePermission()) return;
         if (isSharingScreenRef.current) return;
         const socket = socketRef.current;
         if (!socket) return;
-        navigator.mediaDevices.getDisplayMedia({ video: { cursor: 'always', frameRate: { ideal: 30, max: 60 } }, audio: false })
+        navigator.mediaDevices.getDisplayMedia({
+            // Demonstratsiya uchun 15fps yetarli, 1080p cheklov — bandwidth tejaladi,
+            // sifat barqarorlashadi (slayd/matn uchun aniqlik harakatdan muhim)
+            video: { cursor: 'always', frameRate: { ideal: 15, max: 30 }, width: { max: 1920 }, height: { max: 1080 } },
+            audio: true // tizim/tab ovozi ekran oqimi ichida ketadi — video ko'rsatishda zarur
+        })
             .then(screen => {
-                const sv = screen.getVideoTracks()[0];
-                const mic = streamRef.current?.getAudioTracks()[0];
-                screenStreamRef.current = screen;
-                const final = new MediaStream([sv, mic].filter(Boolean));
-                peersRef.current.forEach(({ peer }) => {
-                    const rep = () => {
-                        try {
-                            const ov = streamRef.current?.getVideoTracks()[0];
-                            const oa = streamRef.current?.getAudioTracks()[0];
-                            if (sv && ov) peer.replaceTrack(ov, sv, streamRef.current);
-                            if (final.getAudioTracks()[0] && oa) peer.replaceTrack(oa, final.getAudioTracks()[0], streamRef.current);
-                        } catch (e) { console.error('replaceTrack:', e); }
-                    };
-                    if (!peer.connected) peer.once('connect', rep); else rep();
-                });
-                sv.onended = () => stopScreenShare();
-                socket.emit('start-screen-share', { roomId: roomID, userId: userInfo._id, userName: userInfo.name });
-                setActiveSharingUser({ socketId: socket.id, userId: userInfo._id, userName: userInfo.name });
-                if (userVideo.current) userVideo.current.srcObject = final;
-                isSharingScreenRef.current = true;
-                setIsSharingScreen(true);
+                if (!startStreamShare(screen)) screen.getTracks().forEach(tr => tr.stop());
             })
             .catch(err => {
                 if (err?.name === 'NotAllowedError' || err?.name === 'AbortError') return;
@@ -705,8 +803,6 @@ const RoomPage = () => {
         setTimeout(() => setHandRaisedUsers(p => p.filter(id => id !== userInfo._id)), 10000);
     };
     const muteAll = () => { if (canModerate) socketRef.current?.emit('mute-all', { roomId: roomID }); };
-    const admitUser = (sid) => { socketRef.current?.emit('admit-user', { roomId: roomID, targetSocketId: sid }); setWaitingToasts(p => p.filter(i => i.socketId !== sid)); };
-    const denyUser  = (sid) => { socketRef.current?.emit('deny-user',  { roomId: roomID, targetSocketId: sid }); setWaitingToasts(p => p.filter(i => i.socketId !== sid)); };
     const promoteCoHost = async (uid, sid) => { try { await API.post(`/api/meetings/${meeting._id}/cohost`, { userId: uid }); socketRef.current?.emit('promote-cohost', { roomId: roomID, targetUserId: uid, targetSocketId: sid }); } catch { toast.error('Failed to promote'); } };
     const demoteCoHost  = async (uid, sid) => { try { await API.delete(`/api/meetings/${meeting._id}/cohost`, { data: { userId: uid } }); socketRef.current?.emit('demote-cohost',  { roomId: roomID, targetUserId: uid, targetSocketId: sid }); } catch { toast.error('Failed to demote');  } };
     const respondToShareRequest = (uid, approved, type) => { setShareRequests(p => p.filter(r => r.userId !== uid)); socketRef.current?.emit('share-permission-response', { userId: uid, approved, type }); };
@@ -718,6 +814,7 @@ const RoomPage = () => {
     const leaveRoom = () => {
         sessionStorage.removeItem(`room-pw-${roomID}`);
         if (streamRef.current) { streamRef.current.getTracks().forEach(t => t.stop()); streamRef.current = null; }
+        if (screenStreamRef.current) { screenStreamRef.current.getTracks().forEach(t => t.stop()); screenStreamRef.current = null; }
         socketRef.current?.emit('leave-room'); socketRef.current?.disconnect(); socketRef.current = null;
         navigate('/');
     };
@@ -766,12 +863,11 @@ const RoomPage = () => {
     const effectiveStageUser     = (stageUser && roomUsers.length > 1) ? stageUser : null;
     const uniquePeers             = peers.filter((p, i, arr) => arr.findIndex(x => x.peerID === p.peerID) === i);
     const totalParticipantCount   = roomUsers.length || uniquePeers.length + 1;
-    const autoGrid = totalParticipantCount <= 1 ? 'grid-cols-1' : totalParticipantCount === 2 ? 'grid-cols-2' : totalParticipantCount <= 4 ? 'grid-cols-2' : totalParticipantCount <= 9 ? 'grid-cols-2 sm:grid-cols-3' : 'grid-cols-2 sm:grid-cols-4';
+    const autoGrid = totalParticipantCount <= 1 ? 'grid-cols-1' : totalParticipantCount === 2 ? 'grid-cols-2' : totalParticipantCount <= 4 ? 'grid-cols-2' : totalParticipantCount <= 9 ? 'grid-cols-2 tablet:grid-cols-3' : 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4';
     const gridClassMap = { auto: autoGrid, '1x1': 'grid-cols-1', '2x2': 'grid-cols-2', '3x3': 'grid-cols-2 sm:grid-cols-3' };
 
     // ── Early returns ─────────────────────────────────────────────────────────
-    if (isInWaitingRoom)  return <WaitingRoom />;
-    if (waitingRoomDenied || accessDenied) return <AccessDenied />;
+    if (accessDenied) return <AccessDenied />;
     if (passwordRequired) return (
         <RoomPasswordModal
             roomID={roomID}
@@ -794,9 +890,6 @@ const RoomPage = () => {
                     </div>
                 </div>
             )}
-
-            {/* Waiting room admit toasts */}
-            {canModerate && <WaitingToasts toasts={waitingToasts} onAdmit={admitUser} onDeny={denyUser} />}
 
             <RoomHeader
                 isDark={isDark} meeting={meeting} roomID={roomID}
@@ -822,6 +915,7 @@ const RoomPage = () => {
                         isHost={isHost} isCoHost={isCoHost}
                         isMuted={isMuted} isVideoOff={isVideoOff}
                         activeSharingUser={activeSharingUser}
+                        screenShareStream={screenStream}
                         stopScreenShare={stopScreenShare}
                         remoteStreams={remoteStreams}
                         uniquePeers={uniquePeers}
@@ -837,13 +931,13 @@ const RoomPage = () => {
 
                 {/* Sidebar overlay (mobile) */}
                 {(showChat || showParticipants) && (
-                    <div className="md:hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-40 animate-in fade-in duration-200"
+                    <div className="tablet:hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-40 animate-in fade-in duration-200"
                         onClick={() => { setShowChat(false); setShowParticipants(false); }} />
                 )}
 
                 {/* Sidebar */}
                 {(showChat || showParticipants) && (
-                    <aside className={`absolute inset-y-0 right-0 w-full sm:w-[320px] z-50 md:static md:w-[280px] lg:w-[320px] shrink-0 h-full flex flex-col shadow-[0_0_50px_rgba(0,0,0,0.6)] animate-in slide-in-from-right duration-300
+                    <aside className={`absolute inset-y-0 right-0 w-full xs:w-[320px] z-50 tablet:static tablet:w-[300px] lg:w-[360px] shrink-0 h-full flex flex-col shadow-[0_0_50px_rgba(0,0,0,0.6)] animate-in slide-in-from-right duration-300
                         ${isDark ? 'bg-[#0d0f15] border-l border-white/6' : 'bg-white border-l border-gray-200'}`}>
 
                         {showParticipants && (
@@ -907,13 +1001,14 @@ const RoomPage = () => {
                 myRole={myRole} isMuted={isMuted} toggleMute={toggleMute}
                 isVideoOff={isVideoOff} toggleVideo={toggleVideo}
                 isSharingScreen={isSharingScreen} stopScreenShare={stopScreenShare} toggleScreenShare={toggleScreenShare}
+                openDocShare={openDocShare}
                 showShareMenu={showShareMenu} setShowShareMenu={setShowShareMenu}
                 canRecord={canRecord} isRecording={isRecording} startRecording={startRecording} stopRecording={stopRecording}
                 raiseHand={raiseHand}
                 showSettings={showSettings} setShowSettings={setShowSettings}
                 showChat={showChat} setShowChat={setShowChat}
                 showParticipants={showParticipants} setShowParticipants={setShowParticipants}
-                unreadMessages={unreadMessages} waitingBadge={waitingBadge}
+                unreadMessages={unreadMessages} waitingBadge={0}
                 roomUsers={roomUsers} leaveRoom={leaveRoom} endMeetingForAll={endMeetingForAll}
                 isHost={isHost} onHoldToTalkStart={handleHoldToTalkStart} onHoldToTalkEnd={handleHoldToTalkEnd}
                 mobileMenuOpen={mobileToolsOpen} setMobileMenuOpen={setMobileToolsOpen}
@@ -927,6 +1022,14 @@ const RoomPage = () => {
                     isHost={isHost} meeting={meeting} roomID={roomID}
                 />
             )}
+
+            <RoomDocShare
+                open={docShareOpen}
+                onClose={() => setDocShareOpen(false)}
+                isSharingScreen={isSharingScreen}
+                onStart={startDocShare}
+                onStop={stopScreenShare}
+            />
 
             {confirmModal}
         </div>

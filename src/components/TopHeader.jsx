@@ -2,11 +2,13 @@ import React, { useContext, useState, useRef, useEffect } from 'react';
 import { ThemeLanguageContext } from '../context/ThemeLanguageContext';
 import ThemeToggle from './ThemeToggle';
 import LanguageToggle from './LanguageToggle';
+import { useMediaQuery } from '../hooks/useMediaQuery';
 
 const TopHeader = ({ title, subtitle, isSidebarOpen, setIsSidebarOpen, actionButton, onNavAction }) => {
     const { lang } = useContext(ThemeLanguageContext);
     const [hostDropdownOpen, setHostDropdownOpen] = useState(false);
     const dropdownRef = useRef(null);
+    const isXs = useMediaQuery('(max-width: 479px)');
 
     useEffect(() => {
         const handler = (e) => {
@@ -90,10 +92,10 @@ const TopHeader = ({ title, subtitle, isSidebarOpen, setIsSidebarOpen, actionBut
                 {/* Divider */}
                 <div className="w-px h-6 bg-gray-200 dark:bg-white/10 hidden xs:block" />
 
-                {/* Language + Theme — compact on mobile, full on xs+ */}
+                {/* Language + Theme — compact on xs (<480px) */}
                 <div className="flex items-center gap-1.5 xs:gap-2">
-                    <LanguageToggle compact={false} />
-                    <ThemeToggle compact={false} />
+                    <LanguageToggle compact={isXs} />
+                    <ThemeToggle compact={isXs} />
                 </div>
 
                 {/* Mobile: Host icon button (only visible < sm) */}

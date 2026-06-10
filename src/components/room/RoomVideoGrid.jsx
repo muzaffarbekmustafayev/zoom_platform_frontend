@@ -7,7 +7,7 @@ const RoomVideoGrid = ({
     isDark, viewMode, gridClassMap, gridSize,
     effectiveStageUser, socketRef, stream,
     userInfo, myRole, isHost, isCoHost, isMuted, isVideoOff,
-    activeSharingUser, stopScreenShare,
+    activeSharingUser, screenShareStream, stopScreenShare,
     remoteStreams, uniquePeers, roomUsers,
     activeSpeakers, handRaisedUsers, currentTurnUserId,
     pinnedSocketId, setPinnedSocketId,
@@ -15,21 +15,42 @@ const RoomVideoGrid = ({
 }) => {
     const { lang } = useContext(ThemeLanguageContext);
 
+    // Demonstratsiya paytida default sahna — ekran; lekin biror tile pin qilinsa
+    // (host o'zini yoki boshqani tanlasa) sahnada o'sha odamning kamerasi ko'rsatiladi.
+    const showScreen = !!activeSharingUser && !pinnedSocketId;
+
     if (effectiveStageUser && viewMode === 'speaker') {
         return (
-            <div className="flex-1 flex flex-col md:flex-row overflow-hidden animate-in fade-in duration-500 relative gap-2">
+            <div className="flex-1 flex flex-col tablet:flex-row overflow-hidden animate-in fade-in duration-500 relative gap-2">
 
                 {/* ── Main Stage ── */}
-                <div className={`w-full flex-1 md:flex-initial md:flex-1 min-h-[40vh] md:min-h-0 relative rounded-xl overflow-hidden shadow-2xl flex items-center justify-center
+                <div className={`w-full flex-1 tablet:flex-initial tablet:flex-1 min-h-[40vh] tablet:min-h-0 relative rounded-xl overflow-hidden shadow-2xl flex items-center justify-center
                     ${isDark ? 'bg-[#0b0d13] border border-white/6' : 'bg-[#1a1d26] border border-gray-500/30'}`}>
 
-                    {effectiveStageUser.socketId === socketRef.current?.id ? (
-                        <Video stream={stream} userName={userInfo.name} role={myRole}
-                            isStage isLocal userVideoStatus={!isVideoOff} />
-                    ) : (() => {
+                    {(() => {
+                        // Demonstratsiya — sahnada EKRAN oqimi ko'rsatiladi (kamera emas);
+                        // prezenter kamerasi thumbnail lentada qoladi.
+                        if (showScreen) {
+                            return screenShareStream ? (
+                                <Video key={`screen-${activeSharingUser.socketId}`}
+                                    stream={screenShareStream} userName={activeSharingUser.userName}
+                                    role={activeSharingUser.role}
+                                    isStage isScreen isLocal={activeSharingUser.socketId === socketRef.current?.id}
+                                    userVideoStatus={true} />
+                            ) : (
+                                <div className="flex flex-col items-center gap-3 animate-pulse">
+                                    <div className="w-10 h-10 border-[3px] border-blue-500 border-t-transparent rounded-full animate-spin" />
+                                    <p className="text-xs font-medium text-gray-500 tracking-wide">Syncing stream…</p>
+                                </div>
+                            );
+                        }
+                        if (effectiveStageUser.socketId === socketRef.current?.id) {
+                            return <Video stream={stream} userName={userInfo.name} role={myRole}
+                                isStage isLocal userVideoStatus={!isVideoOff} />;
+                        }
                         const s = remoteStreams[effectiveStageUser.socketId];
                         return s ? (
-                            <Video key={`${effectiveStageUser.socketId}-${activeSharingUser ? 'sharing' : 'normal'}`}
+                            <Video key={`${effectiveStageUser.socketId}-normal`}
                                 stream={s} userName={effectiveStageUser.userName}
                                 role={effectiveStageUser.role || (effectiveStageUser.isHost ? 'host' : 'participant')}
                                 isStage isLocal={false} userVideoStatus={effectiveStageUser.videoStatus !== false} />
@@ -41,8 +62,17 @@ const RoomVideoGrid = ({
                         );
                     })()}
 
+                    {/* Pin paytida demonstratsiyaga qaytish tugmasi */}
+                    {activeSharingUser && !showScreen && (
+                        <button onClick={() => setPinnedSocketId(null)}
+                            className="absolute top-3 right-3 z-30 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 active:scale-95 text-white text-xs font-bold transition-all shadow-lg border border-blue-400/30">
+                            <MonitorUp size={12} />
+                            <span>{lang === 'uz' ? 'Demonstratsiyaga qaytish' : lang === 'ru' ? 'Вернуться к демонстрации' : 'Back to presentation'}</span>
+                        </button>
+                    )}
+
                     {/* Screen share banner */}
-                    {activeSharingUser && (
+                    {activeSharingUser && showScreen && (
                         <div className="absolute top-0 left-0 right-0 z-30 flex items-center justify-between px-3 sm:px-4 py-2.5 bg-gradient-to-b from-black/80 via-black/30 to-transparent">
                             <div className="flex items-center gap-1.5 bg-blue-600/90 backdrop-blur-sm px-2.5 py-1 rounded-lg border border-blue-400/30 shadow-lg">
                                 <MonitorUp size={12} className="text-blue-200 shrink-0" />
@@ -62,7 +92,7 @@ const RoomVideoGrid = ({
                     )}
 
                     {/* Stage user label */}
-                    {!activeSharingUser && (
+                    {!showScreen && (
                         <div className="absolute top-3 left-3 flex items-center gap-1.5 bg-black/40 backdrop-blur-sm px-2.5 py-1 rounded-lg border border-white/8 z-20 pointer-events-none">
                             <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                             <span className="text-[10px] font-semibold text-white/80 tracking-wide">{effectiveStageUser.userName}</span>
@@ -74,15 +104,17 @@ const RoomVideoGrid = ({
                 </div>
 
                 {/* ── Mobile thumbnail strip ── */}
-                <div className={`md:hidden flex flex-row gap-1.5 overflow-x-auto w-full px-1 py-1.5 shrink-0 snap-x custom-scrollbar backdrop-blur-sm rounded-xl mt-auto
+                <div className={`tablet:hidden flex flex-row gap-1.5 overflow-x-auto w-full px-1 py-1.5 shrink-0 snap-x custom-scrollbar backdrop-blur-sm rounded-xl mt-auto
                     ${isDark ? 'bg-black/30 border border-white/[0.06]' : 'bg-gray-800/30 border border-gray-500/30'}`}>
-                    {effectiveStageUser.socketId !== socketRef.current?.id && (
-                        <div className={`w-[88px] xs:w-[100px] sm:w-[110px] aspect-video shrink-0 snap-center bg-[#0e1016] rounded-lg overflow-hidden shadow-lg
+                    {(showScreen || effectiveStageUser.socketId !== socketRef.current?.id) && (
+                        <div onClick={() => setPinnedSocketId(pinnedSocketId === socketRef.current?.id ? null : socketRef.current?.id)}
+                            className={`w-[88px] xs:w-[100px] sm:w-[110px] aspect-video shrink-0 snap-center bg-[#0e1016] rounded-lg overflow-hidden shadow-lg cursor-pointer
                             ${activeSpeakers.has('__local__') ? 'ring-2 ring-emerald-400/70' : 'ring-1 ring-white/10'}`}>
                             <Video stream={stream} userName="You" role={myRole} isLocal isSpeaking={activeSpeakers.has('__local__')} userVideoStatus={!isVideoOff} />
                         </div>
                     )}
-                    {uniquePeers.filter(p => p.peerID !== effectiveStageUser.socketId).map((peerObj, idx) => {
+                    {/* Demonstratsiya paytida hamma (prezenter kamerasi ham) lentada ko'rinadi */}
+                    {uniquePeers.filter(p => showScreen ? true : p.peerID !== effectiveStageUser.socketId).map((peerObj, idx) => {
                         const user = roomUsers.find(u => u.socketId === peerObj.peerID);
                         const spk = activeSpeakers.has(peerObj.peerID);
                         return (
@@ -96,18 +128,25 @@ const RoomVideoGrid = ({
                     })}
                 </div>
 
-                {/* ── Desktop thumbnail strip ── */}
-                <div className="hidden md:flex flex-col w-[188px] lg:w-[210px] xl:w-[230px] shrink-0 gap-2 overflow-y-auto scroll-smooth pr-0.5">
-                    {effectiveStageUser.socketId !== socketRef.current?.id && (
-                        <div className={`relative shrink-0 aspect-video bg-[#0e1016] rounded-xl overflow-hidden shadow-md transition-all duration-200 cursor-pointer group
+                {/* ── Desktop thumbnail strip — chap tomonda, tepadan pastga, scroll bilan ── */}
+                <div className="hidden tablet:flex tablet:order-first flex-col w-[180px] lg:w-[210px] xl:w-[230px] shrink-0 gap-2 overflow-y-auto scroll-smooth custom-scrollbar pl-0.5">
+                    {(showScreen || effectiveStageUser.socketId !== socketRef.current?.id) && (
+                        <div onClick={() => setPinnedSocketId(pinnedSocketId === socketRef.current?.id ? null : socketRef.current?.id)}
+                            className={`relative shrink-0 aspect-video bg-[#0e1016] rounded-xl overflow-hidden shadow-md transition-all duration-200 cursor-pointer group
                             ${activeSpeakers.has('__local__') ? 'border-2 border-emerald-400/70' : isDark ? 'border border-white/8 hover:border-blue-500/40' : 'border border-gray-500/40 hover:border-blue-500/60'}`}>
                             <Video stream={stream} userName="You" role={myRole} isLocal isSpeaking={activeSpeakers.has('__local__')} userVideoStatus={!isVideoOff} />
                             {handRaisedUsers.includes(userInfo._id) && (
                                 <div className="absolute top-1.5 right-1.5 bg-amber-500/80 backdrop-blur-sm rounded-md p-0.5 animate-in zoom-in text-[10px]">✋</div>
                             )}
+                            {pinnedSocketId === socketRef.current?.id && (
+                                <div className="absolute top-1.5 left-1.5 bg-blue-600/80 backdrop-blur-sm rounded-md px-1.5 py-0.5">
+                                    <Pin size={9} className="text-white" />
+                                </div>
+                            )}
                         </div>
                     )}
-                    {uniquePeers.filter(p => p.peerID !== effectiveStageUser.socketId).map((peerObj, idx) => {
+                    {/* Demonstratsiya paytida hamma (prezenter kamerasi ham) ko'rinadi */}
+                    {uniquePeers.filter(p => showScreen ? true : p.peerID !== effectiveStageUser.socketId).map((peerObj, idx) => {
                         const user = roomUsers.find(u => u.socketId === peerObj.peerID);
                         const spk = activeSpeakers.has(peerObj.peerID);
                         return (

@@ -61,7 +61,7 @@ const MessageBubble = ({ msg, isOwn, prevMsg, onEdit, onDelete, canAct }) => {
                 </div>
             )}
 
-            <div className={`flex items-end gap-2 max-w-[82%] ${isOwn ? 'flex-row-reverse' : 'flex-row'}`}>
+            <div className={`flex items-end gap-2 max-w-[88%] sm:max-w-[82%] ${isOwn ? 'flex-row-reverse' : 'flex-row'}`}>
 
                 {/* Avatar */}
                 <div className="w-7 shrink-0 mb-0.5">

@@ -64,7 +64,7 @@ const RoomHeader = ({
                 )}
 
                 {/* Participant count */}
-                <div className={`hidden md:flex items-center gap-1 shrink-0 px-1.5 py-0.5 rounded-lg ${isDark ? 'bg-white/5' : 'bg-gray-100'}`}>
+                <div className={`hidden sm:flex items-center gap-1 shrink-0 px-1.5 py-0.5 rounded-lg ${isDark ? 'bg-white/5' : 'bg-gray-100'}`}>
                     <Users size={10} className="text-gray-500" />
                     <span className="text-[10px] font-semibold text-gray-500">{totalParticipantCount}</span>
                 </div>
@@ -92,7 +92,7 @@ const RoomHeader = ({
                         {viewMode === 'speaker'
                             ? <Presentation size={13} className="text-blue-400" />
                             : <LayoutGrid size={13} className="text-blue-400" />}
-                        <span className="hidden sm:inline text-[11px] font-bold">{viewMode === 'speaker' ? 'Speaker' : 'Gallery'}</span>
+                        <span className="hidden xs:inline text-[11px] font-bold">{viewMode === 'speaker' ? 'Speaker' : 'Gallery'}</span>
                         <ChevronDown size={12} className={`text-gray-500 transition-transform ${viewMenuOpen ? 'rotate-180' : ''}`} />
                     </button>
 

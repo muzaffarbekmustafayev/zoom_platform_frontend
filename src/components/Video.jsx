@@ -19,7 +19,7 @@ const getAvatarGradient = (name = '') => {
     return gradients[Math.abs(hash) % gradients.length];
 };
 
-const Video = ({ stream, userName, role, hasTurn, isStage, isLocal, userVideoStatus = true, isSpeaking = false }) => {
+const Video = ({ stream, userName, role, hasTurn, isStage, isLocal, isScreen = false, userVideoStatus = true, isSpeaking = false }) => {
     const ref = useRef();
     const { theme } = useContext(ThemeLanguageContext);
     const isDark = theme === 'dark';
@@ -108,10 +108,10 @@ const Video = ({ stream, userName, role, hasTurn, isStage, isLocal, userVideoSta
 
             {/* Avatar circle */}
             <div className={`relative bg-gradient-to-br ${avatarGradient} rounded-2xl flex items-center justify-center shadow-2xl
-                ${isStage ? 'w-24 h-24 sm:w-28 sm:h-28 rounded-3xl' : 'w-12 h-12 sm:w-16 sm:h-16 rounded-2xl'}`}
+                ${isStage ? 'w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-3xl' : 'w-10 h-10 sm:w-12 sm:h-12 md:w-16 md:h-16 rounded-2xl'}`}
                 style={{ boxShadow: `0 8px 32px rgba(0,0,0,0.4)` }}
             >
-                <span className={`font-black text-white tracking-tight ${isStage ? 'text-3xl sm:text-4xl' : 'text-lg sm:text-xl'}`}>{initials}</span>
+                <span className={`font-black text-white tracking-tight ${isStage ? 'text-2xl sm:text-3xl md:text-4xl' : 'text-base sm:text-lg md:text-xl'}`}>{initials}</span>
                 {hasTurn && (
                     <span className={`absolute -top-1.5 -right-1.5 w-4 h-4 bg-emerald-500 rounded-full border-2 ${isDark ? 'border-[#0e1016]' : 'border-[#1c2030]'} animate-pulse shadow-lg shadow-emerald-500/40`} />
                 )}
@@ -161,7 +161,7 @@ const Video = ({ stream, userName, role, hasTurn, isStage, isLocal, userVideoSta
                             ? (isStage ? 'object-contain block' : 'object-cover block')
                             : 'hidden'
                         }`}
-                        style={isLocal ? { transform: 'scaleX(-1)' } : undefined}
+                        style={isLocal && !isScreen ? { transform: 'scaleX(-1)' } : undefined}
                     />
                     {!showVideo && <AvatarFallback />}
                 </>

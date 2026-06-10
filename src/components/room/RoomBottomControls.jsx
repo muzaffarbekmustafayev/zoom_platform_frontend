@@ -2,7 +2,7 @@ import React, { useContext, useEffect, useRef, useState } from 'react';
 import {
     Mic, MicOff, Video as VideoIcon, VideoOff, MonitorUp, MonitorOff,
     Circle, StopCircle, Hand, Settings, MessageSquare,
-    Users, PhoneOff, MoreHorizontal, Copy, Check,
+    Users, PhoneOff, MoreHorizontal, Copy, Check, FileText,
 } from 'lucide-react';
 import { ThemeLanguageContext } from '../../context/ThemeLanguageContext';
 
@@ -14,6 +14,7 @@ const RoomBottomControls = ({
     isMuted, toggleMute,
     isVideoOff, toggleVideo,
     isSharingScreen, stopScreenShare, toggleScreenShare,
+    openDocShare,
     showShareMenu, setShowShareMenu,
     canRecord, isRecording, startRecording, stopRecording,
     raiseHand,
@@ -119,7 +120,7 @@ const RoomBottomControls = ({
         const bgClass = red
             ? 'bg-red-600 hover:bg-red-500 shadow-lg shadow-red-900/30'
             : danger
-                ? 'bg-red-500/90 hover:bg-red-500 shadow-md shadow-red-900/20'
+                ? 'bg-red-500 hover:bg-red-400 shadow-lg shadow-red-900/30 ring-2 ring-red-500/25'
                 : active
                     ? 'bg-blue-600/25 hover:bg-blue-600/35 ring-1 ring-blue-500/40'
                     : isDark ? 'bg-white/10 hover:bg-white/16' : 'bg-gray-100 hover:bg-gray-200';
@@ -161,7 +162,7 @@ const RoomBottomControls = ({
                     )}
                 </button>
                 {label && (
-                    <span className={`text-[9px] font-semibold whitespace-nowrap select-none leading-none ${labelColor}`}>
+                    <span className={`text-[10px] font-semibold whitespace-nowrap select-none leading-none ${labelColor}`}>
                         {label}
                     </span>
                 )}
@@ -206,7 +207,7 @@ const RoomBottomControls = ({
                                 onEnd={onMicPressEnd}
                                 danger={isMuted}
                                 active={!isMuted}
-                                titleProp={isMuted ? (t('ctl_unmute_hold') || 'Hold to talk') : (t('ctl_mute') || 'Mute')}
+                                title={isMuted ? (t('ctl_unmute_hold') || 'Click to unmute · Hold for push-to-talk') : (t('ctl_mute') || 'Mute mic')}
                             />
                             <Btn
                                 icon={isVideoOff ? <VideoOff size={19} /> : <VideoIcon size={19} />}
@@ -214,7 +215,7 @@ const RoomBottomControls = ({
                                 onClick={toggleVideo}
                                 danger={isVideoOff}
                                 active={!isVideoOff}
-                                titleProp={isVideoOff ? (t('ctl_start_video') || 'Start Video') : (t('ctl_stop_video') || 'Stop Video')}
+                                title={isVideoOff ? (t('ctl_start_video') || 'Start camera') : (t('ctl_stop_video') || 'Stop camera')}
                             />
 
                             <div className={`w-px h-8 mx-1 ${isDark ? 'bg-white/10' : 'bg-gray-200'}`} />
@@ -224,20 +225,29 @@ const RoomBottomControls = ({
                                 label={isSharingScreen ? (t('ctl_stop_share') || 'Stop Share') : (t('ctl_share') || 'Share')}
                                 onClick={handleShareClick}
                                 active={isSharingScreen}
+                                title={isSharingScreen ? (t('ctl_stop_share') || 'Stop screen share') : (t('ctl_share') || 'Share screen')}
+                            />
+                            <Btn
+                                icon={<FileText size={18} />}
+                                label={t('ctl_present_file') || 'Fayl'}
+                                onClick={openDocShare}
+                                title={t('ctl_present_file_full') || 'Fayl taqdimoti (PDF, Word, TXT, PPTX)'}
                             />
                             {canRecord && (
                                 <Btn
                                     icon={isRecording ? <StopCircle size={18} /> : <Circle size={18} />}
-                                    label={isRecording ? (t('ctl_stop_record') || 'Stop') : (t('ctl_record') || 'Record')}
+                                    label={isRecording ? '● REC' : (t('ctl_record') || 'Record')}
                                     onClick={isRecording ? stopRecording : startRecording}
                                     active={isRecording}
                                     pulse={isRecording}
+                                    title={isRecording ? (t('ctl_stop_record') || 'Stop recording') : (t('ctl_record') || 'Start recording')}
                                 />
                             )}
                             <Btn
                                 icon={<Hand size={18} />}
                                 label={t('ctl_raise') || 'Raise Hand'}
                                 onClick={raiseHand}
+                                title={t('ctl_raise_hand') || 'Raise hand'}
                             />
                         </>
                     )}
@@ -257,6 +267,7 @@ const RoomBottomControls = ({
                         label={t('ctl_settings') || 'Settings'}
                         active={showSettings}
                         onClick={() => setShowSettings(!showSettings)}
+                        title={t('ctl_settings') || 'Device settings'}
                     />
                     <Btn
                         icon={<MessageSquare size={16} />}
@@ -264,6 +275,7 @@ const RoomBottomControls = ({
                         active={showChat}
                         badge={unreadMessages}
                         onClick={() => { setShowChat(!showChat); setShowParticipants(false); }}
+                        title={t('ctl_chat') || 'Open chat'}
                     />
                     <Btn
                         icon={<Users size={16} />}
@@ -271,6 +283,7 @@ const RoomBottomControls = ({
                         active={showParticipants}
                         badge={waitingBadge}
                         onClick={() => { setShowParticipants(!showParticipants); setShowChat(false); }}
+                        title={t('ctl_people') || 'Participants'}
                     />
 
                     <div className="w-px h-8 bg-white/10 mx-1" />
@@ -322,14 +335,16 @@ const RoomBottomControls = ({
                             onEnd={onMicPressEnd}
                             danger={isMuted}
                             active={!isMuted}
+                            title={isMuted ? (t('ctl_unmute_hold') || 'Tap to unmute · Hold for push-to-talk') : (t('ctl_mute') || 'Mute mic')}
                         />
                         {/* Camera */}
                         <Btn
                             icon={isVideoOff ? <VideoOff size={18} /> : <VideoIcon size={18} />}
-                            label={isVideoOff ? (t('ctl_start_video') || 'Camera') : (t('ctl_stop_video') || 'Camera')}
+                            label={isVideoOff ? (t('ctl_start_video') || 'Start Cam') : (t('ctl_stop_video') || 'Stop Cam')}
                             onClick={toggleVideo}
                             danger={isVideoOff}
                             active={!isVideoOff}
+                            title={isVideoOff ? (t('ctl_start_video') || 'Start camera') : (t('ctl_stop_video') || 'Stop camera')}
                         />
                         {/* Chat */}
                         <Btn
@@ -338,14 +353,16 @@ const RoomBottomControls = ({
                             active={showChat}
                             badge={unreadMessages}
                             onClick={() => { setShowChat(!showChat); setShowParticipants(false); }}
+                            title={t('ctl_chat') || 'Open chat'}
                         />
                         {/* People */}
                         <Btn
                             icon={<Users size={18} />}
-                            label={roomUsers.length > 0 ? `(${roomUsers.length})` : (t('ctl_people') || 'People')}
+                            label={roomUsers.length > 0 ? `${t('ctl_people') || 'People'} (${roomUsers.length})` : (t('ctl_people') || 'People')}
                             active={showParticipants}
                             badge={waitingBadge}
                             onClick={() => { setShowParticipants(!showParticipants); setShowChat(false); }}
+                            title={t('ctl_people') || 'Participants'}
                         />
                         {/* More */}
                         <Btn
@@ -353,6 +370,7 @@ const RoomBottomControls = ({
                             label={t('ctl_more') || 'More'}
                             active={mobileMenuOpen}
                             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                            title={t('ctl_more') || 'More options'}
                         />
                     </>
                 ) : (
@@ -364,18 +382,21 @@ const RoomBottomControls = ({
                             active={showChat}
                             badge={unreadMessages}
                             onClick={() => { setShowChat(!showChat); setShowParticipants(false); }}
+                            title={t('ctl_chat') || 'Open chat'}
                         />
                         <Btn
                             icon={<Users size={18} />}
-                            label={roomUsers.length > 0 ? `(${roomUsers.length})` : (t('ctl_people') || 'People')}
+                            label={roomUsers.length > 0 ? `${t('ctl_people') || 'People'} (${roomUsers.length})` : (t('ctl_people') || 'People')}
                             active={showParticipants}
                             badge={waitingBadge}
                             onClick={() => { setShowParticipants(!showParticipants); setShowChat(false); }}
+                            title={t('ctl_people') || 'Participants'}
                         />
                         <Btn
                             icon={<Hand size={18} />}
-                            label={t('ctl_raise') || 'Hand'}
+                            label={t('ctl_raise') || 'Raise Hand'}
                             onClick={raiseHand}
+                            title={t('ctl_raise_hand') || 'Raise hand'}
                         />
                     </>
                 )}
@@ -389,7 +410,7 @@ const RoomBottomControls = ({
                         <div className="w-11 h-11 rounded-2xl bg-red-600 hover:bg-red-500 flex items-center justify-center transition-all active:scale-95 shadow-lg shadow-red-900/30">
                             <PhoneOff size={18} className="text-white" />
                         </div>
-                        <span className="text-[9px] font-semibold text-red-400">
+                        <span className="text-[10px] font-semibold text-red-400">
                             {t('ctl_leave') || 'Leave'}
                         </span>
                     </button>
@@ -420,6 +441,11 @@ const RoomBottomControls = ({
 
             {/* ── Mobile "More" dropdown ── */}
             {mobileMenuOpen && (
+                <>
+                <div
+                    className="fixed inset-0 z-40 sm:hidden"
+                    onClick={() => setMobileMenuOpen(false)}
+                />
                 <div
                     role="menu"
                     className={`absolute bottom-full right-2 mb-2 w-64 rounded-2xl shadow-2xl p-2 sm:hidden z-50 animate-in slide-in-from-bottom-2 fade-in duration-200 ${isDark ? 'border border-white/10 bg-[#1e2028]' : 'border border-gray-200 bg-white'}`}
@@ -441,6 +467,13 @@ const RoomBottomControls = ({
                         }
                         {isSharingScreen ? (t('ctl_stop_sharing') || 'Stop Sharing') : (t('ctl_share_screen') || 'Share Screen')}
                     </button>
+                    <button
+                        onClick={() => { setMobileMenuOpen(false); openDocShare?.(); }}
+                        className={`w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors ${isDark ? 'text-gray-200 hover:bg-white/8' : 'text-gray-700 hover:bg-gray-50'}`}
+                    >
+                        <FileText size={15} className="text-blue-400 shrink-0" />
+                        {t('ctl_present_file_full') || 'Fayl taqdimoti (PDF, Word…)'}
+                    </button>
                     {canRecord && (
                         <button
                             onClick={() => { isRecording ? stopRecording() : startRecording(); setMobileMenuOpen(false); }}
@@ -461,6 +494,7 @@ const RoomBottomControls = ({
                         {t('ctl_settings') || 'Settings'}
                     </button>
                 </div>
+                </>
             )}
         </div>
     );
