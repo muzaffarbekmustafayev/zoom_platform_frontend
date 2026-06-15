@@ -68,17 +68,19 @@ const MessageBubble = ({ msg, isOwn, prevMsg, onEdit, onDelete, canAct }) => {
                     {!isOwn && senderChanged && <Avatar name={msg.userName} />}
                 </div>
 
-                {/* Actions */}
-                {isOwn && canAct && !msg.file && (
+                {/* Actions — fayl uchun faqat o'chirish (tahrirlab bo'lmaydi) */}
+                {isOwn && canAct && msg._id && (
                     <div className={`flex items-center gap-0.5 self-end mb-1 transition-all duration-150
                         ${hovered ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
-                        <button
-                            onClick={() => onEdit(msg._id, msg.text)}
-                            className="p-1.5 rounded-lg text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-500/10 transition-colors"
-                            title={t('chat_edit')}
-                        >
-                            <Pencil size={11} />
-                        </button>
+                        {!msg.file && (
+                            <button
+                                onClick={() => onEdit(msg._id, msg.text)}
+                                className="p-1.5 rounded-lg text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-500/10 transition-colors"
+                                title={t('chat_edit')}
+                            >
+                                <Pencil size={11} />
+                            </button>
+                        )}
                         <button
                             onClick={() => onDelete(msg._id)}
                             className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
@@ -120,15 +122,24 @@ const TimeRow = ({ isOwn, time }) => (
     </div>
 );
 
+const fmtBytes = (n) => {
+    if (!n || n < 0) return '';
+    if (n < 1024) return `${n} B`;
+    if (n < 1024 * 1024) return `${Math.round(n / 1024)} KB`;
+    return `${(n / 1024 / 1024).toFixed(1)} MB`;
+};
+
 const FileMsgContent = ({ msg, isOwn }) => {
     const { t } = useContext(ThemeLanguageContext);
+    const sizeLabel = fmtBytes(msg.file?.size);
     return (
         <div className="flex items-center gap-3 py-0.5 min-w-[160px]">
             <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${isOwn ? 'bg-white/20' : 'bg-blue-50 dark:bg-blue-500/15'}`}>
                 <FileText size={16} className={isOwn ? 'text-white' : 'text-blue-600 dark:text-blue-400'} />
             </div>
             <div className="flex-1 min-w-0">
-                <p className="text-[11px] font-semibold truncate mb-1">{msg.file.name}</p>
+                <p className="text-[11px] font-semibold truncate mb-0.5">{msg.file.name}</p>
+                {sizeLabel && <p className="text-[9px] mb-1" style={{ opacity: 0.6 }}>{sizeLabel}</p>}
                 <a
                     href={msg.file.data}
                     download={msg.file.name}
@@ -264,7 +275,7 @@ const ChatPanel = ({
                             {/* Attach */}
                             <label className="w-9 h-9 flex items-center justify-center rounded-xl text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-500/10 transition-colors cursor-pointer shrink-0"
                                 title={t('chat_attach')}>
-                                <input type="file" className="hidden" onChange={handleFileUpload} />
+                                <input type="file" accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.csv,.png,.jpg,.jpeg,.gif,.webp,.zip" className="hidden" onChange={handleFileUpload} />
                                 <Paperclip size={16} />
                             </label>
 

@@ -2,16 +2,32 @@ import React, { useRef, useState, useEffect, useContext, useCallback } from 'rea
 import { X, ChevronLeft, ChevronRight, FileText, Play, Square, Upload } from 'lucide-react';
 import { ThemeLanguageContext } from '../../context/ThemeLanguageContext';
 import * as pdfjsLib from 'pdfjs-dist';
-import pdfWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
+import PdfjsWorker from 'pdfjs-dist/build/pdf.worker.min.mjs?worker';
 import mammoth from 'mammoth/mammoth.browser';
 import JSZip from 'jszip';
 
-pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
+// Vite + pdfjs v4: ishonchli usul — Worker'ni ?worker orqali yaratib, workerPort ga ulash.
+// (workerSrc=URL ba'zi muhitlarda renderni jim qoldiradi.) Birinchi PDF'da yaratiladi.
+let pdfWorkerStarted = false;
+function ensurePdfWorker() {
+    if (pdfWorkerStarted) return;
+    try { pdfjsLib.GlobalWorkerOptions.workerPort = new PdfjsWorker(); }
+    catch (e) { console.error('pdf worker init:', e); }
+    pdfWorkerStarted = true;
+}
 
-// Canvas o'lchami — 16:9, taqdimot uchun yetarli aniqlik
-const CW = 1600;
-const CH = 900;
+// Canvas — hujjatga moslashuvchi o'lcham. Eng uzun tomon shu qiymatga teng bo'ladi.
+const MAX_SIDE = 1920;
+// Standart 16:9 (slaydlar uchun) va A4 portret (matn/docx uchun) o'lchamlari
+const DIMS_169 = { w: 1600, h: 900 };
+const DIMS_A4 = { w: 1240, h: 1754 };
 const ACCEPT = '.pdf,.txt,.docx,.pptx';
+
+// Berilgan kenglik/balandlik nisbatidan canvas o'lchamini hisoblash (eng uzun tomon = MAX_SIDE)
+function fitDims(w, h) {
+    const s = MAX_SIDE / Math.max(w, h);
+    return { w: Math.max(1, Math.round(w * s)), h: Math.max(1, Math.round(h * s)) };
+}
 
 // Matnni canvas kengligiga sig'adigan qatorlarga bo'lish
 function wrapText(ctx, text, maxWidth) {
@@ -32,7 +48,11 @@ function wrapText(ctx, text, maxWidth) {
 const RoomDocShare = ({ open, onClose, isSharingScreen, onStart, onStop }) => {
     const { lang, theme } = useContext(ThemeLanguageContext);
     const isDark = theme === 'dark';
-    const canvasRef = useRef(null);
+    const canvasRef = useRef(null);   // captureStream olinadigan asosiy canvas (uzluksiz yangilanadi)
+    const bufferRef = useRef(null);   // sahifa bir marta chiziladigan offscreen buffer
+    if (bufferRef.current === null && typeof document !== 'undefined') {
+        bufferRef.current = document.createElement('canvas');
+    }
     const pdfDocRef = useRef(null);
 
     const [doc, setDoc] = useState(null);       // { type: 'pdf'|'text'|'slides', pageCount, textPages?, slides? }
@@ -41,6 +61,7 @@ const RoomDocShare = ({ open, onClose, isSharingScreen, onStart, onStop }) => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [presenting, setPresenting] = useState(false); // shu komponent boshlagan demonstratsiya
+    const [dims, setDims] = useState(DIMS_169); // canvas o'lchami — hujjatga moslashadi
 
     const L = (uz, ru, en) => (lang === 'uz' ? uz : lang === 'ru' ? ru : en);
 
@@ -51,9 +72,15 @@ const RoomDocShare = ({ open, onClose, isSharingScreen, onStart, onStop }) => {
 
     // ── Sahifani canvas'ga chizish ─────────────────────────────────────────────
     const renderPage = useCallback(async (n) => {
-        const canvas = canvasRef.current;
-        if (!canvas || !doc) return;
-        const ctx = canvas.getContext('2d');
+        // Sahifa OFFSCREEN buffer'ga chiziladi. Asosiy canvas (captureStream manbasi)
+        // esa alohida halqada uzluksiz yangilanadi — shunda xonadagi ishtirokchilar
+        // uchun video oqimi muzlab/qorayib qolmaydi.
+        const buf = bufferRef.current;
+        if (!buf || !doc) return;
+        const CW = dims.w, CH = dims.h;
+        if (buf.width !== CW) buf.width = CW;
+        if (buf.height !== CH) buf.height = CH;
+        const ctx = buf.getContext('2d');
         ctx.fillStyle = '#1a1d26';
         ctx.fillRect(0, 0, CW, CH);
 
@@ -61,16 +88,17 @@ const RoomDocShare = ({ open, onClose, isSharingScreen, onStart, onStop }) => {
             try {
                 const page = await pdfDocRef.current.getPage(n);
                 const vp1 = page.getViewport({ scale: 1 });
+                // Canvas hujjat nisbatiga moslashgani uchun sahifani to'liq sig'diramiz
                 const scale = Math.min(CW / vp1.width, CH / vp1.height);
                 const vp = page.getViewport({ scale });
                 const off = document.createElement('canvas');
-                off.width = vp.width; off.height = vp.height;
+                off.width = Math.round(vp.width); off.height = Math.round(vp.height);
                 await page.render({ canvasContext: off.getContext('2d'), viewport: vp }).promise;
-                ctx.drawImage(off, (CW - vp.width) / 2, (CH - vp.height) / 2);
+                ctx.drawImage(off, (CW - off.width) / 2, (CH - off.height) / 2);
             } catch (e) { console.error('PDF render:', e); }
         } else if (doc.type === 'text') {
             // Oq sahifa + matn
-            const m = 100;
+            const m = Math.round(CW * 0.08);
             ctx.fillStyle = '#ffffff';
             ctx.fillRect(m / 2, 20, CW - m, CH - 40);
             ctx.fillStyle = '#111827';
@@ -108,17 +136,41 @@ const RoomDocShare = ({ open, onClose, isSharingScreen, onStart, onStop }) => {
         ctx.font = 'bold 20px Inter, Arial, sans-serif';
         ctx.textBaseline = 'middle';
         ctx.fillText(`${n} / ${doc.pageCount}`, CW - 150, CH - 38);
-    }, [doc]);
+    }, [doc, dims]);
 
-    useEffect(() => { if (doc) renderPage(pageNum); }, [doc, pageNum, renderPage]);
+    // doc, sahifa yoki o'lcham o'zgarsa sahifani buffer'ga qayta chizamiz.
+    useEffect(() => {
+        if (doc) renderPage(pageNum);
+    }, [doc, pageNum, dims, renderPage]);
+
+    // Uzluksiz blit halqasi: buffer → asosiy canvas. Preview ochiq yoki taqdimot
+    // davom etayotganda ishlaydi. Bu captureStream'ni "jonli" tutadi (har kadr yangi
+    // surat) — aks holda statik canvas remote tomonda qora/muzlagan kadr berishi mumkin.
+    useEffect(() => {
+        if (!doc || !(open || presenting)) return;
+        let raf;
+        const tick = () => {
+            const main = canvasRef.current, buf = bufferRef.current;
+            if (main && buf && buf.width) {
+                if (main.width !== buf.width) main.width = buf.width;
+                if (main.height !== buf.height) main.height = buf.height;
+                main.getContext('2d').drawImage(buf, 0, 0);
+            }
+            raf = requestAnimationFrame(tick);
+        };
+        raf = requestAnimationFrame(tick);
+        return () => cancelAnimationFrame(raf);
+    }, [doc, open, presenting]);
 
     // ── Fayl o'qish ────────────────────────────────────────────────────────────
-    const paginateText = (text) => {
+    const paginateText = (text, d = DIMS_A4) => {
         const canvas = canvasRef.current;
         const ctx = canvas.getContext('2d');
         ctx.font = '26px Inter, Arial, sans-serif';
-        const lines = wrapText(ctx, text, CW - 200);
-        const perPage = 20;
+        const margin = Math.round(d.w * 0.08);
+        const lines = wrapText(ctx, text, d.w - 2 * margin);
+        // Sahifa balandligiga qarab bir sahifaga sig'adigan qatorlar soni (qator balandligi 38px)
+        const perPage = Math.max(8, Math.floor((d.h - 100) / 38));
         const pages = [];
         for (let i = 0; i < lines.length; i += perPage) pages.push(lines.slice(i, i + perPage));
         return pages.length ? pages : [['(bo\'sh hujjat)']];
@@ -133,16 +185,23 @@ const RoomDocShare = ({ open, onClose, isSharingScreen, onStart, onStop }) => {
         try {
             const buf = await file.arrayBuffer();
             if (ext === 'pdf') {
+                ensurePdfWorker();
                 const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
                 pdfDocRef.current = pdf;
+                // Canvas'ni birinchi sahifa o'lchamiga moslaymiz (portret/landshaft)
+                const p1 = await pdf.getPage(1);
+                const v = p1.getViewport({ scale: 1 });
+                setDims(fitDims(v.width, v.height));
                 setDoc({ type: 'pdf', pageCount: pdf.numPages });
             } else if (ext === 'txt') {
                 const text = new TextDecoder('utf-8').decode(buf);
-                const pages = paginateText(text);
+                const pages = paginateText(text, DIMS_A4);
+                setDims(DIMS_A4);
                 setDoc({ type: 'text', pageCount: pages.length, textPages: pages });
             } else if (ext === 'docx') {
                 const result = await mammoth.extractRawText({ arrayBuffer: buf });
-                const pages = paginateText(result.value || '');
+                const pages = paginateText(result.value || '', DIMS_A4);
+                setDims(DIMS_A4);
                 setDoc({ type: 'text', pageCount: pages.length, textPages: pages });
             } else if (ext === 'pptx') {
                 const zip = await JSZip.loadAsync(buf);
@@ -159,6 +218,7 @@ const RoomDocShare = ({ open, onClose, isSharingScreen, onStart, onStop }) => {
                     slides.push(paras.length ? paras : ['(matn yo\'q)']);
                 }
                 if (!slides.length) throw new Error('no slides');
+                setDims(DIMS_169);
                 setDoc({ type: 'slides', pageCount: slides.length, slides });
             } else {
                 throw new Error('unsupported');
@@ -176,7 +236,7 @@ const RoomDocShare = ({ open, onClose, isSharingScreen, onStart, onStop }) => {
     // ── Boshlash / to'xtatish ──────────────────────────────────────────────────
     const startPresenting = () => {
         if (!doc || !canvasRef.current) return;
-        const stream = canvasRef.current.captureStream(10); // 10fps — hujjat uchun yetarli
+        const stream = canvasRef.current.captureStream(15); // 15fps — uzluksiz halqa bilan jonli oqim
         const ok = onStart(stream);
         if (ok) { setPresenting(true); onClose(); }
         else stream.getTracks().forEach(t => t.stop());
@@ -202,8 +262,12 @@ const RoomDocShare = ({ open, onClose, isSharingScreen, onStart, onStop }) => {
 
     return (
         <>
-            {/* Canvas doim DOM'da turadi — captureStream undan o'qiydi */}
-            <canvas ref={canvasRef} width={CW} height={CH} className="hidden" />
+            {/* Canvas doim DOM'da va RENDER bo'ladi (display:none EMAS!) — aks holda
+                captureStream qora kadr beradi. Ekrandan tashqarida, ko'rinmas turadi. */}
+            {/* width/height JSX'da YO'Q — o'lcham renderPage ichida imperativ o'rnatiladi
+                (React canvas'ni tozalab render bilan poyga qilmasin). */}
+            <canvas ref={canvasRef} aria-hidden="true"
+                style={{ position: 'fixed', left: '-99999px', top: 0, pointerEvents: 'none', opacity: 0.01 }} />
 
             {/* ── Fayl tanlash / preview modal ── */}
             {open && (
@@ -232,7 +296,7 @@ const RoomDocShare = ({ open, onClose, isSharingScreen, onStart, onStop }) => {
                         {doc && !loading && (
                             <>
                                 {/* Jonli preview — canvas'dan nusxa */}
-                                <DocPreview canvasRef={canvasRef} pageNum={pageNum} doc={doc} />
+                                <DocPreview canvasRef={canvasRef} pageNum={pageNum} doc={doc} dims={dims} />
                                 <div className="mt-3 flex items-center justify-between">
                                     <div className="flex items-center gap-2">
                                         <button onClick={prev} disabled={pageNum <= 1}
@@ -275,22 +339,28 @@ const RoomDocShare = ({ open, onClose, isSharingScreen, onStart, onStop }) => {
     );
 };
 
-// Modal ichida jonli preview — asosiy canvas'dan kichik nusxa
-const DocPreview = ({ canvasRef, pageNum, doc }) => {
+// Modal ichida jonli preview — asosiy canvas'dan kichik nusxa.
+// Preview o'lchami hujjat nisbatiga moslashadi (portret hujjatlar cho'zilmasin).
+const DocPreview = ({ canvasRef, pageNum, doc, dims = DIMS_169 }) => {
     const ref = useRef(null);
+    const PW = 640;
+    const PH = Math.round(PW * dims.h / dims.w);
     useEffect(() => {
         let raf;
         const copy = () => {
             if (ref.current && canvasRef.current) {
                 const ctx = ref.current.getContext('2d');
+                ctx.clearRect(0, 0, ref.current.width, ref.current.height);
                 ctx.drawImage(canvasRef.current, 0, 0, ref.current.width, ref.current.height);
             }
             raf = requestAnimationFrame(copy);
         };
         raf = requestAnimationFrame(copy);
         return () => cancelAnimationFrame(raf);
-    }, [canvasRef, pageNum, doc]);
-    return <canvas ref={ref} width={640} height={360} className="mt-4 w-full rounded-xl border border-white/10" />;
+    }, [canvasRef, pageNum, doc, dims]);
+    return <canvas ref={ref} width={PW} height={PH}
+        className="mt-4 w-full rounded-xl border border-white/10 bg-[#1a1d26]"
+        style={{ maxHeight: '60vh', objectFit: 'contain' }} />;
 };
 
 export default RoomDocShare;

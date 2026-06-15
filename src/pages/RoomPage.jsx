@@ -16,7 +16,8 @@ import RoomVideoGrid            from '../components/room/RoomVideoGrid';
 import RoomParticipantsSidebar  from '../components/room/RoomParticipantsSidebar';
 import RoomPasswordModal        from '../components/room/RoomPasswordModal';
 import RoomDocShare             from '../components/room/RoomDocShare';
-import { AccessDenied } from '../components/room/RoomScreens';
+import { AccessDenied, WaitingRoom } from '../components/room/RoomScreens';
+import WaitingToasts from '../components/room/WaitingToasts';
 
 // ── ICE configuration ──────────────────────────────────────────────────────────
 // STUN topadi, TURN esa NAT/firewall ortidagi foydalanuvchilar uchun relay —
@@ -31,6 +32,14 @@ const ICE_CONFIG = {
         }] : []),
     ],
 };
+
+// Opus kodek sozlamalari (SDP orqali):
+// useinbandfec=1 — paket yo'qolganda ovozni tiklash (FEC), zaif tarmoqda uzilishlar kamayadi
+// usedtx=1       — jimlikda deyarli trafik yubormaslik (bandwidth tejaladi)
+// maxaveragebitrate=48000 — nutq uchun yuqori sifat
+const tuneOpusSdp = (sdp) =>
+    sdp.replace(/(a=fmtp:\d+ minptime=10;useinbandfec=1)/g,
+        '$1;usedtx=1;maxaveragebitrate=48000;cbr=0');
 
 const RoomPage = () => {
     const { id: roomID } = useParams();
@@ -76,6 +85,8 @@ const RoomPage = () => {
     const [myRole, setMyRole]                 = useState(null);
     const [passwordRequired, setPasswordRequired] = useState(false);
     const [accessDenied, setAccessDenied]     = useState(false);
+    const [inWaitingRoom, setInWaitingRoom]   = useState(false); // men kutish xonasidaman (host tasdig'ini kutyapman)
+    const [waitingToasts, setWaitingToasts]   = useState([]);    // host/cohost ko'radigan kutayotganlar ro'yxati
     const [meetingElapsed, setMeetingElapsed] = useState('00:00:00');
     const [networkInfo, setNetworkInfo]       = useState({ label: 'Stable', ping: 32, tone: 'text-emerald-500' });
     const [viewMode, setViewMode]             = useState('speaker');
@@ -159,6 +170,7 @@ const RoomPage = () => {
             try { sharedVadCtxRef.current = new Ctx(); } catch (_) { return; }
         }
         const ctx = sharedVadCtxRef.current;
+        if (ctx.state === 'suspended') ctx.resume().catch(() => {});
         const cur = remoteAnalysersRef.current;
         for (const sid of Object.keys(cur)) {
             if (!remoteStreams[sid]) {
@@ -236,6 +248,25 @@ const RoomPage = () => {
 
     useEffect(() => { isSharingScreenRef.current = isSharingScreen; }, [isSharingScreen]);
 
+    // Autoplay siyosati tufayli to'xtab qolgan AudioContext'larni birinchi
+    // foydalanuvchi harakatida (klik/klaviatura) uyg'otamiz — aks holda
+    // mikrofon zanjiri va VAD jim ishlaydi.
+    useEffect(() => {
+        const resumeAll = () => {
+            [micAudioCtxRef.current, sharedVadCtxRef.current, audioContextRef.current].forEach(ctx => {
+                if (ctx && ctx.state === 'suspended') ctx.resume().catch(() => {});
+            });
+        };
+        document.addEventListener('click', resumeAll);
+        document.addEventListener('keydown', resumeAll);
+        document.addEventListener('touchstart', resumeAll);
+        return () => {
+            document.removeEventListener('click', resumeAll);
+            document.removeEventListener('keydown', resumeAll);
+            document.removeEventListener('touchstart', resumeAll);
+        };
+    }, []);
+
     useEffect(() => {
         if (activeSharingUser && activeSharingUser.userId !== userInfo._id) {
             setToastMessage(`${activeSharingUser.userName} is sharing their screen`);
@@ -258,25 +289,22 @@ const RoomPage = () => {
         return () => { document.removeEventListener('keydown', onDown); document.removeEventListener('keyup', onUp); };
     }, [myRole, isMuted]);
 
-    // ── Audio processing chain ────────────────────────────────────────────────
-    function buildAudioProcessingChain(rawTrack) {
+    // ── Lokal VAD analyser ────────────────────────────────────────────────────
+    // MUHIM: mikrofon ovozi endi AudioContext orqali O'TKAZILMAYDI — xom trek
+    // to'g'ridan-to'g'ri uzatiladi (brauzerning EC/NS/AGC dsp'si yetarli).
+    // Kontekst uxlab qolganda ovoz jim ketish xavfi shu bilan butunlay yo'qoladi.
+    // AudioContext faqat "gapiryapti" indikatori (VAD) uchun tahlilga ulanadi.
+    function buildLocalAnalyser(track) {
         const Ctx = window.AudioContext || window.webkitAudioContext;
-        if (!Ctx || !rawTrack) return null;
+        if (!Ctx || !track) return null;
         try {
-            const ctx = new Ctx({ sampleRate: 48000 });
-            const hp = ctx.createBiquadFilter();
-            hp.type = 'highpass'; hp.frequency.value = 80; hp.Q.value = 0.7;
-            const comp = ctx.createDynamicsCompressor();
-            comp.threshold.value = -24; comp.knee.value = 30; comp.ratio.value = 4;
-            comp.attack.value = 0.003; comp.release.value = 0.25;
-            const gain = ctx.createGain(); gain.gain.value = 1.3;
+            const ctx = new Ctx();
+            if (ctx.state === 'suspended') ctx.resume().catch(() => {});
             const analyser = ctx.createAnalyser();
             analyser.fftSize = 512; analyser.smoothingTimeConstant = 0.4;
-            const dest = ctx.createMediaStreamDestination();
-            const src = ctx.createMediaStreamSource(new MediaStream([rawTrack]));
-            src.connect(hp); hp.connect(comp); comp.connect(gain); gain.connect(analyser); analyser.connect(dest);
-            return { ctx, processedTrack: dest.stream.getAudioTracks()[0], analyser };
-        } catch (e) { console.error('Audio processing failed:', e); return null; }
+            ctx.createMediaStreamSource(new MediaStream([track])).connect(analyser);
+            return { ctx, analyser };
+        } catch (e) { console.error('VAD analyser failed:', e); return null; }
     }
 
     // ── WebRTC peer helpers ───────────────────────────────────────────────────
@@ -325,7 +353,7 @@ const RoomPage = () => {
     // trickle: true — ICE kandidatlar tayyor bo'lishi bilan yuboriladi,
     // ulanish bir necha soniyaga tezlashadi va muvaffaqiyat darajasi oshadi.
     function createPeer(userToSignal, callerID, stream, callerUserId, socket) {
-        const peer = new Peer({ initiator: true, trickle: true, stream, config: ICE_CONFIG });
+        const peer = new Peer({ initiator: true, trickle: true, stream, config: ICE_CONFIG, sdpTransform: tuneOpusSdp });
         peer.on('signal', signal => socket.emit('sending-signal', { userToSignal, callerID, signal, callerUserId }));
         peer.on('stream', s => registerRemoteStream(userToSignal, s));
         peer.on('error', () => toast.error(lang === 'uz' ? 'Ulanishda xatolik.' : lang === 'ru' ? 'Ошибка подключения.' : 'Connection error.'));
@@ -334,7 +362,7 @@ const RoomPage = () => {
     }
 
     function addPeer(incomingSignal, callerID, stream, socket) {
-        const peer = new Peer({ initiator: false, trickle: true, stream, config: ICE_CONFIG });
+        const peer = new Peer({ initiator: false, trickle: true, stream, config: ICE_CONFIG, sdpTransform: tuneOpusSdp });
         peer.on('signal', signal => socket.emit('returning-signal', { signal, callerID }));
         peer.on('stream', s => registerRemoteStream(callerID, s));
         peer.on('error', () => toast.error(lang === 'uz' ? 'Ulanishda xatolik.' : lang === 'ru' ? 'Ошибка подключения.' : 'Connection error.'));
@@ -386,7 +414,20 @@ const RoomPage = () => {
             setTimeout(() => setToastMessage(null), 3000);
             setTimeout(() => setHandRaisedUsers(p => p.filter(id => id !== userId)), 10000);
         });
-        socket.on('update-user-list', users => setRoomUsers(users));
+        socket.on('update-user-list', users => {
+            setRoomUsers(users);
+            // myRole'ni serverning rasmiy ro'yxati bilan sinxron tutamiz — badge va
+            // ruxsatlar (fayl taqdimoti, moderatsiya) har doim to'g'ri rol bilan ishlaydi.
+            const me = users.find(u => u.userId === userInfo._id || u.socketId === socket.id);
+            if (me?.role) setMyRole(me.role);
+        });
+        // ── Kutish xonasi (private xona ruxsat oqimi) ──
+        // Men kutish xonasiga tushdim — host qabul qilguncha kutaman
+        socket.on('in-waiting-room', () => setInWaitingRoom(true));
+        // Host/cohost: kutayotganlar ro'yxati yangilandi
+        socket.on('waiting-room-update', list => setWaitingToasts(Array.isArray(list) ? list : []));
+        // Host meni rad etdi
+        socket.on('waiting-room-denied', () => { setInWaitingRoom(false); setAccessDenied(true); });
         // Delta sinxronlashuv: mic/video holati o'zgarganda to'liq ro'yxat emas,
         // faqat o'zgargan foydalanuvchi yangilanadi (katta xonada O(N²) → O(N))
         socket.on('user-media-updated', ({ socketId, micStatus, videoStatus }) =>
@@ -445,7 +486,8 @@ const RoomPage = () => {
             setActiveSharingUser(null);
             setScreenStream(null);
         });
-        socket.on('your-role',    ({ role }) => { setMyRole(role); });
+        // your-role faqat xonaga qabul qilingach keladi — kutish ekranini yopamiz
+        socket.on('your-role',    ({ role }) => { setMyRole(role); setInWaitingRoom(false); });
         socket.on('role-updated', ({ role }) => setMyRole(role));
         socket.on('host-changed', ({ newHostUserId, newHostName }) => {
             if (newHostUserId === userInfo._id) { setMyRole('host'); toast.success(lang === 'uz' ? "Siz xona yetakchisi bo'ldingiz" : 'You are now the host'); }
@@ -458,6 +500,15 @@ const RoomPage = () => {
                 sessionStorage.setItem(`mic-${roomID}`, 'false');
                 socket.emit('update-media-status', { roomId: roomID, micStatus: false });
             }
+        });
+        // Mute-on-entry: host muteAllOnEntry yoqqan — kirishda mikrofon majburan o'chadi
+        socket.on('mute-on-entry', () => {
+            const track = streamRef.current?.getAudioTracks()[0];
+            if (track) track.enabled = false;
+            setIsMuted(true);
+            sessionStorage.setItem(`mic-${roomID}`, 'false');
+            socket.emit('update-media-status', { roomId: roomID, micStatus: false });
+            toast.info(lang === 'ru' ? 'Вы вошли с выключенным микрофоном' : lang === 'en' ? 'You joined with your mic off' : 'Mikrofon o\'chiq holda qo\'shildingiz');
         });
         socket.on('meeting-ended', () => { toast.info(t('meeting_ended_msg')); navigate('/'); });
         socket.on('all-users', users => {
@@ -510,14 +561,12 @@ const RoomPage = () => {
                 cur.getVideoTracks().forEach(t => { t.enabled = videoOn; });
                 const rawAudio = cur.getAudioTracks()[0];
                 if (rawAudio) {
-                    const res = buildAudioProcessingChain(rawAudio);
+                    // 'speech' — kodek nutq uchun optimallashadi
+                    try { rawAudio.contentHint = 'speech'; } catch (_) {}
+                    const res = buildLocalAnalyser(rawAudio);
                     if (res) {
                         micAudioCtxRef.current = res.ctx;
-                        rawMicTrackRef.current = rawAudio;
                         localAnalyserRef.current = res.analyser;
-                        res.processedTrack.enabled = micOn;
-                        cur.removeTrack(rawAudio);
-                        cur.addTrack(res.processedTrack);
                     }
                 }
                 setIsMuted(!micOn); setIsVideoOff(!videoOn);
@@ -609,21 +658,24 @@ const RoomPage = () => {
         try {
             const base = { echoCancellation: true, noiseSuppression: true, autoGainControl: true, channelCount: 1, sampleRate: 48000 };
             const ns = await navigator.mediaDevices.getUserMedia({ audio: { deviceId: { exact: deviceId }, ...base } });
-            const rawNew = ns.getAudioTracks()[0];
-            const oldPr = streamRef.current?.getAudioTracks()[0];
-            const prevOn = oldPr ? oldPr.enabled : true;
+            const newTrack = ns.getAudioTracks()[0];
+            if (!newTrack) return;
+            try { newTrack.contentHint = 'speech'; } catch (_) {}
+            const oldTrack = streamRef.current?.getAudioTracks()[0];
+            newTrack.enabled = oldTrack ? oldTrack.enabled : true;
+
+            // VAD analyser'ni yangi trekka qayta ulaymiz
             if (micAudioCtxRef.current) { micAudioCtxRef.current.close().catch(() => {}); micAudioCtxRef.current = null; }
-            if (rawMicTrackRef.current) { rawMicTrackRef.current.stop(); rawMicTrackRef.current = null; }
             localAnalyserRef.current = null;
-            let useTrack = rawNew;
-            if (rawNew) {
-                const res = buildAudioProcessingChain(rawNew);
-                if (res) { micAudioCtxRef.current = res.ctx; rawMicTrackRef.current = rawNew; localAnalyserRef.current = res.analyser; res.processedTrack.enabled = prevOn; useTrack = res.processedTrack; }
-            }
-            if (useTrack) useTrack.enabled = prevOn;
-            peersRef.current.forEach(({ peer }) => { if (oldPr && useTrack) peer.replaceTrack(oldPr, useTrack, streamRef.current); });
-            if (oldPr) streamRef.current.removeTrack(oldPr);
-            if (useTrack) streamRef.current.addTrack(useTrack);
+            const res = buildLocalAnalyser(newTrack);
+            if (res) { micAudioCtxRef.current = res.ctx; localAnalyserRef.current = res.analyser; }
+
+            // Avval peer'larda almashtiramiz, keyin eski trekni to'xtatamiz
+            peersRef.current.forEach(({ peer }) => {
+                try { if (oldTrack) peer.replaceTrack(oldTrack, newTrack, streamRef.current); } catch (e) { console.error('replaceTrack(audio):', e); }
+            });
+            if (oldTrack) { oldTrack.stop(); streamRef.current.removeTrack(oldTrack); }
+            streamRef.current.addTrack(newTrack);
             setSelectedAudioDevice(deviceId);
         } catch (e) { console.error('Audio switch failed:', e); }
     };
@@ -759,15 +811,28 @@ const RoomPage = () => {
     };
 
     // ── Chat ──────────────────────────────────────────────────────────────────
+    const MAX_FILE_MB = 5;
+    const ALLOWED_FILE_RE = /\.(pdf|docx?|pptx?|xlsx?|txt|csv|png|jpe?g|gif|webp|zip)$/i;
     const handleFileUpload = async (e) => {
         const file = e.target.files[0];
+        e.target.value = '';
         if (!file) return;
-        if (!await confirm(`${t('confirm_send_file')} "${file.name}"`)) { e.target.value = ''; return; }
+        // Hajm tekshiruvi — katta faylni base64'ga o'girmasdan oldin to'xtatamiz
+        if (file.size > MAX_FILE_MB * 1024 * 1024) {
+            toast.warning(lang === 'ru' ? `Файл слишком большой (макс. ${MAX_FILE_MB} МБ)` : lang === 'en' ? `File too large (max ${MAX_FILE_MB} MB)` : `Fayl juda katta (maks. ${MAX_FILE_MB} MB)`);
+            return;
+        }
+        // Tur tekshiruvi
+        if (!ALLOWED_FILE_RE.test(file.name)) {
+            toast.warning(lang === 'ru' ? 'Неподдерживаемый тип файла' : lang === 'en' ? 'Unsupported file type' : 'Fayl turi qo\'llab-quvvatlanmaydi');
+            return;
+        }
+        if (!await confirm(`${t('confirm_send_file')} "${file.name}"`)) return;
         const reader = new FileReader();
         reader.onload = ev => {
             socketRef.current?.emit('file-message', { roomId: roomID, userId: userInfo._id, userName: userInfo.name, file: { name: file.name, type: file.type, size: file.size, data: ev.target.result } });
-            e.target.value = '';
         };
+        reader.onerror = () => toast.error(lang === 'ru' ? 'Не удалось прочитать файл' : lang === 'en' ? 'Could not read the file' : 'Faylni o\'qib bo\'lmadi');
         reader.readAsDataURL(file);
     };
 
@@ -789,6 +854,10 @@ const RoomPage = () => {
         setEditingMessageId(msgId); setNewMessage(text);
         if (!showChat) setShowChat(true);
     };
+
+    // ── Kutish xonasi: host qabul/rad qiladi ──
+    const admitWaiting = (sid) => { setWaitingToasts(p => p.filter(u => u.socketId !== sid)); socketRef.current?.emit('admit-user', { roomId: roomID, targetSocketId: sid }); };
+    const denyWaiting  = (sid) => { setWaitingToasts(p => p.filter(u => u.socketId !== sid)); socketRef.current?.emit('deny-user',  { roomId: roomID, targetSocketId: sid }); };
 
     // ── Moderation ────────────────────────────────────────────────────────────
     const kickUser  = async (sid) => { if (await confirm(t('confirm_kick')))  socketRef.current?.emit('kick-user',  { roomId: roomID, targetSocketId: sid }); };
@@ -868,6 +937,7 @@ const RoomPage = () => {
 
     // ── Early returns ─────────────────────────────────────────────────────────
     if (accessDenied) return <AccessDenied />;
+    if (inWaitingRoom) return <WaitingRoom />;
     if (passwordRequired) return (
         <RoomPasswordModal
             roomID={roomID}
@@ -880,6 +950,11 @@ const RoomPage = () => {
     // ── Render ────────────────────────────────────────────────────────────────
     return (
         <div className={`flex flex-col room-fullheight font-sans overflow-hidden ${isDark ? 'bg-[#0c0e14] text-white' : 'bg-gray-100 text-gray-900'}`}>
+
+            {/* Kutish xonasi — host/cohost uchun qabul/rad toast'lari */}
+            {canModerate && (
+                <WaitingToasts toasts={waitingToasts} onAdmit={admitWaiting} onDeny={denyWaiting} />
+            )}
 
             {/* Toast */}
             {toastMessage && (
@@ -1008,7 +1083,7 @@ const RoomPage = () => {
                 showSettings={showSettings} setShowSettings={setShowSettings}
                 showChat={showChat} setShowChat={setShowChat}
                 showParticipants={showParticipants} setShowParticipants={setShowParticipants}
-                unreadMessages={unreadMessages} waitingBadge={0}
+                unreadMessages={unreadMessages} waitingBadge={canModerate ? waitingToasts.length : 0}
                 roomUsers={roomUsers} leaveRoom={leaveRoom} endMeetingForAll={endMeetingForAll}
                 isHost={isHost} onHoldToTalkStart={handleHoldToTalkStart} onHoldToTalkEnd={handleHoldToTalkEnd}
                 mobileMenuOpen={mobileToolsOpen} setMobileMenuOpen={setMobileToolsOpen}
