@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect, useContext } from 'react';
-import { Paperclip, Send, X, Pencil, Trash2, CheckCheck, MessageSquare, FileText } from 'lucide-react';
+import { Paperclip, Send, X, Pencil, Trash2, CheckCheck, MessageSquare, FileText, ChevronDown } from 'lucide-react';
 import { ThemeLanguageContext } from '../context/ThemeLanguageContext';
 
 // ── Avatar color from username hash ────────────────────────────────────────────
@@ -195,7 +195,7 @@ const ChatPanel = ({
             {/* ── Header ── */}
             <div className="shrink-0 flex items-center justify-between px-4 h-14 bg-white dark:bg-[#0f1420] border-b border-gray-200 dark:border-white/[0.07] shadow-sm">
                 <div className="flex items-center gap-2.5">
-                    <div className="w-8 h-8 rounded-xl bg-blue-600/10 dark:bg-blue-500/15 flex items-center justify-center">
+                    <div className="w-8 h-8 rounded-xl flex items-center justify-center bg-gradient-to-br from-blue-500/15 to-blue-600/5 dark:from-blue-500/25 dark:to-blue-600/10 ring-1 ring-blue-500/15">
                         <MessageSquare size={15} className="text-blue-600 dark:text-blue-400" />
                     </div>
                     <div>
@@ -214,7 +214,8 @@ const ChatPanel = ({
                 </button>
             </div>
 
-            {/* ── Messages body ── */}
+            {/* ── Messages body (relative wrapper — pastga tushish tugmasi uchun) ── */}
+            <div className="relative flex-1 flex min-h-0">
             <div
                 ref={bodyRef}
                 onScroll={handleScroll}
@@ -246,6 +247,18 @@ const ChatPanel = ({
                     })
                 )}
                 <div ref={messagesEndRef} className="h-2" />
+            </div>
+
+            {/* Pastga tushish — faqat pastda emas va xabarlar bo'lsa */}
+            {!atBottom && grouped.length > 0 && (
+                <button
+                    onClick={() => { messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }); setAtBottom(true); }}
+                    aria-label={t('chat_scroll_bottom') || 'Pastga'}
+                    className="absolute bottom-3 right-3 z-20 w-9 h-9 flex items-center justify-center rounded-full bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-600/30 transition-all duration-150 active:scale-90 animate-in fade-in zoom-in-90"
+                >
+                    <ChevronDown size={18} />
+                </button>
+            )}
             </div>
 
             {/* ── Edit banner ── */}

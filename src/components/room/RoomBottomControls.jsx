@@ -286,7 +286,7 @@ const RoomBottomControls = ({
                         title={t('ctl_people') || 'Participants'}
                     />
 
-                    <div className="w-px h-8 bg-white/10 mx-1" />
+                    <div className={`w-px h-8 mx-1 ${isDark ? 'bg-white/10' : 'bg-gray-200'}`} />
 
                     <div className="relative" ref={leaveWrapRef}>
                         <button
@@ -488,7 +488,7 @@ const RoomBottomControls = ({
                     )}
                     <button
                         onClick={() => { setShowSettings(!showSettings); setMobileMenuOpen(false); }}
-                        className={`w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors ${showSettings ? 'bg-blue-500/15 text-blue-400' : 'text-gray-200 hover:bg-white/8'}`}
+                        className={`w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors ${showSettings ? 'bg-blue-500/15 text-blue-400' : isDark ? 'text-gray-200 hover:bg-white/8' : 'text-gray-700 hover:bg-gray-50'}`}
                     >
                         <Settings size={15} className={showSettings ? 'text-blue-400 shrink-0' : 'text-gray-400 shrink-0'} />
                         {t('ctl_settings') || 'Settings'}

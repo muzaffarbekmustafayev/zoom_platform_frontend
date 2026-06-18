@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState, useContext } from 'react';
-import { X, Camera, Mic, Volume2, CheckCircle2, AlertCircle, RefreshCw, Lock, Eye, EyeOff } from 'lucide-react';
+import { X, Camera, Mic, Volume2, CheckCircle2, AlertCircle, RefreshCw, Lock, Eye, EyeOff, MessageSquare, MicOff, MonitorUp } from 'lucide-react';
 import Select from '../Select';
 import { ThemeLanguageContext } from '../../context/ThemeLanguageContext';
 import API from '../../api';
@@ -9,6 +9,7 @@ const RoomSettingsModal = ({
     videoDevices, selectedVideoDevice, switchCamera,
     audioDevices, selectedAudioDevice, switchAudio,
     isHost, meeting,
+    roomSettings = {}, updateRoomSettings = () => {},
 }) => {
     const { t } = useContext(ThemeLanguageContext);
     const [activeTab, setActiveTab] = useState('devices');
@@ -173,6 +174,35 @@ const RoomSettingsModal = ({
 
                 {activeTab === 'room' && isHost ? (
                     <div className="p-6 space-y-5">
+                        {/* Room controls — jonli sozlamalar (darhol butun xonaga tarqaladi) */}
+                        <div>
+                            <div className="flex items-center gap-2 mb-3">
+                                <div className="w-6 h-6 rounded-lg bg-blue-100 dark:bg-blue-500/15 flex items-center justify-center">
+                                    <MessageSquare size={13} className="text-blue-600 dark:text-blue-400" />
+                                </div>
+                                <span className="text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wide">Xona boshqaruvi</span>
+                            </div>
+                            <div className="space-y-2">
+                                {[
+                                    { key: 'isChatEnabled',      on: roomSettings.isChatEnabled !== false,      icon: MessageSquare, title: 'Chat',                   desc: 'Ishtirokchilar yozisha oladi' },
+                                    { key: 'muteAllOnEntry',     on: roomSettings.muteAllOnEntry === true,      icon: MicOff,         title: 'Kirishda mikrofon o\'chiq', desc: "Yangi a'zolar jim kiradi" },
+                                    { key: 'allowScreenSharing', on: roomSettings.allowScreenSharing !== false,  icon: MonitorUp,      title: 'Demonstratsiya',        desc: 'Ishtirokchilar ekran ulasha oladi' },
+                                ].map(({ key, on, icon: Icon, title, desc }) => (
+                                    <button key={key} type="button" onClick={() => updateRoomSettings({ [key]: !on })}
+                                        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl bg-gray-50 dark:bg-[#161b22] border border-gray-200 dark:border-white/8 hover:border-blue-400/50 transition-colors text-left">
+                                        <Icon size={16} className={on ? 'text-blue-500 shrink-0' : 'text-gray-400 dark:text-gray-500 shrink-0'} />
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-sm font-semibold text-gray-800 dark:text-gray-100 truncate">{title}</p>
+                                            <p className="text-[11px] text-gray-400 dark:text-gray-500 truncate">{desc}</p>
+                                        </div>
+                                        <span className={`relative w-9 h-5 rounded-full transition-colors shrink-0 ${on ? 'bg-blue-500' : 'bg-gray-300 dark:bg-white/15'}`}>
+                                            <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-all ${on ? 'left-[18px]' : 'left-0.5'}`} />
+                                        </span>
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
                         {/* Password change */}
                         <div>
                             <div className="flex items-center gap-2 mb-3">

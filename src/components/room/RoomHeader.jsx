@@ -111,13 +111,13 @@ const RoomHeader = ({
 
                             {viewMode === 'grid' && (
                                 <>
-                                    <div className="mx-2 my-2 border-t border-white/5" />
+                                    <div className={`mx-2 my-2 border-t ${isDark ? 'border-white/5' : 'border-gray-200'}`} />
                                     <div className="px-3 py-1 mb-1 text-[10px] font-black text-gray-500 uppercase tracking-widest">Grid Size</div>
                                     <div className="px-2 grid grid-cols-2 gap-1">
                                         {['auto', '1x1', '2x2', '3x3'].map(sz => (
                                             <button key={sz} onClick={() => { setGridSize(sz); setViewMenuOpen(false); }}
                                                 className={`px-2 py-1.5 rounded-lg text-[10px] font-bold text-center border transition-all
-                                                    ${gridSize === sz ? 'bg-blue-600/20 border-blue-500/40 text-blue-400' : 'bg-white/5 border-transparent text-gray-400 hover:bg-white/8 hover:text-white'}`}>
+                                                    ${gridSize === sz ? 'bg-blue-600/20 border-blue-500/40 text-blue-400' : isDark ? 'bg-white/5 border-transparent text-gray-400 hover:bg-white/8 hover:text-white' : 'bg-gray-100 border-transparent text-gray-500 hover:bg-gray-200 hover:text-gray-900'}`}>
                                                 {sz.toUpperCase()}
                                             </button>
                                         ))}

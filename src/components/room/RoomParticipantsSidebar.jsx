@@ -32,12 +32,16 @@ const RoomParticipantsSidebar = ({
             {/* Share requests */}
             {canModerate && shareRequests.length > 0 && (
                 <div className="space-y-2 mb-6">
-                    <h3 className="text-[10px] font-black text-amber-500 uppercase tracking-widest px-2">Share Requests</h3>
+                    <h3 className="text-[10px] font-black text-amber-500 uppercase tracking-widest px-2">
+                        {lang === 'uz' ? "Ulashish so'rovlari" : lang === 'ru' ? 'Запросы показа' : 'Share Requests'}
+                    </h3>
                     {shareRequests.map((req, idx) => (
-                        <div key={idx} className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl flex items-center justify-between">
+                        <div key={idx} className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl flex items-center justify-between animate-in fade-in slide-in-from-top-1 duration-200">
                             <div className="min-w-0">
-                                <p className="text-[11px] font-black text-amber-200 truncate">{req.userName}</p>
-                                <p className="text-[9px] text-amber-500 font-bold uppercase">Wants to share {req.type}</p>
+                                <p className="text-[11px] font-black text-amber-600 dark:text-amber-200 truncate">{req.userName}</p>
+                                <p className="text-[9px] text-amber-500 font-bold uppercase">
+                                    {lang === 'uz' ? `${req.type} ulashmoqchi` : lang === 'ru' ? `Хочет показать ${req.type}` : `Wants to share ${req.type}`}
+                                </p>
                             </div>
                             <div className="flex space-x-1 ml-2">
                                 <button onClick={() => respondToShareRequest(req.userId, true, req.type)}
@@ -82,9 +86,14 @@ const RoomParticipantsSidebar = ({
                             : isDark ? 'bg-white/4 border-white/5 hover:bg-white/8 hover:border-white/10'
                             : 'bg-gray-50 border-gray-200 hover:bg-gray-100'}`}>
 
-                            {/* Avatar */}
-                            <div className={`w-9 h-9 rounded-xl bg-gradient-to-br ${getGrad(user.userName)} flex items-center justify-center text-[11px] font-black text-white shadow-md shrink-0 select-none`}>
-                                {getInitials(user.userName)}
+                            {/* Avatar + presence/mic indikator */}
+                            <div className="relative shrink-0">
+                                <div className={`w-9 h-9 rounded-xl bg-gradient-to-br ${getGrad(user.userName)} flex items-center justify-center text-[11px] font-black text-white shadow-md select-none ring-2 transition-all duration-200 ${isSpotlit ? 'ring-blue-400/70' : 'ring-transparent'}`}>
+                                    {getInitials(user.userName)}
+                                </div>
+                                {user.micStatus && (
+                                    <span className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-500 border-2 ${isDark ? 'border-[#0d0f15]' : 'border-white'}`} />
+                                )}
                             </div>
 
                             {/* Info */}
@@ -94,10 +103,10 @@ const RoomParticipantsSidebar = ({
                                     {isMe && <span className="shrink-0 text-[9px] text-gray-500 font-medium">{t('you_label')}</span>}
                                     {handRaisedUsers.includes(user.userId) && <span className="shrink-0 text-[11px]">✋</span>}
                                 </div>
-                                <div className="flex items-center gap-1.5 mt-0.5">
-                                    {user.role === 'host'   ? <span className="text-[9px] font-bold text-blue-400 uppercase tracking-wide">{t('role_host')}</span>
-                                    : user.role === 'cohost' ? <span className="text-[9px] font-bold text-emerald-400 uppercase tracking-wide">{t('role_cohost')}</span>
-                                    :                          <span className="text-[9px] font-medium text-gray-500 uppercase tracking-wide">{t('role_participant')}</span>}
+                                <div className="flex items-center gap-1.5 mt-1">
+                                    {user.role === 'host'   ? <span className="px-1.5 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wide bg-blue-500/15 text-blue-500 dark:text-blue-400">{t('role_host')}</span>
+                                    : user.role === 'cohost' ? <span className="px-1.5 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wide bg-emerald-500/15 text-emerald-500 dark:text-emerald-400">{t('role_cohost')}</span>
+                                    :                          <span className={`px-1.5 py-0.5 rounded-md text-[9px] font-medium uppercase tracking-wide ${isDark ? 'bg-white/5 text-gray-400' : 'bg-gray-200/70 text-gray-500'}`}>{t('role_participant')}</span>}
                                 </div>
                             </div>
 

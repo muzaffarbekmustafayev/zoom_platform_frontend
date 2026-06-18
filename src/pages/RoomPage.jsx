@@ -98,6 +98,10 @@ const RoomPage = () => {
     const [showShareMenu, setShowShareMenu]   = useState(false);
     const [searchQuery, setSearchQuery]       = useState('');
     const [currentTurnUserId, setCurrentTurnUserId] = useState(null);
+    // Xona sozlamalari — serverdan keladi (room-settings / room-settings-updated)
+    const [roomSettings, setRoomSettings] = useState({
+        isChatEnabled: true, isWaitingRoomEnabled: false, muteAllOnEntry: false, allowScreenSharing: true,
+    });
 
     // ── Refs ───────────────────────────────────────────────────────────────────
     const mediaRecorderRef    = useRef(null);
@@ -417,10 +421,15 @@ const RoomPage = () => {
             setTimeout(() => setHandRaisedUsers(p => p.filter(id => id !== userId)), 10000);
         });
         socket.on('update-user-list', users => {
+            if (!Array.isArray(users)) return;
             setRoomUsers(users);
             // myRole'ni serverning rasmiy ro'yxati bilan sinxron tutamiz — badge va
             // ruxsatlar (fayl taqdimoti, moderatsiya) har doim to'g'ri rol bilan ishlaydi.
-            const me = users.find(u => u.userId === userInfo._id || u.socketId === socket.id);
+            // AVVAL socket.id bo'yicha (joriy ulanish uchun aniq identifikator),
+            // keyin userId bo'yicha (String moslashtirish bilan) o'zimizni topamiz.
+            const myId = userInfo?._id != null ? String(userInfo._id) : null;
+            const me = users.find(u => u.socketId === socket.id)
+                || (myId && users.find(u => String(u.userId) === myId));
             if (me?.role) setMyRole(me.role);
         });
         // ── Kutish xonasi (private xona ruxsat oqimi) ──
@@ -487,6 +496,15 @@ const RoomPage = () => {
             activeSharingRef.current = null;
             setActiveSharingUser(null);
             setScreenStream(null);
+        });
+        // Xona sozlamalari: kirishda to'liq holat, host o'zgartirsa yangilanish keladi
+        const applySettings = (s) => { if (s && typeof s === 'object') setRoomSettings(prev => ({ ...prev, ...s })); };
+        socket.on('room-settings', applySettings);
+        socket.on('room-settings-updated', s => {
+            applySettings(s);
+            if (s && typeof s === 'object') {
+                toast.info(lang === 'uz' ? 'Xona sozlamalari yangilandi' : lang === 'ru' ? 'Настройки комнаты обновлены' : 'Room settings updated');
+            }
         });
         // your-role faqat xonaga qabul qilingach keladi — kutish ekranini yopamiz
         socket.on('your-role',    ({ role }) => { setMyRole(role); setInWaitingRoom(false); });
@@ -705,6 +723,12 @@ const RoomPage = () => {
     const ensureSharePermission = () => {
         const isModeratorRole = myRole === 'host' || myRole === 'cohost';
 
+        // Host demonstratsiyani umuman o'chirgan bo'lsa — oddiy ishtirokchi share qila olmaydi
+        if (!isModeratorRole && roomSettings.allowScreenSharing === false) {
+            toast.warning(lang === 'uz' ? 'Bu xonada demonstratsiya o\'chirilgan' : lang === 'ru' ? 'Демонстрация экрана отключена' : 'Screen sharing is disabled in this room');
+            return false;
+        }
+
         // Oddiy ishtirokchi — avval moderator ruxsatini olishi shart
         if (!isModeratorRole && !isShareApproved) {
             if (requestPending) {
@@ -874,8 +898,11 @@ const RoomPage = () => {
         setTimeout(() => setHandRaisedUsers(p => p.filter(id => id !== userInfo._id)), 10000);
     };
     const muteAll = () => { if (canModerate) socketRef.current?.emit('mute-all', { roomId: roomID }); };
-    const promoteCoHost = async (uid, sid) => { try { await API.post(`/api/meetings/${meeting._id}/cohost`, { userId: uid }); socketRef.current?.emit('promote-cohost', { roomId: roomID, targetUserId: uid, targetSocketId: sid }); } catch { toast.error('Failed to promote'); } };
-    const demoteCoHost  = async (uid, sid) => { try { await API.delete(`/api/meetings/${meeting._id}/cohost`, { data: { userId: uid } }); socketRef.current?.emit('demote-cohost',  { roomId: roomID, targetUserId: uid, targetSocketId: sid }); } catch { toast.error('Failed to demote');  } };
+    // Server-authoritative: socket hodisasining o'zi DB'ni (coHosts) yangilaydi va
+    // rollarni qayta tarqatadi. Frontend faqat so'rovni yuboradi — alohida API
+    // chaqiruvi shart emas (double-write/race oldini oladi).
+    const promoteCoHost = (uid, sid) => socketRef.current?.emit('promote-cohost', { roomId: roomID, targetUserId: uid, targetSocketId: sid });
+    const demoteCoHost  = (uid, sid) => socketRef.current?.emit('demote-cohost',  { roomId: roomID, targetUserId: uid, targetSocketId: sid });
     const respondToShareRequest = (uid, approved, type) => { setShareRequests(p => p.filter(r => r.userId !== uid)); socketRef.current?.emit('share-permission-response', { userId: uid, approved, type }); };
     const endMeetingForAll = async () => {
         if (!await confirm(t('confirm_end_meeting'))) return;
@@ -910,7 +937,15 @@ const RoomPage = () => {
     const isCoHost    = myRole === 'cohost';
     const canModerate = isHost || isCoHost;
     const canRecord   = !!myRole;
-    const canChat     = !!myRole;
+    // Chat o'chirilgan bo'lsa faqat moderator yoza oladi
+    const canChat     = !!myRole && (canModerate || roomSettings.isChatEnabled !== false);
+    // Demonstratsiya o'chirilgan bo'lsa faqat moderator share qila oladi
+    const canShareScreen = canModerate || roomSettings.allowScreenSharing !== false;
+
+    // Host jonli sozlamani o'zgartiradi (server-authoritative, butun xonaga tarqaladi)
+    const updateRoomSettings = useCallback((patch) => {
+        socketRef.current?.emit('update-room-settings', { roomId: roomID, settings: patch });
+    }, [roomID]);
 
     const getStageUser = () => {
         if (!meeting) return null;
@@ -1097,6 +1132,7 @@ const RoomPage = () => {
                     videoDevices={videoDevices} selectedVideoDevice={selectedVideoDevice} switchCamera={switchCamera}
                     audioDevices={audioDevices} selectedAudioDevice={selectedAudioDevice} switchAudio={switchAudio}
                     isHost={isHost} meeting={meeting} roomID={roomID}
+                    roomSettings={roomSettings} updateRoomSettings={updateRoomSettings}
                 />
             )}
 
