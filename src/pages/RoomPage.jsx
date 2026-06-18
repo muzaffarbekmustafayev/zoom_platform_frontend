@@ -376,9 +376,11 @@ const RoomPage = () => {
         joinStartedRef.current = false;
         const socket = io(import.meta.env.VITE_BACKEND_URL || 'http://localhost:5005', {
             auth: { token: userInfo?.token || null },
-            // websocket'dan to'g'ridan-to'g'ri boshlash — long-polling upgrade bosqichi
-            // o'tkazib yuboriladi, ulanish/sinxronlashuv sezilarli tezlashadi
-            transports: ['websocket', 'polling'],
+            // FAQAT polling. Apache reverse-proxy websocket upgrade'ni 101 qiladi-yu,
+            // keyin uzib, ishlayotgan polling ulanishini ham buzyapti. upgrade'ni
+            // o'chirsak ulanish barqaror bo'ladi (media baribir P2P/WebRTC ketadi).
+            transports: ['polling'],
+            upgrade: false,
             reconnectionDelay: 500,
             reconnectionDelayMax: 3000,
             timeout: 8000,

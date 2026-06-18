@@ -19,7 +19,7 @@ const Field = ({ icon: Icon, label, hint, children }) => (
     </div>
 );
 
-const UserModal = ({ editMode, user, onChange, onSubmit, onClose, t }) => {
+const UserModal = ({ editMode, user, saving, onChange, onSubmit, onClose, t }) => {
     const [showPw, setShowPw] = useState(false);
 
     const initials = user.name
@@ -146,17 +146,21 @@ const UserModal = ({ editMode, user, onChange, onSubmit, onClose, t }) => {
                         <button
                             type="button"
                             onClick={onClose}
-                            className="flex-1 py-2.5 rounded-xl text-sm font-semibold border border-gray-200 dark:border-white/8 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/6 transition-colors"
+                            disabled={saving}
+                            className="flex-1 py-2.5 rounded-xl text-sm font-semibold border border-gray-200 dark:border-white/8 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/6 transition-colors disabled:opacity-50"
                         >
                             {t('cancel')}
                         </button>
                         <button
                             type="submit"
-                            className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold bg-blue-600 hover:bg-blue-700 text-white transition-colors shadow-lg shadow-blue-500/25"
+                            disabled={saving}
+                            className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold bg-blue-600 hover:bg-blue-700 text-white transition-colors shadow-lg shadow-blue-500/25 disabled:opacity-60 disabled:cursor-not-allowed"
                         >
-                            {editMode
-                                ? <><Save size={14} /> {t('save_btn')}</>
-                                : <><UserPlus size={14} /> {t('create_btn')}</>}
+                            {saving
+                                ? <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                                : editMode
+                                    ? <><Save size={14} /> {t('save_btn')}</>
+                                    : <><UserPlus size={14} /> {t('create_btn')}</>}
                         </button>
                     </div>
                 </form>

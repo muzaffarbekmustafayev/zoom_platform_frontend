@@ -3,7 +3,7 @@ import ThemeToggle from '../components/ThemeToggle';
 import LanguageToggle from '../components/LanguageToggle';
 import { Icon, Ico } from './icons';
 
-const AdminHeader = ({ activeTab, loading, onRefresh, onAdd, onMenuOpen, t }) => (
+const AdminHeader = ({ activeTab, loading, onRefresh, onAdd, onExport, onMenuOpen, t }) => (
     <header className="h-16 bg-white dark:bg-[#0f1117] border-b border-gray-200 dark:border-white/8 flex items-center justify-between px-4 md:px-6 shrink-0">
         <div className="flex items-center gap-3">
             <button
@@ -28,6 +28,16 @@ const AdminHeader = ({ activeTab, loading, onRefresh, onAdd, onMenuOpen, t }) =>
             >
                 <Ico d={Icon.refresh} size={16} className={loading ? 'animate-spin' : ''} />
             </button>
+            {(activeTab === 'users' || activeTab === 'meetings') && (
+                <button
+                    onClick={onExport}
+                    title={t('export_csv')}
+                    className="flex items-center gap-1.5 p-2 md:px-3 md:py-1.5 rounded-lg border border-gray-200 dark:border-white/8 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/6 text-sm font-semibold transition-colors"
+                >
+                    <Ico d={Icon.download} size={16} />
+                    <span className="hidden md:inline">{t('export_csv')}</span>
+                </button>
+            )}
             {activeTab === 'users' && (
                 <button
                     onClick={onAdd}

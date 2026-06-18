@@ -71,13 +71,11 @@ const OverviewTab = ({ stats, chart, chartDays, setChartDays, t }) => (
                         <DonutChart size={84} segments={[
                             { value: stats?.users  ?? 0, color: '#3b82f6' },
                             { value: stats?.admins ?? 0, color: '#8b5cf6' },
-                            { value: stats?.guests ?? 0, color: '#f59e0b' },
                         ]} />
                         <div className="space-y-2 flex-1">
                             {[
                                 { label: t('users'),  val: stats?.users,  color: 'bg-blue-500' },
                                 { label: t('admins'), val: stats?.admins, color: 'bg-purple-500' },
-                                { label: t('guests'), val: stats?.guests, color: 'bg-amber-400' },
                             ].map(r => (
                                 <div key={r.label} className="flex items-center gap-2">
                                     <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${r.color}`} />
@@ -117,7 +115,7 @@ const OverviewTab = ({ stats, chart, chartDays, setChartDays, t }) => (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {[
                 { label: t('admins'),         val: stats?.admins,       color: 'text-purple-600 dark:text-purple-400', bg: 'bg-purple-50 dark:bg-purple-500/10' },
-                { label: t('guests'),         val: stats?.guests,       color: 'text-amber-600 dark:text-amber-400',   bg: 'bg-amber-50 dark:bg-amber-500/10' },
+                { label: t('total_users'),    val: stats?.totalUsers,   color: 'text-blue-600 dark:text-blue-400',     bg: 'bg-blue-50 dark:bg-blue-500/10' },
                 { label: t('blocked'),        val: stats?.blockedUsers, color: 'text-rose-600 dark:text-rose-400',     bg: 'bg-rose-50 dark:bg-rose-500/10' },
                 { label: t('today_activity'), val: (stats?.newUsersToday ?? 0) + (stats?.newMeetingsToday ?? 0),
                   color: 'text-teal-600 dark:text-teal-400', bg: 'bg-teal-50 dark:bg-teal-500/10',

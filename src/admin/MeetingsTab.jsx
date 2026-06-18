@@ -1,17 +1,27 @@
 import React from 'react';
 import Select from '../components/Select';
 import { Icon, Ico } from './icons';
+import { SortTh, SkeletonRows, MessageRow, Pagination } from './TableKit';
 
-const MeetingsTab = ({ meetings, status, type, onStatus, onType, onDelete, t }) => {
-    const filtered = meetings.filter(m =>
-        (status === 'all' || m.status   === status) &&
-        (type   === 'all' || m.roomType === type)
-    );
+const COLS = 6;
+
+const MeetingsTab = ({
+    data, loading, error, page, onPage,
+    search, status, type, sort, onSort,
+    onSearch, onStatus, onType, onDelete, onRetry, t
+}) => {
+    const items = data?.items || [];
 
     return (
         <div className="space-y-4">
             {/* Filters */}
             <div className="bg-white dark:bg-[#161B22] rounded-xl border border-gray-200 dark:border-white/8 p-4 flex flex-wrap gap-3 items-center">
+                <input
+                    value={search}
+                    onChange={e => onSearch(e.target.value)}
+                    placeholder={t('search_meeting')}
+                    className="flex-1 min-w-[180px] border border-gray-200 dark:border-white/8 rounded-lg px-3 py-2 text-sm text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-[#0d1117] placeholder-gray-400 dark:placeholder-gray-600 focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400/30 transition"
+                />
                 <div className="w-44">
                     <Select size="sm" value={status} onChange={onStatus} options={[
                         { value: 'all',       label: t('all_status') },
@@ -27,7 +37,7 @@ const MeetingsTab = ({ meetings, status, type, onStatus, onType, onDelete, t }) 
                         { value: 'private', label: t('private_label') },
                     ]} />
                 </div>
-                <span className="text-xs text-gray-400 dark:text-gray-500 ml-auto">{filtered.length} {t('n_results')}</span>
+                <span className="text-xs text-gray-400 dark:text-gray-500 ml-auto">{data?.total ?? 0} {t('n_results')}</span>
             </div>
 
             {/* Table */}
@@ -36,13 +46,22 @@ const MeetingsTab = ({ meetings, status, type, onStatus, onType, onDelete, t }) 
                     <table className="w-full">
                         <thead>
                             <tr className="bg-gray-50 dark:bg-[#1e2430] border-b border-gray-200 dark:border-white/8">
-                                {[t('meetings'), t('host'), t('type_col'), t('status'), t('date'), t('actions')].map((h, i) => (
-                                    <th key={h} className={`px-5 py-3.5 text-[11px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider ${i === 5 ? 'text-right' : 'text-left'}`}>{h}</th>
-                                ))}
+                                <SortTh label={t('meetings')} field="title" sort={sort} onSort={onSort} />
+                                <SortTh label={t('host')} field="host" sort={null} />
+                                <SortTh label={t('type_col')} field="roomType" sort={sort} onSort={onSort} />
+                                <SortTh label={t('status')} field="status" sort={sort} onSort={onSort} />
+                                <SortTh label={t('date')} field="createdAt" sort={sort} onSort={onSort} />
+                                <SortTh label={t('actions')} field="actions" sort={null} align="right" />
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100 dark:divide-white/[0.04]">
-                            {filtered.length > 0 ? filtered.map(m => (
+                            {loading ? (
+                                <SkeletonRows rows={6} cols={COLS} />
+                            ) : error ? (
+                                <MessageRow cols={COLS} action={
+                                    <button onClick={onRetry} className="mt-3 px-3 py-1.5 text-xs font-semibold rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors">{t('retry')}</button>
+                                }>{t('error_load')}</MessageRow>
+                            ) : items.length > 0 ? items.map(m => (
                                 <tr key={m._id} className="hover:bg-gray-50 dark:hover:bg-white/[0.04] transition-colors">
                                     <td className="px-5 py-4">
                                         <p className="text-sm font-medium text-gray-900 dark:text-white">{m.title}</p>
@@ -83,19 +102,13 @@ const MeetingsTab = ({ meetings, status, type, onStatus, onType, onDelete, t }) 
                                     </td>
                                 </tr>
                             )) : (
-                                <tr>
-                                    <td colSpan="6" className="px-5 py-12 text-center text-sm text-gray-400 dark:text-gray-500">
-                                        {t('no_meetings_found')}
-                                    </td>
-                                </tr>
+                                <MessageRow cols={COLS}>{t('no_meetings_found')}</MessageRow>
                             )}
                         </tbody>
                     </table>
                 </div>
-                {filtered.length > 0 && (
-                    <div className="border-t border-gray-100 dark:border-white/8 px-5 py-3 text-xs text-gray-400 dark:text-gray-500">
-                        {t('total_n')}: <span className="font-semibold text-gray-600 dark:text-gray-300 ml-1">{filtered.length}</span> {t('meetings').toLowerCase()}
-                    </div>
+                {!loading && !error && items.length > 0 && (
+                    <Pagination page={page} pages={data.pages} total={data.total} onPage={onPage} t={t} unit={t('meetings').toLowerCase()} />
                 )}
             </div>
         </div>
