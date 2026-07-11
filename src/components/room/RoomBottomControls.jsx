@@ -107,32 +107,28 @@ const RoomBottomControls = ({
         onStart,
         onEnd,
         active = false,
-        danger = false,      // off-state is red (mic/cam off)
-        red = false,         // always red (leave)
+        danger = false,
+        red = false,
         badge = 0,
         disabled = false,
-        hide = false,        // completely hidden on current breakpoint
         pulse = false,
         title: titleProp,
+        size = 'md', // 'sm' | 'md'
     }) => {
-        if (hide) return null;
+        const btnSize = size === 'sm'
+            ? 'w-10 h-10 rounded-xl'
+            : 'w-11 h-11 sm:w-12 sm:h-12 rounded-2xl';
 
         const bgClass = red
             ? 'bg-red-600 hover:bg-red-500 shadow-lg shadow-red-900/30'
             : danger
-                ? 'bg-red-500 hover:bg-red-400 shadow-lg shadow-red-900/30 ring-2 ring-red-500/25'
+                ? 'bg-red-500/90 hover:bg-red-400 shadow-lg shadow-red-900/30 ring-2 ring-red-500/25'
                 : active
                     ? 'bg-blue-600/25 hover:bg-blue-600/35 ring-1 ring-blue-500/40'
                     : isDark ? 'bg-white/10 hover:bg-white/16' : 'bg-gray-100 hover:bg-gray-200';
 
-        const iconColor = red || danger ? 'text-white' : active ? 'text-blue-500' : isDark ? 'text-gray-300' : 'text-gray-600';
-        const labelColor = red
-            ? 'text-red-400'
-            : danger
-                ? 'text-red-400'
-                : active
-                    ? 'text-blue-500'
-                    : isDark ? 'text-gray-500' : 'text-gray-500';
+        const iconColor = red || danger ? 'text-white' : active ? 'text-blue-400' : isDark ? 'text-gray-300' : 'text-gray-600';
+        const labelColor = red ? 'text-red-400' : danger ? 'text-red-400' : active ? 'text-blue-400' : isDark ? 'text-gray-500' : 'text-gray-500';
 
         return (
             <div className="flex flex-col items-center gap-1">
@@ -147,7 +143,7 @@ const RoomBottomControls = ({
                     title={titleProp}
                     aria-label={titleProp}
                     aria-pressed={active}
-                    className={`relative w-11 h-11 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center
+                    className={`relative ${btnSize} flex items-center justify-center
                         transition-all duration-150 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed
                         ${bgClass}`}
                 >
@@ -156,13 +152,13 @@ const RoomBottomControls = ({
                         <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full animate-ping opacity-75" />
                     )}
                     {badge > 0 && (
-                        <span className="absolute -top-1 -right-1 min-w-[17px] h-[17px] px-1 bg-red-500 text-[9px] font-black rounded-full flex items-center justify-center text-white leading-none shadow">
+                        <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 bg-red-500 text-[9px] font-black rounded-full flex items-center justify-center text-white leading-none shadow">
                             {badge > 9 ? '9+' : badge}
                         </span>
                     )}
                 </button>
                 {label && (
-                    <span className={`text-[10px] font-semibold whitespace-nowrap select-none leading-none ${labelColor}`}>
+                    <span className={`text-[9px] xs:text-[10px] font-semibold whitespace-nowrap select-none leading-none ${labelColor}`}>
                         {label}
                     </span>
                 )}
@@ -172,10 +168,11 @@ const RoomBottomControls = ({
 
     return (
         <div className={`relative z-50 shrink-0 ${isDark ? 'bg-[#13151c] border-t border-white/[0.06]' : 'bg-white border-t border-gray-200'}`}>
+
             {/* ── Desktop / Tablet bar ── */}
             <div className="hidden sm:flex items-center justify-between px-4 lg:px-6 py-3">
 
-                {/* Left: Meeting ID (lg only) */}
+                {/* Left: Meeting ID */}
                 <div className="w-[160px] lg:w-[200px] flex items-center">
                     <button
                         type="button"
@@ -217,9 +214,7 @@ const RoomBottomControls = ({
                                 active={!isVideoOff}
                                 title={isVideoOff ? (t('ctl_start_video') || 'Start camera') : (t('ctl_stop_video') || 'Stop camera')}
                             />
-
                             <div className={`w-px h-8 mx-1 ${isDark ? 'bg-white/10' : 'bg-gray-200'}`} />
-
                             <Btn
                                 icon={isSharingScreen ? <MonitorOff size={18} /> : <MonitorUp size={18} />}
                                 label={isSharingScreen ? (t('ctl_stop_share') || 'Stop Share') : (t('ctl_share') || 'Share')}
@@ -285,9 +280,7 @@ const RoomBottomControls = ({
                         onClick={() => { setShowParticipants(!showParticipants); setShowChat(false); }}
                         title={t('ctl_people') || 'Participants'}
                     />
-
                     <div className={`w-px h-8 mx-1 ${isDark ? 'bg-white/10' : 'bg-gray-200'}`} />
-
                     <div className="relative" ref={leaveWrapRef}>
                         <button
                             onClick={handleLeaveClick}
@@ -323,177 +316,237 @@ const RoomBottomControls = ({
             </div>
 
             {/* ── Mobile bar ── */}
-            <div className="sm:hidden flex items-center justify-around px-2 py-3">
-                {!isGuest ? (
-                    <>
-                        {/* Mic */}
-                        <Btn
-                            icon={isMuted ? <MicOff size={18} /> : <Mic size={18} />}
-                            label={isMuted ? (t('ctl_unmute') || 'Unmute') : (t('ctl_mute') || 'Mute')}
-                            onClick={onMicClick}
-                            onStart={onMicPressStart}
-                            onEnd={onMicPressEnd}
-                            danger={isMuted}
-                            active={!isMuted}
-                            title={isMuted ? (t('ctl_unmute_hold') || 'Tap to unmute · Hold for push-to-talk') : (t('ctl_mute') || 'Mute mic')}
-                        />
-                        {/* Camera */}
-                        <Btn
-                            icon={isVideoOff ? <VideoOff size={18} /> : <VideoIcon size={18} />}
-                            label={isVideoOff ? (t('ctl_start_video') || 'Start Cam') : (t('ctl_stop_video') || 'Stop Cam')}
-                            onClick={toggleVideo}
-                            danger={isVideoOff}
-                            active={!isVideoOff}
-                            title={isVideoOff ? (t('ctl_start_video') || 'Start camera') : (t('ctl_stop_video') || 'Stop camera')}
-                        />
-                        {/* Chat */}
-                        <Btn
-                            icon={<MessageSquare size={18} />}
-                            label={t('ctl_chat') || 'Chat'}
-                            active={showChat}
-                            badge={unreadMessages}
-                            onClick={() => { setShowChat(!showChat); setShowParticipants(false); }}
-                            title={t('ctl_chat') || 'Open chat'}
-                        />
-                        {/* People */}
-                        <Btn
-                            icon={<Users size={18} />}
-                            label={roomUsers.length > 0 ? `${t('ctl_people') || 'People'} (${roomUsers.length})` : (t('ctl_people') || 'People')}
-                            active={showParticipants}
-                            badge={waitingBadge}
-                            onClick={() => { setShowParticipants(!showParticipants); setShowChat(false); }}
-                            title={t('ctl_people') || 'Participants'}
-                        />
-                        {/* More */}
-                        <Btn
-                            icon={<MoreHorizontal size={18} />}
-                            label={t('ctl_more') || 'More'}
-                            active={mobileMenuOpen}
-                            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                            title={t('ctl_more') || 'More options'}
-                        />
-                    </>
-                ) : (
-                    <>
-                        {/* Guest: only chat + people + raise hand + leave */}
-                        <Btn
-                            icon={<MessageSquare size={18} />}
-                            label={t('ctl_chat') || 'Chat'}
-                            active={showChat}
-                            badge={unreadMessages}
-                            onClick={() => { setShowChat(!showChat); setShowParticipants(false); }}
-                            title={t('ctl_chat') || 'Open chat'}
-                        />
-                        <Btn
-                            icon={<Users size={18} />}
-                            label={roomUsers.length > 0 ? `${t('ctl_people') || 'People'} (${roomUsers.length})` : (t('ctl_people') || 'People')}
-                            active={showParticipants}
-                            badge={waitingBadge}
-                            onClick={() => { setShowParticipants(!showParticipants); setShowChat(false); }}
-                            title={t('ctl_people') || 'Participants'}
-                        />
-                        <Btn
-                            icon={<Hand size={18} />}
-                            label={t('ctl_raise') || 'Raise Hand'}
-                            onClick={raiseHand}
-                            title={t('ctl_raise_hand') || 'Raise hand'}
-                        />
-                    </>
-                )}
-
-                {/* Leave — always visible on mobile */}
-                <div className="relative" ref={!isGuest ? undefined : leaveWrapRef}>
-                    <button
-                        onClick={handleLeaveClick}
-                        className="flex flex-col items-center gap-1"
-                    >
-                        <div className="w-11 h-11 rounded-2xl bg-red-600 hover:bg-red-500 flex items-center justify-center transition-all active:scale-95 shadow-lg shadow-red-900/30">
-                            <PhoneOff size={18} className="text-white" />
-                        </div>
-                        <span className="text-[10px] font-semibold text-red-400">
-                            {t('ctl_leave') || 'Leave'}
-                        </span>
-                    </button>
-                    {isHost && leaveMenuOpen && (
-                        <div className={`absolute bottom-full right-0 mb-3 w-64 rounded-2xl p-2 shadow-2xl z-[60] animate-in fade-in slide-in-from-bottom-2 duration-200 ${isDark ? 'bg-[#1e2028] border border-white/10' : 'bg-white border border-gray-200'}`}>
-                            <button
-                                onClick={() => { setLeaveMenuOpen(false); endMeetingForAll?.(); }}
-                                className="w-full text-left px-4 py-3 text-xs font-bold text-red-500 hover:bg-red-500/10 rounded-xl transition-colors"
-                            >
-                                {t('leave_end_all') || 'End meeting for all'}
-                                <span className="block text-[10px] font-medium text-gray-400 mt-0.5">
-                                    {t('leave_end_all_sub') || 'Removes everyone from the meeting'}
-                                </span>
-                            </button>
-                            <button
-                                onClick={() => { setLeaveMenuOpen(false); leaveRoom(); }}
-                                className={`w-full text-left px-4 py-3 text-xs font-semibold rounded-xl transition-colors mt-1 ${isDark ? 'text-gray-200 hover:text-white hover:bg-white/8' : 'text-gray-700 hover:bg-gray-50'}`}
-                            >
-                                {t('leave_only_me') || 'Leave meeting'}
-                                <span className="block text-[10px] font-medium text-gray-500 mt-0.5">
-                                    {t('leave_only_me_sub') || 'Others will remain in the meeting'}
-                                </span>
-                            </button>
-                        </div>
+            <div className="sm:hidden safe-bottom">
+                {/* Primary controls row */}
+                <div className={`flex items-center justify-around px-1 pt-2 pb-1 ${isDark ? '' : ''}`}>
+                    {!isGuest ? (
+                        <>
+                            {/* Mic */}
+                            <Btn
+                                icon={isMuted ? <MicOff size={20} /> : <Mic size={20} />}
+                                label={isMuted ? (t('ctl_unmute') || 'Unmute') : (t('ctl_mute') || 'Mute')}
+                                onClick={onMicClick}
+                                onStart={onMicPressStart}
+                                onEnd={onMicPressEnd}
+                                danger={isMuted}
+                                active={!isMuted}
+                                title={isMuted ? 'Tap to unmute' : 'Mute mic'}
+                            />
+                            {/* Camera */}
+                            <Btn
+                                icon={isVideoOff ? <VideoOff size={20} /> : <VideoIcon size={20} />}
+                                label={isVideoOff ? 'Camera' : 'Stop Cam'}
+                                onClick={toggleVideo}
+                                danger={isVideoOff}
+                                active={!isVideoOff}
+                                title={isVideoOff ? 'Start camera' : 'Stop camera'}
+                            />
+                            {/* Chat */}
+                            <Btn
+                                icon={<MessageSquare size={20} />}
+                                label={t('ctl_chat') || 'Chat'}
+                                active={showChat}
+                                badge={unreadMessages}
+                                onClick={() => { setShowChat(!showChat); setShowParticipants(false); setMobileMenuOpen(false); }}
+                                title={t('ctl_chat') || 'Open chat'}
+                            />
+                            {/* People */}
+                            <Btn
+                                icon={<Users size={20} />}
+                                label={roomUsers.length > 0 ? `People (${roomUsers.length})` : 'People'}
+                                active={showParticipants}
+                                badge={waitingBadge}
+                                onClick={() => { setShowParticipants(!showParticipants); setShowChat(false); setMobileMenuOpen(false); }}
+                                title="Participants"
+                            />
+                            {/* More */}
+                            <Btn
+                                icon={<MoreHorizontal size={20} />}
+                                label={t('ctl_more') || 'More'}
+                                active={mobileMenuOpen}
+                                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                                title="More options"
+                            />
+                        </>
+                    ) : (
+                        <>
+                            <Btn
+                                icon={<MessageSquare size={20} />}
+                                label="Chat"
+                                active={showChat}
+                                badge={unreadMessages}
+                                onClick={() => { setShowChat(!showChat); setShowParticipants(false); }}
+                            />
+                            <Btn
+                                icon={<Users size={20} />}
+                                label={roomUsers.length > 0 ? `People (${roomUsers.length})` : 'People'}
+                                active={showParticipants}
+                                badge={waitingBadge}
+                                onClick={() => { setShowParticipants(!showParticipants); setShowChat(false); }}
+                            />
+                            <Btn
+                                icon={<Hand size={20} />}
+                                label="Raise"
+                                onClick={raiseHand}
+                            />
+                        </>
                     )}
+
+                    {/* Leave — always visible */}
+                    <div className="relative" ref={!isGuest ? undefined : leaveWrapRef}>
+                        <div className="flex flex-col items-center gap-1">
+                            <button
+                                onClick={handleLeaveClick}
+                                className="w-11 h-11 rounded-2xl bg-red-600 hover:bg-red-500 flex items-center justify-center transition-all active:scale-95 shadow-lg shadow-red-900/30"
+                                aria-label="Leave meeting"
+                            >
+                                <PhoneOff size={20} className="text-white" />
+                            </button>
+                            <span className="text-[9px] xs:text-[10px] font-semibold text-red-400 leading-none">
+                                {t('ctl_leave') || 'Leave'}
+                            </span>
+                        </div>
+                        {isHost && leaveMenuOpen && (
+                            <div className={`absolute bottom-full right-0 mb-3 w-64 rounded-2xl p-2 shadow-2xl z-[60] animate-in fade-in slide-in-from-bottom-2 duration-200 ${isDark ? 'bg-[#1e2028] border border-white/10' : 'bg-white border border-gray-200'}`}>
+                                <button
+                                    onClick={() => { setLeaveMenuOpen(false); endMeetingForAll?.(); }}
+                                    className="w-full text-left px-4 py-3 text-xs font-bold text-red-500 hover:bg-red-500/10 rounded-xl transition-colors"
+                                >
+                                    {t('leave_end_all') || 'End meeting for all'}
+                                    <span className="block text-[10px] font-medium text-gray-400 mt-0.5">
+                                        {t('leave_end_all_sub') || 'Removes everyone from the meeting'}
+                                    </span>
+                                </button>
+                                <button
+                                    onClick={() => { setLeaveMenuOpen(false); leaveRoom(); }}
+                                    className={`w-full text-left px-4 py-3 text-xs font-semibold rounded-xl transition-colors mt-1 ${isDark ? 'text-gray-200 hover:text-white hover:bg-white/8' : 'text-gray-700 hover:bg-gray-50'}`}
+                                >
+                                    {t('leave_only_me') || 'Leave meeting'}
+                                    <span className="block text-[10px] font-medium text-gray-500 mt-0.5">
+                                        {t('leave_only_me_sub') || 'Others will remain in the meeting'}
+                                    </span>
+                                </button>
+                            </div>
+                        )}
+                    </div>
                 </div>
+
+                {/* Safe area spacer */}
+                <div className="h-safe-bottom" style={{ height: 'env(safe-area-inset-bottom, 0px)' }} />
             </div>
 
-            {/* ── Mobile "More" dropdown ── */}
+            {/* ── Mobile "More" bottom sheet ── */}
             {mobileMenuOpen && (
                 <>
-                <div
-                    className="fixed inset-0 z-40 sm:hidden"
-                    onClick={() => setMobileMenuOpen(false)}
-                />
-                <div
-                    role="menu"
-                    className={`absolute bottom-full right-2 mb-2 w-64 rounded-2xl shadow-2xl p-2 sm:hidden z-50 animate-in slide-in-from-bottom-2 fade-in duration-200 ${isDark ? 'border border-white/10 bg-[#1e2028]' : 'border border-gray-200 bg-white'}`}
-                >
-                    <button
-                        onClick={() => { raiseHand(); setMobileMenuOpen(false); }}
-                        className={`w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors ${isDark ? 'text-gray-200 hover:bg-white/8' : 'text-gray-700 hover:bg-gray-50'}`}
+                    {/* Backdrop */}
+                    <div
+                        className="fixed inset-0 z-40 sm:hidden bg-black/40 backdrop-blur-[2px]"
+                        onClick={() => setMobileMenuOpen(false)}
+                    />
+                    {/* Sheet */}
+                    <div
+                        role="menu"
+                        className={`fixed bottom-0 left-0 right-0 sm:hidden z-50 rounded-t-3xl shadow-2xl
+                            animate-in slide-in-from-bottom-3 fade-in duration-250
+                            ${isDark ? 'border-t border-white/10 bg-[#1a1d27]' : 'border-t border-gray-200 bg-white'}`}
                     >
-                        <Hand size={15} className="text-amber-400 shrink-0" />
-                        {t('ctl_raise_hand') || 'Raise Hand'}
-                    </button>
-                    <button
-                        onClick={() => { setMobileMenuOpen(false); handleShareClick(); }}
-                        className={`w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors ${isSharingScreen ? 'text-blue-400 bg-blue-500/10' : isDark ? 'text-gray-200 hover:bg-white/8' : 'text-gray-700 hover:bg-gray-50'}`}
-                    >
-                        {isSharingScreen
-                            ? <MonitorOff size={15} className="text-blue-400 shrink-0" />
-                            : <MonitorUp size={15} className="text-blue-400 shrink-0" />
-                        }
-                        {isSharingScreen ? (t('ctl_stop_sharing') || 'Stop Sharing') : (t('ctl_share_screen') || 'Share Screen')}
-                    </button>
-                    <button
-                        onClick={() => { setMobileMenuOpen(false); openDocShare?.(); }}
-                        className={`w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors ${isDark ? 'text-gray-200 hover:bg-white/8' : 'text-gray-700 hover:bg-gray-50'}`}
-                    >
-                        <FileText size={15} className="text-blue-400 shrink-0" />
-                        {t('ctl_present_file_full') || 'Fayl taqdimoti (PDF, Word…)'}
-                    </button>
-                    {canRecord && (
-                        <button
-                            onClick={() => { isRecording ? stopRecording() : startRecording(); setMobileMenuOpen(false); }}
-                            className={`w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors ${isRecording ? 'text-red-400 bg-red-500/10' : isDark ? 'text-gray-200 hover:bg-white/8' : 'text-gray-700 hover:bg-gray-50'}`}
-                        >
-                            {isRecording
-                                ? <StopCircle size={15} className="text-red-400 shrink-0" />
-                                : <Circle size={15} className="text-gray-400 shrink-0" />
-                            }
-                            {isRecording ? (t('ctl_stop_recording') || 'Stop Recording') : (t('ctl_start_recording') || 'Start Recording')}
-                        </button>
-                    )}
-                    <button
-                        onClick={() => { setShowSettings(!showSettings); setMobileMenuOpen(false); }}
-                        className={`w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors ${showSettings ? 'bg-blue-500/15 text-blue-400' : isDark ? 'text-gray-200 hover:bg-white/8' : 'text-gray-700 hover:bg-gray-50'}`}
-                    >
-                        <Settings size={15} className={showSettings ? 'text-blue-400 shrink-0' : 'text-gray-400 shrink-0'} />
-                        {t('ctl_settings') || 'Settings'}
-                    </button>
-                </div>
+                        {/* Handle bar */}
+                        <div className="flex justify-center pt-3 pb-2">
+                            <div className={`w-10 h-1 rounded-full ${isDark ? 'bg-white/20' : 'bg-gray-300'}`} />
+                        </div>
+
+                        <div className="px-4 pb-4 space-y-1">
+                            {/* Title */}
+                            <p className={`text-[10px] font-black uppercase tracking-widest px-1 pb-2 ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
+                                {t('ctl_more') || 'More Options'}
+                            </p>
+
+                            <button
+                                onClick={() => { raiseHand(); setMobileMenuOpen(false); }}
+                                className={`w-full flex items-center gap-4 rounded-2xl px-4 py-3.5 text-sm font-semibold transition-colors ${isDark ? 'text-gray-200 hover:bg-white/8 active:bg-white/12' : 'text-gray-700 hover:bg-gray-50 active:bg-gray-100'}`}
+                            >
+                                <div className="w-9 h-9 rounded-xl bg-amber-500/15 flex items-center justify-center shrink-0">
+                                    <Hand size={18} className="text-amber-400" />
+                                </div>
+                                <div>
+                                    <div>{t('ctl_raise_hand') || 'Raise Hand'}</div>
+                                </div>
+                            </button>
+
+                            <button
+                                onClick={() => { setMobileMenuOpen(false); handleShareClick(); }}
+                                className={`w-full flex items-center gap-4 rounded-2xl px-4 py-3.5 text-sm font-semibold transition-colors ${isSharingScreen ? 'bg-blue-500/10 text-blue-400' : isDark ? 'text-gray-200 hover:bg-white/8 active:bg-white/12' : 'text-gray-700 hover:bg-gray-50 active:bg-gray-100'}`}
+                            >
+                                <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${isSharingScreen ? 'bg-blue-500/20' : isDark ? 'bg-white/8' : 'bg-gray-100'}`}>
+                                    {isSharingScreen
+                                        ? <MonitorOff size={18} className="text-blue-400" />
+                                        : <MonitorUp size={18} className={isDark ? 'text-gray-300' : 'text-gray-600'} />}
+                                </div>
+                                <div>
+                                    <div>{isSharingScreen ? (t('ctl_stop_sharing') || 'Stop Sharing') : (t('ctl_share_screen') || 'Share Screen')}</div>
+                                </div>
+                            </button>
+
+                            <button
+                                onClick={() => { setMobileMenuOpen(false); openDocShare?.(); }}
+                                className={`w-full flex items-center gap-4 rounded-2xl px-4 py-3.5 text-sm font-semibold transition-colors ${isDark ? 'text-gray-200 hover:bg-white/8 active:bg-white/12' : 'text-gray-700 hover:bg-gray-50 active:bg-gray-100'}`}
+                            >
+                                <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${isDark ? 'bg-white/8' : 'bg-gray-100'}`}>
+                                    <FileText size={18} className="text-blue-400" />
+                                </div>
+                                <div>
+                                    <div>{t('ctl_present_file_full') || 'Present File'}</div>
+                                    <div className="text-[10px] text-gray-500 font-normal">PDF, Word, PPTX…</div>
+                                </div>
+                            </button>
+
+                            {canRecord && (
+                                <button
+                                    onClick={() => { isRecording ? stopRecording() : startRecording(); setMobileMenuOpen(false); }}
+                                    className={`w-full flex items-center gap-4 rounded-2xl px-4 py-3.5 text-sm font-semibold transition-colors ${isRecording ? 'bg-red-500/10 text-red-400' : isDark ? 'text-gray-200 hover:bg-white/8 active:bg-white/12' : 'text-gray-700 hover:bg-gray-50 active:bg-gray-100'}`}
+                                >
+                                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${isRecording ? 'bg-red-500/20' : isDark ? 'bg-white/8' : 'bg-gray-100'}`}>
+                                        {isRecording
+                                            ? <StopCircle size={18} className="text-red-400" />
+                                            : <Circle size={18} className={isDark ? 'text-gray-300' : 'text-gray-600'} />}
+                                    </div>
+                                    <div>
+                                        <div className="flex items-center gap-2">
+                                            {isRecording && <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />}
+                                            {isRecording ? (t('ctl_stop_recording') || 'Stop Recording') : (t('ctl_start_recording') || 'Start Recording')}
+                                        </div>
+                                    </div>
+                                </button>
+                            )}
+
+                            <button
+                                onClick={() => { setShowSettings(!showSettings); setMobileMenuOpen(false); }}
+                                className={`w-full flex items-center gap-4 rounded-2xl px-4 py-3.5 text-sm font-semibold transition-colors ${showSettings ? 'bg-blue-500/10 text-blue-400' : isDark ? 'text-gray-200 hover:bg-white/8 active:bg-white/12' : 'text-gray-700 hover:bg-gray-50 active:bg-gray-100'}`}
+                            >
+                                <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${showSettings ? 'bg-blue-500/20' : isDark ? 'bg-white/8' : 'bg-gray-100'}`}>
+                                    <Settings size={18} className={showSettings ? 'text-blue-400' : isDark ? 'text-gray-300' : 'text-gray-600'} />
+                                </div>
+                                <div>{t('ctl_settings') || 'Device Settings'}</div>
+                            </button>
+
+                            {/* Room ID copy */}
+                            <button
+                                onClick={() => { navigator.clipboard.writeText(roomID); setCopied(true); setTimeout(() => setCopied(false), 2000); }}
+                                className={`w-full flex items-center gap-4 rounded-2xl px-4 py-3.5 text-sm font-semibold transition-colors ${isDark ? 'text-gray-200 hover:bg-white/8 active:bg-white/12' : 'text-gray-700 hover:bg-gray-50 active:bg-gray-100'}`}
+                            >
+                                <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${isDark ? 'bg-white/8' : 'bg-gray-100'}`}>
+                                    {copied ? <Check size={18} className="text-emerald-400" /> : <Copy size={18} className={isDark ? 'text-gray-300' : 'text-gray-600'} />}
+                                </div>
+                                <div>
+                                    <div>{copied ? (t('ctl_copied') || 'Copied!') : (t('ctl_meeting_id') || 'Copy Meeting ID')}</div>
+                                    <div className="text-[10px] text-gray-500 font-mono font-normal truncate max-w-[180px]">{roomID}</div>
+                                </div>
+                            </button>
+                        </div>
+
+                        {/* Safe area spacing */}
+                        <div style={{ height: 'env(safe-area-inset-bottom, 8px)' }} />
+                    </div>
                 </>
             )}
         </div>

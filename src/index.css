@@ -247,7 +247,61 @@ h1, h2, h3, h4, .font-outfit {
   -webkit-overflow-scrolling: touch;
 }
 
+
 .thumb-scroll-x > * {
   scroll-snap-align: start;
   flex-shrink: 0;
+}
+
+/* ── Slide-in from right (full width) animation ─────────────────────────── */
+@keyframes slide-in-from-right-full {
+  from { transform: translateX(100%); }
+  to   { transform: translateX(0); }
+}
+
+.animate-in.slide-in-from-right-full {
+  animation: slide-in-from-right-full var(--tw-enter-duration, 250ms) var(--tw-enter-easing, ease-out);
+}
+
+/* ── Mobile: prevent body scroll when sidebar is open ─────────────────── */
+body.sidebar-open {
+  overflow: hidden;
+  position: fixed;
+  width: 100%;
+}
+
+/* ── Video tile aspect ratio enforcement on mobile ────────────────────── */
+@media (max-width: 479px) {
+  /* Ensure at least 2 thumbnails visible in strip */
+  .thumb-scroll-x > * {
+    min-width: 80px;
+    max-width: 110px;
+  }
+}
+
+/* ── Bottom sheet animation ───────────────────────────────────────────── */
+@keyframes slide-in-from-bottom-sheet {
+  from { transform: translateY(100%); opacity: 0; }
+  to   { transform: translateY(0); opacity: 1; }
+}
+
+/* ── Mobile control bar safe area ─────────────────────────────────────── */
+.room-mobile-bar {
+  padding-bottom: max(12px, env(safe-area-inset-bottom));
+}
+
+/* ── Thumb strip fade edges ─────────────────────────────────────────── */
+.thumb-strip-container {
+  position: relative;
+}
+.thumb-strip-container::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 32px;
+  background: linear-gradient(to left, rgba(0,0,0,0.4), transparent);
+  pointer-events: none;
+  z-index: 1;
 }

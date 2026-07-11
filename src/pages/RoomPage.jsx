@@ -1017,7 +1017,7 @@ const RoomPage = () => {
 
             {/* Main area */}
             <div className="flex-1 flex overflow-hidden relative">
-                <div className="flex-1 flex flex-col p-1 xs:p-1.5 sm:p-2 relative z-10 min-w-0">
+                <div className="flex-1 flex flex-col p-0.5 xs:p-1 sm:p-2 relative z-10 min-w-0">
                     <RoomVideoGrid
                         isDark={isDark} viewMode={viewMode}
                         gridClassMap={gridClassMap} gridSize={gridSize}
@@ -1049,7 +1049,7 @@ const RoomPage = () => {
 
                 {/* Sidebar */}
                 {(showChat || showParticipants) && (
-                    <aside className={`absolute inset-y-0 right-0 w-full xs:w-[320px] z-50 tablet:static tablet:w-[300px] lg:w-[360px] shrink-0 h-full flex flex-col shadow-[0_0_50px_rgba(0,0,0,0.6)] animate-in slide-in-from-right duration-300
+                    <aside className={`absolute inset-y-0 right-0 w-full xs:w-[320px] z-50 tablet:static tablet:w-[300px] lg:w-[360px] shrink-0 h-full flex flex-col shadow-[0_0_50px_rgba(0,0,0,0.6)] animate-in slide-in-from-right-full duration-250 ease-out
                         ${isDark ? 'bg-[#0d0f15] border-l border-white/6' : 'bg-white border-l border-gray-200'}`}>
 
                         {showParticipants && (

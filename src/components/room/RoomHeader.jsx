@@ -16,7 +16,7 @@ const RoomHeader = ({
     const { t } = useContext(ThemeLanguageContext);
 
     return (
-        <header className={`h-12 sm:h-14 flex items-center justify-between px-3 sm:px-5 z-40 shrink-0 ${isDark ? 'bg-[#13151c] border-b border-white/[0.06]' : 'bg-white border-b border-gray-200'}`}>
+        <header className={`h-11 sm:h-14 flex items-center justify-between px-2 sm:px-5 z-40 shrink-0 ${isDark ? 'bg-[#13151c] border-b border-white/[0.06]' : 'bg-white border-b border-gray-200'}`}>
 
             {/* Left */}
             <div className="flex items-center gap-2 overflow-hidden min-w-0">
@@ -33,10 +33,10 @@ const RoomHeader = ({
 
                 {/* Room title + ID */}
                 <div className="flex flex-col min-w-0">
-                    <h1 className={`text-xs sm:text-sm font-semibold tracking-tight truncate max-w-[120px] xs:max-w-[180px] sm:max-w-none ${isDark ? 'text-white/90' : 'text-gray-900'}`}>
-                        {meeting?.title || 'Tayyorlanmoqda...'}
+                    <h1 className={`text-[11px] sm:text-sm font-semibold tracking-tight truncate max-w-[90px] xs:max-w-[140px] sm:max-w-none leading-tight ${isDark ? 'text-white/90' : 'text-gray-900'}`}>
+                        {meeting?.title || 'Loading...'}
                     </h1>
-                    <button onClick={copyRoomID} className="flex items-center gap-1 group cursor-pointer w-fit" title={t('copy_id') || 'Copy ID'}>
+                    <button onClick={copyRoomID} className="hidden xs:flex items-center gap-1 group cursor-pointer w-fit" title={t('copy_id') || 'Copy ID'}>
                         <span className="text-[9px] font-mono text-gray-600 group-hover:text-blue-400 transition-colors truncate max-w-[80px] sm:max-w-none">
                             {roomID}
                         </span>
@@ -71,7 +71,7 @@ const RoomHeader = ({
             </div>
 
             {/* Right */}
-            <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+            <div className="flex items-center gap-1 sm:gap-2 shrink-0">
                 {/* Network */}
                 <div className="hidden md:flex items-center gap-3">
                     <div className="flex items-center gap-1">
