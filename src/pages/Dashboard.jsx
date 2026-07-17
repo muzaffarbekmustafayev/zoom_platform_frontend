@@ -20,6 +20,15 @@ const JoinView = ({ t }) => {
         e.preventDefault();
         if (roomID.trim()) navigate(`/room/${roomID.trim()}`);
     };
+
+    const handleRoomIdChange = (e) => {
+        // Faqat harf va raqamlarni olib (defislarni olib tashlab), max 9 ta belgiga cheklaymiz
+        const val = e.target.value.replace(/[^a-zA-Z0-9]/g, '').slice(0, 9);
+        // Har 3 ta belgidan keyin defis qo'yamiz
+        const formatted = val.match(/.{1,3}/g)?.join('-') || '';
+        setRoomID(formatted);
+    };
+
     return (
         <div className="flex-1 flex flex-col items-center justify-center px-4 py-12 sm:py-16">
             <div className="w-full max-w-md bg-white dark:bg-[#161B22] backdrop-blur-md border border-gray-100 dark:border-white/8 rounded-[2rem] p-8 sm:p-10 shadow-2xl shadow-gray-200/50 dark:shadow-black/40 text-center relative overflow-hidden">
@@ -34,7 +43,7 @@ const JoinView = ({ t }) => {
                 <form onSubmit={handleJoin} className="space-y-5 relative z-10">
                     <div className="text-left">
                         <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 pl-1">{t('meeting_id_link')}</label>
-                        <input autoFocus type="text" placeholder="123-456-789" value={roomID} onChange={e => setRoomID(e.target.value)}
+                        <input autoFocus type="text" placeholder="123-456-789" value={roomID} onChange={handleRoomIdChange}
                             className="w-full bg-gray-50 dark:bg-[#1e2430] border border-gray-200 dark:border-white/8 rounded-xl px-5 py-4 text-base font-medium text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all" />
                     </div>
                     <button type="submit" disabled={!roomID.trim()}
@@ -719,21 +728,21 @@ const HomeView = ({ t, lang, userInfo, onNav, history = [] }) => {
                 </div>
 
                 <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 sm:pt-10 pb-0">
-                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5">
+                    <div className="flex flex-row items-end sm:items-center justify-between gap-3 sm:gap-5">
                         {/* Left: greeting */}
-                        <div>
-                            <div className="flex items-center gap-2 mb-2">
-                                <span className="relative flex h-2 w-2">
+                        <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-2 mb-1 sm:mb-2">
+                                <span className="relative flex h-2 w-2 shrink-0">
                                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-300 opacity-60" />
                                     <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-200" />
                                 </span>
-                                <span className="text-blue-200 text-xs font-semibold uppercase tracking-widest">{dateStr}</span>
+                                <span className="text-blue-200 text-[10px] sm:text-xs font-semibold uppercase tracking-widest truncate">{dateStr}</span>
                             </div>
-                            <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight leading-tight">
+                            <h1 className="text-2xl xs:text-3xl sm:text-4xl font-extrabold text-white tracking-tight leading-tight truncate">
                                 {greeting},&nbsp;
                                 <span className="text-blue-200">{userInfo.name.split(' ')[0]}!</span>
                             </h1>
-                            <p className="text-blue-200/60 text-sm mt-1.5 font-medium">
+                            <p className="text-blue-200/60 text-xs sm:text-sm mt-1 sm:mt-1.5 font-medium truncate">
                                 {todayCount > 0
                                     ? (lang === 'uz' ? `Bugun ${todayCount} ta uchrashuv` : lang === 'ru' ? `Сегодня ${todayCount} встреч` : `${todayCount} meeting${todayCount !== 1 ? 's' : ''} today`)
                                     : (lang === 'uz' ? 'Bugun hali uchrashuv yo\'q' : lang === 'ru' ? 'Сегодня встреч нет' : 'No meetings today yet')}
@@ -741,8 +750,8 @@ const HomeView = ({ t, lang, userInfo, onNav, history = [] }) => {
                         </div>
 
                         {/* Right: clock */}
-                        <div className="select-none shrink-0 text-right">
-                            <p className="text-5xl sm:text-6xl font-black text-white tabular-nums tracking-tighter leading-none font-outfit">{hh}</p>
+                        <div className="select-none shrink-0 text-right pb-0.5 sm:pb-0">
+                            <p className="text-4xl xs:text-5xl sm:text-6xl font-black text-white tabular-nums tracking-tighter leading-none font-outfit">{hh}</p>
                         </div>
                     </div>
 
@@ -764,7 +773,7 @@ const HomeView = ({ t, lang, userInfo, onNav, history = [] }) => {
 
             {/* ── Action buttons ───────────────────────────────────────────── */}
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
-                <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
                     {actions.map(action => (
                         <button
                             key={action.id}
@@ -1846,7 +1855,7 @@ const Dashboard = () => {
                         <div className="w-7 h-7 bg-blue-600 rounded-lg flex items-center justify-center shadow-md shadow-blue-600/20 group-hover:shadow-blue-600/40 transition-shadow">
                             <span className="text-white text-xs font-black">{APP_NAME[0]}</span>
                         </div>
-                        <span className="text-sm font-bold text-gray-900 dark:text-white hidden sm:block tracking-tight">{APP_NAME}</span>
+                        <span className="text-sm font-bold text-gray-900 dark:text-white tracking-tight">{APP_NAME}</span>
                     </button>
 
                     {/* Separator */}

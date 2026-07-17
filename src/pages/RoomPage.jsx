@@ -36,10 +36,15 @@ const ICE_CONFIG = {
 // Opus kodek sozlamalari (SDP orqali):
 // useinbandfec=1 — paket yo'qolganda ovozni tiklash (FEC), zaif tarmoqda uzilishlar kamayadi
 // usedtx=1       — jimlikda deyarli trafik yubormaslik (bandwidth tejaladi)
-// maxaveragebitrate=48000 — nutq uchun yuqori sifat
-const tuneOpusSdp = (sdp) =>
-    sdp.replace(/(a=fmtp:\d+ minptime=10;useinbandfec=1)/g,
-        '$1;usedtx=1;maxaveragebitrate=48000;cbr=0');
+// maxaveragebitrate=256000 — nutq va musiqa uchun yuqori sifat, stereo=1 — stereo ovoz
+// video bitrate 4000 kbps ga ko'tarildi
+const tuneSdp = (sdp) => {
+    let s = sdp.replace(/(a=fmtp:\d+ minptime=10;useinbandfec=1)/g,
+        '$1;usedtx=1;maxaveragebitrate=256000;stereo=1;cbr=0');
+    // b=AS:4000 video tezligini 4 Mbps ga cheklaydi (juda yuqori sifat)
+    s = s.replace(/(m=video.*?\r\n)/g, '$1b=AS:4000\r\n');
+    return s;
+};
 
 const RoomPage = () => {
     const { id: roomID } = useParams();
@@ -357,7 +362,7 @@ const RoomPage = () => {
     // trickle: true — ICE kandidatlar tayyor bo'lishi bilan yuboriladi,
     // ulanish bir necha soniyaga tezlashadi va muvaffaqiyat darajasi oshadi.
     function createPeer(userToSignal, callerID, stream, callerUserId, socket) {
-        const peer = new Peer({ initiator: true, trickle: true, stream, config: ICE_CONFIG, sdpTransform: tuneOpusSdp });
+        const peer = new Peer({ initiator: true, trickle: true, stream, config: ICE_CONFIG, sdpTransform: tuneSdp });
         peer.on('signal', signal => socket.emit('sending-signal', { userToSignal, callerID, signal, callerUserId }));
         peer.on('stream', s => registerRemoteStream(userToSignal, s));
         peer.on('error', () => toast.error(lang === 'uz' ? 'Ulanishda xatolik.' : lang === 'ru' ? 'Ошибка подключения.' : 'Connection error.'));
@@ -366,7 +371,7 @@ const RoomPage = () => {
     }
 
     function addPeer(incomingSignal, callerID, stream, socket) {
-        const peer = new Peer({ initiator: false, trickle: true, stream, config: ICE_CONFIG, sdpTransform: tuneOpusSdp });
+        const peer = new Peer({ initiator: false, trickle: true, stream, config: ICE_CONFIG, sdpTransform: tuneSdp });
         peer.on('signal', signal => socket.emit('returning-signal', { signal, callerID }));
         peer.on('stream', s => registerRemoteStream(callerID, s));
         peer.on('error', () => toast.error(lang === 'uz' ? 'Ulanishda xatolik.' : lang === 'ru' ? 'Ошибка подключения.' : 'Connection error.'));
@@ -572,8 +577,8 @@ const RoomPage = () => {
         const initMedia = async (pw = '') => {
             try {
                 const cur = await navigator.mediaDevices.getUserMedia({
-                    video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: 'user' },
-                    audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true, channelCount: 1, sampleRate: 48000, sampleSize: 16 }
+                    video: { width: { ideal: 1920 }, height: { ideal: 1080 }, frameRate: { ideal: 60, min: 24 }, facingMode: 'user' },
+                    audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true, channelCount: 2, sampleRate: 48000, sampleSize: 16 }
                 });
                 const micOn   = sessionStorage.getItem(`mic-${roomID}`)   === 'true';
                 const videoOn = sessionStorage.getItem(`video-${roomID}`) === 'true';
@@ -657,9 +662,9 @@ const RoomPage = () => {
 
     const switchCamera = async (deviceId) => {
         try {
-            const base = { echoCancellation: true, noiseSuppression: true, autoGainControl: true, channelCount: 1, sampleRate: 48000 };
+            const base = { echoCancellation: true, noiseSuppression: true, autoGainControl: true, channelCount: 2, sampleRate: 48000, sampleSize: 16 };
             const ns = await navigator.mediaDevices.getUserMedia({
-                video: { deviceId: { exact: deviceId } },
+                video: { deviceId: { exact: deviceId }, width: { ideal: 1920 }, height: { ideal: 1080 }, frameRate: { ideal: 60, min: 24 } },
                 audio: selectedAudioDevice ? { deviceId: { exact: selectedAudioDevice }, ...base } : base,
             });
             const nv = ns.getVideoTracks()[0];
@@ -676,7 +681,7 @@ const RoomPage = () => {
 
     const switchAudio = async (deviceId) => {
         try {
-            const base = { echoCancellation: true, noiseSuppression: true, autoGainControl: true, channelCount: 1, sampleRate: 48000 };
+            const base = { echoCancellation: true, noiseSuppression: true, autoGainControl: true, channelCount: 2, sampleRate: 48000, sampleSize: 16 };
             const ns = await navigator.mediaDevices.getUserMedia({ audio: { deviceId: { exact: deviceId }, ...base } });
             const newTrack = ns.getAudioTracks()[0];
             if (!newTrack) return;
@@ -795,9 +800,8 @@ const RoomPage = () => {
         const socket = socketRef.current;
         if (!socket) return;
         navigator.mediaDevices.getDisplayMedia({
-            // Demonstratsiya uchun 15fps yetarli, 1080p cheklov — bandwidth tejaladi,
-            // sifat barqarorlashadi (slayd/matn uchun aniqlik harakatdan muhim)
-            video: { cursor: 'always', frameRate: { ideal: 15, max: 30 }, width: { max: 1920 }, height: { max: 1080 } },
+            // Demonstratsiya uchun 30fps va 1080p gacha ruxsat beramiz — slayd va harakatli narsalar tekis ishlaydi
+            video: { cursor: 'always', frameRate: { ideal: 30, max: 60 }, width: { ideal: 1920, max: 1920 }, height: { ideal: 1080, max: 1080 } },
             audio: true // tizim/tab ovozi ekran oqimi ichida ketadi — video ko'rsatishda zarur
         })
             .then(screen => {
