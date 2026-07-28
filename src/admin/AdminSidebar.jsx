@@ -5,9 +5,16 @@ const APP_NAME = import.meta.env.VITE_APP_NAME || 'SamMeet';
 
 const AdminSidebar = ({ activeTab, setActiveTab, sidebarOpen, setSidebar, me, onLogout, t }) => {
     const navItems = [
-        { id: 'overview', label: t('overview'),  d: Icon.dashboard },
-        { id: 'users',    label: t('users'),     d: Icon.users },
-        { id: 'meetings', label: t('meetings'),  d: Icon.meetings },
+        { id: 'overview', label: t('overview') || 'Asosiy',  d: Icon.dashboard },
+        { id: 'users',    label: t('users') || 'Foydalanuvchilar',     d: Icon.users },
+        { id: 'meetings', label: t('meetings') || 'Uchrashuvlar',  d: Icon.meetings },
+        { id: 'reports',  label: 'Hisobotlar',  d: Icon.document },
+    ];
+
+    const securityItems = [
+        { id: 'iplogs',   label: 'IP Monitoring', d: Icon.globe, accent: true },
+        { id: 'roles',    label: 'Rollar (Roles)', d: Icon.shield, accent: true },
+        { id: 'settings', label: 'Tizim sozlamalari', d: Icon.settings, accent: true },
     ];
 
     return (
@@ -60,6 +67,28 @@ const AdminSidebar = ({ activeTab, setActiveTab, sidebarOpen, setSidebar, me, on
                             {item.label}
                         </button>
                     ))}
+
+                    {/* Security section */}
+                    <div className="pt-3">
+                        <p className="text-[10px] font-semibold text-orange-400/80 dark:text-orange-500/60 uppercase tracking-widest px-3 pb-2 flex items-center gap-1.5">
+                            <span>🔒</span> Xavfsizlik
+                        </p>
+                        {securityItems.map(item => (
+                            <button
+                                key={item.id}
+                                onClick={() => { setActiveTab(item.id); setSidebar(false); }}
+                                className={[
+                                    'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
+                                    activeTab === item.id
+                                        ? 'bg-orange-50 dark:bg-orange-500/15 text-orange-700 dark:text-orange-400'
+                                        : 'text-gray-600 dark:text-gray-400 hover:bg-orange-50/50 dark:hover:bg-orange-500/8 hover:text-orange-700 dark:hover:text-orange-400',
+                                ].join(' ')}
+                            >
+                                <Ico d={item.d} size={17} />
+                                {item.label}
+                            </button>
+                        ))}
+                    </div>
                 </nav>
 
                 {/* User block */}

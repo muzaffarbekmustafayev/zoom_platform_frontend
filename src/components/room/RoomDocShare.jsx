@@ -93,7 +93,11 @@ const RoomDocShare = ({ open, onClose, isSharingScreen, onStart, onStop }) => {
                 const vp = page.getViewport({ scale });
                 const off = document.createElement('canvas');
                 off.width = Math.round(vp.width); off.height = Math.round(vp.height);
-                await page.render({ canvasContext: off.getContext('2d'), viewport: vp }).promise;
+                const offCtx = off.getContext('2d');
+                // Oq fon to'ldirish (PPTX -> PDF dizaynlari va qora matnlar ko'rinishi uchun)
+                offCtx.fillStyle = '#ffffff';
+                offCtx.fillRect(0, 0, off.width, off.height);
+                await page.render({ canvasContext: offCtx, viewport: vp }).promise;
                 ctx.drawImage(off, (CW - off.width) / 2, (CH - off.height) / 2);
             } catch (e) { console.error('PDF render:', e); }
         } else if (doc.type === 'text') {
@@ -186,7 +190,11 @@ const RoomDocShare = ({ open, onClose, isSharingScreen, onStart, onStop }) => {
             const buf = await file.arrayBuffer();
             if (ext === 'pdf') {
                 ensurePdfWorker();
-                const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
+                const pdf = await pdfjsLib.getDocument({
+                    data: buf,
+                    cMapUrl: 'https://unpkg.com/pdfjs-dist@3.11.174/cmaps/',
+                    cMapPacked: true,
+                }).promise;
                 pdfDocRef.current = pdf;
                 // Canvas'ni birinchi sahifa o'lchamiga moslaymiz (portret/landshaft)
                 const p1 = await pdf.getPage(1);

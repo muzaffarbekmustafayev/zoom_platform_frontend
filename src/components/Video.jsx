@@ -37,8 +37,8 @@ const Video = ({ stream, userName, role, hasTurn, isStage, isLocal, isScreen = f
         if (!stream) { setVideoEnabled(false); setAudioEnabled(false); return; }
         const vt = stream.getVideoTracks();
         const at = stream.getAudioTracks();
-        setVideoEnabled(vt.length > 0 && vt.some(t => t.readyState === 'live' && t.enabled && !t.muted));
-        setAudioEnabled(at.length > 0 && at.some(t => t.readyState === 'live' && t.enabled && !t.muted));
+        setVideoEnabled(vt.length > 0 && vt.some(t => t.readyState !== 'ended' && t.enabled));
+        setAudioEnabled(at.length > 0 && at.some(t => t.readyState !== 'ended' && t.enabled));
     }, [stream]);
 
     useEffect(() => {
@@ -79,7 +79,7 @@ const Video = ({ stream, userName, role, hasTurn, isStage, isLocal, isScreen = f
 
     useEffect(() => { syncTrackState(); }, [userVideoStatus, syncTrackState]);
 
-    const showVideo = videoEnabled && userVideoStatus !== false;
+    const showVideo = isScreen ? (videoEnabled || stream?.getVideoTracks()?.length > 0) : (videoEnabled && userVideoStatus !== false);
 
     const toggleFullScreen = () => {
         if (!ref.current) return;
@@ -118,23 +118,23 @@ const Video = ({ stream, userName, role, hasTurn, isStage, isLocal, isScreen = f
             </div>
 
             {/* Name + role */}
-            <div className="mt-4 flex flex-col items-center gap-1.5 px-4 max-w-[85%]">
-                <p className={`text-white font-semibold truncate text-center w-full ${isStage ? 'text-base' : 'text-xs'}`}>
+            <div className={`flex flex-col items-center justify-center gap-1 sm:gap-1.5 px-2 w-full ${isStage ? 'mt-4' : 'mt-2'}`}>
+                <p className={`text-white font-semibold truncate text-center w-full ${isStage ? 'text-base' : 'text-[10px] sm:text-xs'}`}>
                     {userName}
                 </p>
-                <div className="flex items-center gap-1.5">
+                <div className="flex flex-wrap justify-center items-center gap-1">
                     {(isHost || isCoHost || isGuest) && (
-                        <span className={`hidden sm:inline-flex px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wider
+                        <span className={`px-1.5 py-0.5 rounded flex items-center justify-center text-[8px] font-bold uppercase tracking-wider
                             ${isHost ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30'
                             : isCoHost ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
                             : 'bg-white/8 text-gray-400 border border-white/10'}`}>
-                            {isHost ? 'Host' : isCoHost ? 'Co-Host' : 'Guest'}
+                            {isHost ? 'Host' : isCoHost ? 'Co' : 'Guest'}
                         </span>
                     )}
                     {!audioEnabled && (
-                        <span className="flex items-center gap-1 bg-red-500/15 px-2 py-0.5 rounded-md border border-red-500/20">
-                            <MicOff size={9} className="text-red-400" />
-                            <span className="text-[9px] font-bold text-red-400">Muted</span>
+                        <span className="flex items-center gap-1 bg-red-500/15 px-1.5 py-0.5 rounded border border-red-500/20">
+                            <MicOff size={8} className="text-red-400" />
+                            <span className="text-[8px] font-bold text-red-400">Muted</span>
                         </span>
                     )}
                 </div>
@@ -143,7 +143,7 @@ const Video = ({ stream, userName, role, hasTurn, isStage, isLocal, isScreen = f
     );
 
     return (
-        <div className={`relative w-full h-full overflow-hidden group transition-all duration-300 ${tileBg}
+        <div className={`relative w-full h-full overflow-hidden group transition-all duration-300 ${tileBg} flex items-center justify-center
             ${!isStage ? `rounded-2xl border ${
                 isSpeaking ? 'border-emerald-400/60 shadow-[0_0_14px_rgba(52,211,153,0.18)]'
                 : hasTurn ? 'border-emerald-500/50 shadow-[0_0_16px_rgba(16,185,129,0.12)]'
@@ -172,8 +172,7 @@ const Video = ({ stream, userName, role, hasTurn, isStage, isLocal, isScreen = f
                         <span className={`font-black text-white ${isStage ? 'text-xl sm:text-2xl' : 'text-sm sm:text-base'}`}>{initials}</span>
                     </div>
                     <div className="flex flex-col items-center gap-1.5">
-                        <div className="w-5 h-5 border-2 border-blue-500/25 border-t-blue-500/70 rounded-full animate-spin" />
-                        <span className="text-[9px] font-semibold text-gray-600 uppercase tracking-widest">Connecting...</span>
+                        <div className="w-4 h-4 border-2 border-blue-500/25 border-t-blue-500/70 rounded-full animate-spin" />
                     </div>
                 </div>
             )}
@@ -183,10 +182,10 @@ const Video = ({ stream, userName, role, hasTurn, isStage, isLocal, isScreen = f
 
             {/* Top-right: audio/video status indicators */}
             {stream && showVideo && (
-                <div className="absolute top-2 right-2 flex items-center gap-1 z-20">
+                <div className="absolute top-1.5 right-1.5 flex items-center gap-1 z-20">
                     {!audioEnabled && (
-                        <div className="p-1 rounded-lg bg-red-500/80 backdrop-blur-sm border border-red-400/30">
-                            <MicOff size={10} className="text-white" />
+                        <div className="p-1 rounded bg-red-500/80 backdrop-blur-sm border border-red-400/30">
+                            <MicOff size={8} className="text-white" />
                         </div>
                     )}
                 </div>
@@ -194,21 +193,20 @@ const Video = ({ stream, userName, role, hasTurn, isStage, isLocal, isScreen = f
 
             {/* Bottom info bar */}
             {stream && (
-                <div className="absolute bottom-0 left-0 right-0 px-3 py-2 flex items-center justify-between bg-gradient-to-t from-black/75 to-transparent z-20">
-                    <div className="flex items-center gap-1.5 min-w-0">
+                <div className="absolute bottom-0 left-0 right-0 px-2 py-1.5 sm:px-3 sm:py-2 flex items-center justify-between bg-gradient-to-t from-black/75 to-transparent z-20 overflow-hidden">
+                    <div className="flex items-center gap-1 min-w-0">
                         {/* Audio dot */}
                         <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${
                             audioEnabled ? 'bg-emerald-400' : 'bg-red-400'
                         } ${audioEnabled && !isLocal ? 'animate-pulse' : ''}`} />
-                        <span className="text-[10px] font-semibold text-white/90 truncate max-w-[60px] sm:max-w-none">{userName}</span>
-                        {isHost && <span className="hidden sm:inline text-[8px] font-bold text-blue-400 uppercase tracking-wider shrink-0">HOST</span>}
-                        {isCoHost && <span className="hidden sm:inline text-[8px] font-bold text-emerald-400 uppercase tracking-wider shrink-0">CO-HOST</span>}
-                        {hasTurn && <span className="text-[8px] font-bold text-amber-400 uppercase tracking-wider shrink-0">• Speaking</span>}
+                        <span className="text-[9px] sm:text-[10px] font-semibold text-white/90 truncate max-w-[45px] sm:max-w-none">{userName}</span>
+                        {isHost && <span className="text-[7px] font-bold text-blue-400 uppercase tracking-wider shrink-0">HOST</span>}
+                        {isCoHost && <span className="hidden sm:inline text-[7px] font-bold text-emerald-400 uppercase tracking-wider shrink-0">CO</span>}
                     </div>
                     {showVideo && (
                         <button
                             onClick={toggleFullScreen}
-                            className="p-1 bg-white/10 hover:bg-white/20 backdrop-blur-sm rounded-lg border border-white/10 text-white/60 hover:text-white transition-all shrink-0 opacity-0 group-hover:opacity-100"
+                            className="p-1 bg-white/10 hover:bg-white/20 backdrop-blur-sm rounded-lg border border-white/10 text-white/60 hover:text-white transition-all shrink-0 opacity-0 group-hover:opacity-100 hidden sm:block"
                         >
                             {isFullScreen ? <Minimize2 size={10} /> : <Maximize2 size={10} />}
                         </button>

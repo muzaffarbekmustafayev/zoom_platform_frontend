@@ -14,42 +14,90 @@ const APP_NAME = import.meta.env.VITE_APP_NAME || 'Meetra';
 
 // ─── Join View ────────────────────────────────────────────────────────────────
 const JoinView = ({ t }) => {
-    const [roomID, setRoomID] = useState('');
+    const [inputValue, setInputValue] = useState('');
     const navigate = useNavigate();
-    const handleJoin = (e) => {
-        e.preventDefault();
-        if (roomID.trim()) navigate(`/room/${roomID.trim()}`);
+
+    const parseRoomCode = (raw) => {
+        let text = (raw || '').trim();
+        if (!text) return '';
+        // If full URL pasted: extract after /room/
+        if (text.includes('/room/')) {
+            const parts = text.split('/room/');
+            return parts[parts.length - 1].split('?')[0].split('#')[0];
+        }
+        // If 9 digits without hyphens e.g. 580616615 -> format to 580-616-615
+        const digitsOnly = text.replace(/\D/g, '');
+        if (digitsOnly.length === 9 && !text.includes('-')) {
+            return `${digitsOnly.slice(0, 3)}-${digitsOnly.slice(3, 6)}-${digitsOnly.slice(6, 9)}`;
+        }
+        return text;
     };
 
-    const handleRoomIdChange = (e) => {
-        // Faqat harf va raqamlarni olib (defislarni olib tashlab), max 9 ta belgiga cheklaymiz
-        const val = e.target.value.replace(/[^a-zA-Z0-9]/g, '').slice(0, 9);
-        // Har 3 ta belgidan keyin defis qo'yamiz
-        const formatted = val.match(/.{1,3}/g)?.join('-') || '';
-        setRoomID(formatted);
+    const handleJoin = (e) => {
+        e.preventDefault();
+        const code = parseRoomCode(inputValue);
+        if (code) navigate(`/room/${code}`);
     };
+
+    const handlePasteAndJoin = async () => {
+        try {
+            const text = await navigator.clipboard.readText();
+            const code = parseRoomCode(text);
+            if (code) {
+                setInputValue(code);
+                navigate(`/room/${code}`);
+            }
+        } catch (_) {}
+    };
+
+    const cleanCode = parseRoomCode(inputValue);
 
     return (
         <div className="flex-1 flex flex-col items-center justify-center px-4 py-12 sm:py-16">
             <div className="w-full max-w-md bg-white dark:bg-[#161B22] backdrop-blur-md border border-gray-100 dark:border-white/8 rounded-[2rem] p-8 sm:p-10 shadow-2xl shadow-gray-200/50 dark:shadow-black/40 text-center relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none" />
                 <div className="mb-8 relative z-10">
-                    <div className="w-14 h-14 border border-gray-100 dark:border-white/10 rounded-2xl flex items-center justify-center mx-auto mb-6 bg-gray-50 dark:bg-white/5 shadow-inner">
-                        <svg className="w-6 h-6 text-blue-500 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" /></svg>
+                    <div className="w-14 h-14 border border-gray-100 dark:border-white/10 rounded-2xl flex items-center justify-center mx-auto mb-6 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 shadow-inner text-xl">
+                        📹
                     </div>
-                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2 tracking-tight">{t('join_meeting')}</h2>
-                    <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{t('enter_code')}</p>
+                    <h2 className="text-2xl font-extrabold text-gray-900 dark:text-white mb-2 tracking-tight">{t('join_meeting') || 'Uchrashuvga Qo\'shilish'}</h2>
+                    <p className="text-xs font-medium text-gray-500 dark:text-gray-400">Xona kodini yoki havolasini kiriting</p>
                 </div>
-                <form onSubmit={handleJoin} className="space-y-5 relative z-10">
-                    <div className="text-left">
-                        <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 pl-1">{t('meeting_id_link')}</label>
-                        <input autoFocus type="text" placeholder="123-456-789" value={roomID} onChange={handleRoomIdChange}
-                            className="w-full bg-gray-50 dark:bg-[#1e2430] border border-gray-200 dark:border-white/8 rounded-xl px-5 py-4 text-base font-medium text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all" />
+
+                <form onSubmit={handleJoin} className="space-y-4 relative z-10">
+                    <div className="text-left space-y-1.5">
+                        <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest pl-1">Xona kodi yoki Havola</label>
+                        <input
+                            autoFocus
+                            type="text"
+                            placeholder="580-616-615 yoki havola..."
+                            value={inputValue}
+                            onChange={e => setInputValue(e.target.value)}
+                            className="w-full bg-gray-50 dark:bg-[#1e2430] border border-gray-200 dark:border-white/8 rounded-xl px-5 py-3.5 text-sm font-medium text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
+                        />
                     </div>
-                    <button type="submit" disabled={!roomID.trim()}
-                        className={`w-full py-4 rounded-xl font-bold text-base transition-all ${roomID.trim() ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-500/30' : 'bg-gray-100 dark:bg-[#161B22] text-gray-400 cursor-not-allowed border border-transparent'}`}>
-                        {t('join_now')}
-                    </button>
+
+                    <div className="flex gap-2">
+                        <button
+                            type="button"
+                            onClick={handlePasteAndJoin}
+                            className="px-4 py-3.5 rounded-xl text-xs font-semibold bg-gray-100 dark:bg-white/8 hover:bg-gray-200 dark:hover:bg-white/12 text-gray-700 dark:text-gray-300 transition-all flex items-center gap-1.5 shrink-0"
+                            title="Nusxalangan havoladan kirish"
+                        >
+                            📋 Nusxadan
+                        </button>
+                        <button
+                            type="submit"
+                            disabled={!cleanCode}
+                            className={`flex-1 py-3.5 rounded-xl font-bold text-sm transition-all ${
+                                cleanCode
+                                    ? 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg shadow-blue-500/25 hover:scale-[1.02] active:scale-[0.98]'
+                                    : 'bg-gray-100 dark:bg-[#161B22] text-gray-400 cursor-not-allowed border border-transparent'
+                            }`}
+                        >
+                            {t('join_now') || 'Xonaga Kirish'}
+                        </button>
+                    </div>
                 </form>
             </div>
         </div>

@@ -1,19 +1,80 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Select from '../components/Select';
 import { Icon, Ico } from './icons';
 import { SortTh, SkeletonRows, MessageRow, Pagination } from './TableKit';
 
+
+/* Registration IP cell with copy button + full timestamp */
+const RegIpCell = ({ u }) => {
+    const [copied, setCopied] = useState(false);
+    const copy = () => {
+        if (!u.registrationIp) return;
+        navigator.clipboard.writeText(u.registrationIp).then(() => {
+            setCopied(true);
+            setTimeout(() => setCopied(false), 1500);
+        });
+    };
+    const regTime = u.registrationAt || u.createdAt;
+    const deviceIcon =
+        u.registrationDevice === 'mobile'  ? '📱' :
+        u.registrationDevice === 'tablet'  ? '📟' :
+        u.registrationDevice === 'desktop' ? '🖥️' :
+        u.registrationDevice === 'bot'     ? '🤖' : null;
+
+    if (!u.registrationIp) {
+        return (
+            <span className="inline-flex px-2 py-0.5 rounded text-[11px] font-mono text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-white/5">
+                Noma'lum
+            </span>
+        );
+    }
+
+    return (
+        <div className="space-y-1">
+            {/* IP + copy button */}
+            <div className="flex items-center gap-1.5 group">
+                <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-orange-50 dark:bg-orange-500/10 border border-orange-200 dark:border-orange-500/20 font-mono text-xs font-bold text-orange-600 dark:text-orange-400">
+                    🌐 {u.registrationIp}
+                </span>
+                <button
+                    onClick={copy}
+                    title="IP nusxa olish"
+                    className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-orange-100 dark:hover:bg-orange-500/20"
+                >
+                    {copied ? (
+                        <svg className="w-3.5 h-3.5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                        </svg>
+                    ) : (
+                        <svg className="w-3.5 h-3.5 text-gray-400 hover:text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                        </svg>
+                    )}
+                </button>
+            </div>
+            {/* Device + method */}
+            {(deviceIcon || u.registrationMethod) && (
+                <p className="text-[10px] text-gray-400 dark:text-gray-500 flex items-center gap-1">
+                    {deviceIcon && <span>{deviceIcon}</span>}
+                    <span>{u.registrationMethod === 'google' ? 'Google bilan' : 'Email bilan'}</span>
+                </p>
+            )}
+        </div>
+    );
+};
+
 const roleOptions = ['user', 'admin'];
+
 
 const roleBgMap = {
     admin: 'bg-purple-100 text-purple-700 dark:bg-purple-500/20 dark:text-purple-300 border-purple-200 dark:border-purple-500/30',
     user:  'bg-blue-100   text-blue-700   dark:bg-blue-500/20   dark:text-blue-300   border-blue-200   dark:border-blue-500/30',
 };
 
-const COLS = 6;
+const COLS = 7;
 
 const UsersTab = ({
-    data, loading, error, page, onPage,
+    data, loading, error, page, onPage, pageSize, onPageSize,
     search, role, status, sort, onSort,
     onSearch, onRole, onStatus,
     onEdit, onBlock, onDelete, onRoleChange, onRetry,
@@ -95,6 +156,7 @@ const UsersTab = ({
                                 <SortTh label={t('user_col')} field="name" sort={sort} onSort={onSort} />
                                 <SortTh label={t('role')} field="role" sort={sort} onSort={onSort} />
                                 <SortTh label={t('status')} field="status" sort={null} />
+                                <SortTh label="Reg. IP" field="regip" sort={null} />
                                 <SortTh label={t('date')} field="createdAt" sort={sort} onSort={onSort} />
                                 <SortTh label={t('actions')} field="actions" sort={null} align="right" />
                             </tr>
@@ -148,8 +210,17 @@ const UsersTab = ({
                                             <span className="text-xs text-gray-600 dark:text-gray-400">{u.isBlocked ? t('blocked') : t('unblocked')}</span>
                                         </div>
                                     </td>
-                                    <td className="px-5 py-4 text-xs text-gray-400 dark:text-gray-500">
-                                        {new Date(u.createdAt).toLocaleDateString()}
+                                    {/* Registration IP + device + time */}
+                                    <td className="px-5 py-4">
+                                        <RegIpCell u={u} />
+                                    </td>
+                                    <td className="px-5 py-4">
+                                        <p className="text-xs font-medium text-gray-700 dark:text-gray-300">
+                                            {new Date(u.createdAt).toLocaleDateString('uz-UZ', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                                        </p>
+                                        <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5 tabular-nums">
+                                            {new Date(u.createdAt).toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit' })}
+                                        </p>
                                     </td>
                                     <td className="px-5 py-4 text-right space-x-2 whitespace-nowrap">
                                         <button onClick={() => onEdit(u)} className="inline-flex items-center gap-1 text-xs font-medium text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 transition-colors">
@@ -170,7 +241,7 @@ const UsersTab = ({
                     </table>
                 </div>
                 {!loading && !error && items.length > 0 && (
-                    <Pagination page={page} pages={data.pages} total={data.total} onPage={onPage} t={t} unit={t('users').toLowerCase()} />
+                    <Pagination page={page} pages={data.pages} total={data.total} onPage={onPage} t={t} unit={t('users').toLowerCase()} pageSize={pageSize} onPageSize={onPageSize} />
                 )}
             </div>
         </div>

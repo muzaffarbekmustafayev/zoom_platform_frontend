@@ -17,9 +17,11 @@ const RoomVideoGrid = ({
 
     const showScreen = !!activeSharingUser && !pinnedSocketId;
 
-    if (effectiveStageUser && viewMode === 'speaker') {
+    const isSidebar = viewMode === 'sidebar';
+
+    if (effectiveStageUser && (viewMode === 'speaker' || viewMode === 'sidebar')) {
         return (
-            <div className="flex-1 flex flex-col overflow-hidden relative min-h-0">
+            <div className={`flex-1 flex ${isSidebar ? 'flex-col sm:flex-row' : 'flex-col'} overflow-hidden relative min-h-0`}>
 
                 {/* ── Main Stage ── */}
                 <div className={`flex-1 relative rounded-xl overflow-hidden shadow-2xl flex items-center justify-center min-h-0
@@ -101,17 +103,17 @@ const RoomVideoGrid = ({
                     )}
                 </div>
 
-                {/* ── Thumbnail strip (horizontal scroll on all sizes) ── */}
-                <div className={`flex flex-row gap-2 overflow-x-auto w-full px-1 py-2 shrink-0 snap-x thumb-scroll-x
+                {/* ── Thumbnail strip / Sidebar ── */}
+                <div className={`${isSidebar ? 'flex flex-row sm:flex-col overflow-x-auto sm:overflow-y-auto sm:overflow-x-hidden w-full sm:w-[140px] lg:w-[180px] sm:h-full px-1 py-2 sm:px-0 sm:pl-2 gap-2 shrink-0 snap-x sm:snap-y thumb-scroll-x sm:thumb-scroll-y mt-2 sm:mt-0' : 'flex flex-row gap-2 overflow-x-auto w-full px-1 py-2 shrink-0 snap-x thumb-scroll-x'}
                     ${isDark ? 'bg-black/20' : 'bg-gray-800/10'}`}
-                    style={{ maxHeight: '120px', minHeight: '72px' }}>
+                    style={!isSidebar ? { maxHeight: '120px', minHeight: '72px' } : {}}>
 
                     {/* Local tile */}
                     {(showScreen || effectiveStageUser.socketId !== socketRef.current?.id) && (
                         <div onClick={() => setPinnedSocketId(pinnedSocketId === socketRef.current?.id ? null : socketRef.current?.id)}
                             className={`relative shrink-0 snap-center rounded-xl overflow-hidden cursor-pointer transition-all duration-200 bg-[#0e1016]
                             ${activeSpeakers.has('__local__') ? 'ring-2 ring-emerald-400/70' : 'ring-1 ring-white/10 hover:ring-blue-400/50'}`}
-                            style={{ width: '96px', aspectRatio: '16/9' }}>
+                            style={isSidebar ? { width: '100%', minWidth: '96px', aspectRatio: '16/9' } : { width: '96px', aspectRatio: '16/9' }}>
                             <Video stream={stream} userName="You" role={myRole} isLocal isSpeaking={activeSpeakers.has('__local__')} userVideoStatus={!isVideoOff} />
                             {pinnedSocketId === socketRef.current?.id && (
                                 <div className="absolute top-1 left-1 bg-blue-600/80 backdrop-blur-sm rounded p-0.5">
@@ -130,7 +132,7 @@ const RoomVideoGrid = ({
                             <div key={idx} onClick={() => setPinnedSocketId(pinnedSocketId === peerObj.peerID ? null : peerObj.peerID)}
                                 className={`relative shrink-0 snap-center rounded-xl overflow-hidden cursor-pointer transition-all duration-200 bg-[#0e1016]
                                     ${spk ? 'ring-2 ring-emerald-400/70' : pinnedSocketId === peerObj.peerID ? 'ring-2 ring-blue-500/70' : 'ring-1 ring-white/10 hover:ring-blue-400/50'}`}
-                                style={{ width: '96px', aspectRatio: '16/9' }}>
+                                style={isSidebar ? { width: '100%', minWidth: '96px', aspectRatio: '16/9' } : { width: '96px', aspectRatio: '16/9' }}>
                                 <Video stream={remoteStreams[peerObj.peerID]} userName={user?.userName || 'Participant'}
                                     role={user?.role} isSpeaking={spk} isLocal={false} userVideoStatus={user?.videoStatus !== false} />
                                 {pinnedSocketId === peerObj.peerID && (

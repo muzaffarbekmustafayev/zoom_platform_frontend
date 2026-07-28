@@ -46,8 +46,39 @@ const tuneSdp = (sdp) => {
     return s;
 };
 
+const generate30CharHash = (str) => {
+    if (!str) return 'a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5';
+    const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+    let res = '';
+    for (let i = 0; i < 30; i++) {
+        const idx = (str.charCodeAt(i % str.length) * 17 + i * 31 + 7) % chars.length;
+        res += chars[idx];
+    }
+    return res;
+};
+
 const RoomPage = () => {
-    const { id: roomID } = useParams();
+    const { id: routeID } = useParams();
+    const [roomID] = useState(() => {
+        if (!routeID) return sessionStorage.getItem('last_active_room');
+        // Check if routeID is already a mapped 30-char hash
+        const mapped = sessionStorage.getItem(`hash_map_${routeID}`);
+        if (mapped) return mapped;
+        // Otherwise it's a real ID or meetingCode
+        sessionStorage.setItem('last_active_room', routeID);
+        return routeID;
+    });
+
+    useEffect(() => {
+        if (roomID) {
+            const hash30 = generate30CharHash(roomID);
+            sessionStorage.setItem(`hash_map_${hash30}`, roomID);
+            if (routeID !== hash30) {
+                window.history.replaceState(null, '', `/room/${hash30}`);
+            }
+        }
+    }, [routeID, roomID]);
+
     const navigate = useNavigate();
     const { t, lang, theme } = useContext(ThemeLanguageContext);
     const isDark = theme === 'dark';
@@ -97,6 +128,20 @@ const RoomPage = () => {
     const [viewMode, setViewMode]             = useState('speaker');
     const [gridSize, setGridSize]             = useState('auto');
     const [pinnedSocketId, setPinnedSocketId] = useState(null);
+
+    const handleViewModeChange = (newMode) => {
+        setViewMode(newMode);
+        if (myRole === 'host' || myRole === 'cohost') {
+            socketRef.current?.emit('sync-view-mode', { roomId: roomID, viewMode: newMode, gridSize });
+        }
+    };
+
+    const handleGridSizeChange = (newSize) => {
+        setGridSize(newSize);
+        if (myRole === 'host' || myRole === 'cohost') {
+            socketRef.current?.emit('sync-view-mode', { roomId: roomID, viewMode, gridSize: newSize });
+        }
+    };
     const [mobileToolsOpen, setMobileToolsOpen] = useState(false);
     const [viewMenuOpen, setViewMenuOpen]     = useState(false);
     const [activeSpeakers, setActiveSpeakers] = useState(new Set());
@@ -477,6 +522,15 @@ const RoomPage = () => {
             }
         });
         socket.on('kicked',        () => { toast.error(t('kicked_msg'));  navigate('/'); });
+        socket.on('user-unblocked', ({ userId }) => {
+            if (userId === userInfo?._id) toast.success(t('unblocked_msg') || 'You have been unblocked.');
+        });
+        
+        socket.on('view-mode-changed', ({ viewMode: newViewMode, gridSize: newGridSize }) => {
+            if (newViewMode) setViewMode(newViewMode);
+            if (newGridSize) setGridSize(newGridSize);
+        });
+
         socket.on('blocked',       () => { toast.error(t('blocked_msg')); navigate('/'); });
         socket.on('error-message', msg => { toast.error(msg); navigate('/'); });
         socket.on('error',         ({ message } = {}) => { if (message) toast.error(message); });
@@ -726,7 +780,10 @@ const RoomPage = () => {
 
     // Ruxsat darvozasi — ekran va fayl taqdimoti uchun umumiy
     const ensureSharePermission = () => {
-        const isModeratorRole = myRole === 'host' || myRole === 'cohost';
+        const isHostUser = userInfo?._id && meeting?.hostId && (
+            String(userInfo._id) === String(meeting.hostId._id || meeting.hostId)
+        );
+        const isModeratorRole = myRole === 'host' || myRole === 'cohost' || isHostUser || userInfo?.role === 'admin';
 
         // Host demonstratsiyani umuman o'chirgan bo'lsa — oddiy ishtirokchi share qila olmaydi
         if (!isModeratorRole && roomSettings.allowScreenSharing === false) {
@@ -792,25 +849,35 @@ const RoomPage = () => {
         setDocShareOpen(true);
     };
 
-    const toggleScreenShare = () => {
+    const toggleScreenShare = async () => {
         if (isSharingScreen) { stopScreenShare(); return; }
         if (!navigator.mediaDevices?.getDisplayMedia) { toast.error(t('share_unsupported')); return; }
         if (!ensureSharePermission()) return;
         if (isSharingScreenRef.current) return;
         const socket = socketRef.current;
         if (!socket) return;
-        navigator.mediaDevices.getDisplayMedia({
-            // Demonstratsiya uchun 30fps va 1080p gacha ruxsat beramiz — slayd va harakatli narsalar tekis ishlaydi
-            video: { cursor: 'always', frameRate: { ideal: 30, max: 60 }, width: { ideal: 1920, max: 1920 }, height: { ideal: 1080, max: 1080 } },
-            audio: true // tizim/tab ovozi ekran oqimi ichida ketadi — video ko'rsatishda zarur
-        })
-            .then(screen => {
-                if (!startStreamShare(screen)) screen.getTracks().forEach(tr => tr.stop());
-            })
-            .catch(err => {
+
+        try {
+            let screen;
+            try {
+                screen = await navigator.mediaDevices.getDisplayMedia({
+                    video: { cursor: 'always' },
+                    audio: true
+                });
+            } catch (err) {
                 if (err?.name === 'NotAllowedError' || err?.name === 'AbortError') return;
-                toast.error(t('share_failed'));
-            });
+                // Ovoz qat'iy talabi ayrim Windows/Brauzerlarda xatolik berishi mumkin — ovozsiz fallback qilamiz
+                screen = await navigator.mediaDevices.getDisplayMedia({ video: true });
+            }
+
+            if (screen) {
+                if (!startStreamShare(screen)) screen.getTracks().forEach(tr => tr.stop());
+            }
+        } catch (err) {
+            if (err?.name === 'NotAllowedError' || err?.name === 'AbortError') return;
+            console.error('getDisplayMedia error:', err);
+            toast.error(t('share_failed'));
+        }
     };
 
     // ── Recording ─────────────────────────────────────────────────────────────
@@ -990,7 +1057,7 @@ const RoomPage = () => {
 
     // ── Render ────────────────────────────────────────────────────────────────
     return (
-        <div className={`flex flex-col room-fullheight font-sans overflow-hidden ${isDark ? 'bg-[#0c0e14] text-white' : 'bg-gray-100 text-gray-900'}`}>
+        <div className={`flex flex-col room-fullheight font-sans overflow-hidden ${isDark ? 'bg-[#0f111a] bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-[#1a1d2d] via-[#0f111a] to-[#0a0b10] text-white' : 'bg-gray-50 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-white via-gray-50 to-gray-200 text-gray-900'}`}>
 
             {/* Kutish xonasi — host/cohost uchun qabul/rad toast'lari */}
             {canModerate && (
@@ -1013,10 +1080,10 @@ const RoomPage = () => {
                 meetingElapsed={meetingElapsed} myRole={myRole}
                 totalParticipantCount={totalParticipantCount}
                 networkInfo={networkInfo}
-                viewMode={viewMode} setViewMode={setViewMode}
+                viewMode={viewMode} setViewMode={handleViewModeChange}
                 viewMenuOpen={viewMenuOpen} setViewMenuOpen={setViewMenuOpen}
                 viewMenuRef={viewMenuRef}
-                gridSize={gridSize} setGridSize={setGridSize}
+                gridSize={gridSize} setGridSize={handleGridSizeChange}
             />
 
             {/* Main area */}
@@ -1128,6 +1195,7 @@ const RoomPage = () => {
                 roomUsers={roomUsers} leaveRoom={leaveRoom} endMeetingForAll={endMeetingForAll}
                 isHost={isHost} onHoldToTalkStart={handleHoldToTalkStart} onHoldToTalkEnd={handleHoldToTalkEnd}
                 mobileMenuOpen={mobileToolsOpen} setMobileMenuOpen={setMobileToolsOpen}
+                meetingElapsed={meetingElapsed} networkInfo={networkInfo}
             />
 
             {showSettings && (

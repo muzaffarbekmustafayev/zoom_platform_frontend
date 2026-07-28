@@ -6,7 +6,7 @@ import { SortTh, SkeletonRows, MessageRow, Pagination } from './TableKit';
 const COLS = 6;
 
 const MeetingsTab = ({
-    data, loading, error, page, onPage,
+    data, loading, error, page, onPage, pageSize, onPageSize,
     search, status, type, sort, onSort,
     onSearch, onStatus, onType, onDelete, onRetry, t
 }) => {
@@ -108,7 +108,7 @@ const MeetingsTab = ({
                     </table>
                 </div>
                 {!loading && !error && items.length > 0 && (
-                    <Pagination page={page} pages={data.pages} total={data.total} onPage={onPage} t={t} unit={t('meetings').toLowerCase()} />
+                    <Pagination page={page} pages={data.pages} total={data.total} onPage={onPage} t={t} unit={t('meetings').toLowerCase()} pageSize={pageSize} onPageSize={onPageSize} />
                 )}
             </div>
         </div>

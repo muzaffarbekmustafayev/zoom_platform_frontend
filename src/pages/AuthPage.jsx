@@ -238,6 +238,31 @@ const TermsContent = ({ lang, appName }) => {
     );
 };
 
+const RECAPTCHA_SITE_KEY = import.meta.env.VITE_RECAPTCHA_SITE_KEY;
+const hasRecaptcha = RECAPTCHA_SITE_KEY && RECAPTCHA_SITE_KEY !== 'your_recaptcha_site_key_here';
+
+/**
+ * Executes reCAPTCHA v3 and returns a token string.
+ * Returns null silently if the library is not loaded or site key is missing.
+ */
+const executeRecaptcha = (action) => {
+    return new Promise((resolve) => {
+        if (!hasRecaptcha || typeof window.grecaptcha === 'undefined') {
+            resolve(null);
+            return;
+        }
+        try {
+            window.grecaptcha.ready(() => {
+                window.grecaptcha.execute(RECAPTCHA_SITE_KEY, { action })
+                    .then(resolve)
+                    .catch(() => resolve(null));
+            });
+        } catch {
+            resolve(null);
+        }
+    });
+};
+
 const AuthPage = () => {
     const location = useLocation();
     const navigate = useNavigate();
@@ -247,6 +272,8 @@ const AuthPage = () => {
     const l = txt[lang] || txt.en;
 
     const [isLogin, setIsLogin] = useState(location.pathname !== '/register');
+    const searchParams = new URLSearchParams(location.search);
+    const returnUrl = searchParams.get('returnUrl');
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -259,6 +286,24 @@ const AuthPage = () => {
     const [forgotEmail, setForgotEmail] = useState('');
     const [forgotStatus, setForgotStatus] = useState('');
 
+    // Local CAPTCHA states
+    const [captchaData, setCaptchaData] = useState({ id: '', svg: '' });
+    const [captchaValue, setCaptchaValue] = useState('');
+
+    const fetchCaptcha = async () => {
+        try {
+            const { data } = await API.get('/api/users/captcha');
+            setCaptchaData(data);
+            setCaptchaValue('');
+        } catch (err) {
+            console.error("Failed to fetch captcha", err);
+        }
+    };
+
+    useEffect(() => {
+        fetchCaptcha();
+    }, []);
+
     useEffect(() => {
         const nextIsLogin = location.pathname !== '/register';
         setIsLogin(nextIsLogin);
@@ -267,7 +312,8 @@ const AuthPage = () => {
 
     const toggle = () => {
         setError('');
-        navigate(isLogin ? '/register' : '/login');
+        const q = returnUrl ? `?returnUrl=${encodeURIComponent(returnUrl)}` : '';
+        navigate(isLogin ? `/register${q}` : `/login${q}`);
     };
 
     const submit = async (e) => {
@@ -276,19 +322,20 @@ const AuthPage = () => {
         setLoading(true);
         try {
             if (isLogin) {
-                const { data } = await API.post('/api/users/login', { email, password });
+                const { data } = await API.post('/api/users/login', { email, password, captchaId: captchaData.id, captchaValue });
                 login(data);
-                navigate(data.role === 'admin' ? '/admin' : '/dashboard', { replace: true });
+                navigate(returnUrl || (data.role === 'admin' ? '/admin' : '/dashboard'), { replace: true });
             } else {
-                const { data } = await API.post('/api/users/register', { name, email, password });
+                const { data } = await API.post('/api/users/register', { name, email, password, captchaId: captchaData.id, captchaValue });
                 login(data);
-                navigate('/dashboard', { replace: true });
+                navigate(returnUrl || (data.role === 'admin' ? '/admin' : '/dashboard'), { replace: true });
             }
         } catch (err) {
             const msg = err.response?.data?.details?.[0]?.message
                 || err.response?.data?.message
                 || (isLogin ? 'Login failed' : 'Registration failed');
             setError(msg);
+            fetchCaptcha(); // Refresh CAPTCHA on failure
         } finally {
             setLoading(false);
         }
@@ -298,7 +345,8 @@ const AuthPage = () => {
         e.preventDefault();
         setForgotStatus('sending');
         try {
-            await API.post('/api/users/forgot-password', { email: forgotEmail });
+            const recaptchaToken = await executeRecaptcha('forgot_password');
+            await API.post('/api/users/forgot-password', { email: forgotEmail, recaptchaToken });
             setForgotStatus('success');
         } catch (err) {
             setForgotStatus(err.response?.data?.message || 'Failed');
@@ -309,9 +357,10 @@ const AuthPage = () => {
         setGoogleLoading(true);
         setError('');
         try {
-            const { data } = await API.post('/api/users/google-auth', { token });
+            const recaptchaToken = await executeRecaptcha('google_auth');
+            const { data } = await API.post('/api/users/google-auth', { token, recaptchaToken });
             login(data);
-            navigate(data.role === 'admin' ? '/admin' : '/dashboard', { replace: true });
+            navigate(returnUrl || (data.role === 'admin' ? '/admin' : '/dashboard'), { replace: true });
         } catch (err) {
             setError(err.response?.data?.message || 'Google login failed');
         } finally {
@@ -554,6 +603,32 @@ const AuthPage = () => {
                             </div>
                         </div>
 
+                        {/* CAPTCHA */}
+                        <div className="space-y-1.5 pt-1">
+                            <label className="text-[11px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Xavfsizlik kodi (CAPTCHA)</label>
+                            <div className="flex flex-col sm:flex-row gap-3">
+                                {captchaData?.svg && (
+                                    <div 
+                                        className="h-11 w-[150px] bg-white border border-gray-200 dark:border-white/8 rounded-xl overflow-hidden cursor-pointer flex-shrink-0 flex items-center justify-center [&>svg]:w-full [&>svg]:h-full" 
+                                        onClick={fetchCaptcha}
+                                        title="Yangi kod olish uchun bosing"
+                                        dangerouslySetInnerHTML={{ __html: captchaData.svg }} 
+                                    />
+                                )}
+                                <div className="relative flex-1">
+                                    <Shield size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                                    <input
+                                        type="text"
+                                        placeholder="Misolning javobini kiriting"
+                                        value={captchaValue}
+                                        onChange={e => setCaptchaValue(e.target.value)}
+                                        className={`${inp} pl-10`}
+                                        required
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
                         {/* Remember / Terms */}
                         {isLogin ? (
                             <label className="flex items-center gap-2.5 cursor-pointer">
@@ -592,6 +667,17 @@ const AuthPage = () => {
                             className="w-full py-3 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-sm font-bold rounded-xl shadow-md shadow-blue-600/25 hover:shadow-blue-600/35 disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-150 flex items-center justify-center gap-2">
                             {loading ? <><Spinner size={15} />{isLogin ? l.signIn : l.signUp}...</> : (isLogin ? l.signIn : l.signUp)}
                         </button>
+
+                        {/* reCAPTCHA attribution — required by Google policy when badge is hidden */}
+                        {hasRecaptcha && (
+                            <p className="text-[10px] text-center text-gray-400 dark:text-gray-600 leading-relaxed">
+                                {lang === 'ru'
+                                    ? <>Защищено <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" className="underline hover:text-gray-600 dark:hover:text-gray-400 transition-colors">reCAPTCHA</a> от Google. Применяются <a href="https://policies.google.com/terms" target="_blank" rel="noopener noreferrer" className="underline hover:text-gray-600 dark:hover:text-gray-400 transition-colors">Условия использования</a>.</>
+                                    : lang === 'uz'
+                                    ? <>Bu sayt <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" className="underline hover:text-gray-600 dark:hover:text-gray-400 transition-colors">reCAPTCHA</a> bilan himoyalangan. Google <a href="https://policies.google.com/terms" target="_blank" rel="noopener noreferrer" className="underline hover:text-gray-600 dark:hover:text-gray-400 transition-colors">Foydalanish shartlari</a> qo'llaniladi.</>
+                                    : <>Protected by <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" className="underline hover:text-gray-600 dark:hover:text-gray-400 transition-colors">reCAPTCHA</a>. Google <a href="https://policies.google.com/terms" target="_blank" rel="noopener noreferrer" className="underline hover:text-gray-600 dark:hover:text-gray-400 transition-colors">Terms</a> apply.</>}
+                            </p>
+                        )}
 
                         {/* Google divider */}
                         {hasGoogleAuth && (

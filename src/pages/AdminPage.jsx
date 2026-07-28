@@ -11,7 +11,11 @@ import AdminHeader   from '../admin/AdminHeader';
 import OverviewTab   from '../admin/OverviewTab';
 import UsersTab      from '../admin/UsersTab';
 import MeetingsTab   from '../admin/MeetingsTab';
-import UserModal     from '../admin/UserModal';
+import IpLogsTab from '../admin/IpLogsTab';
+import RolesTab from '../admin/RolesTab';
+import SettingsTab from '../admin/SettingsTab';
+import ReportsTab from '../admin/ReportsTab';
+import UserModal from '../admin/UserModal';
 
 const EMPTY_USER = { name: '', email: '', password: '', role: 'user' };
 const PAGE_SIZE = 20;
@@ -66,6 +70,7 @@ const AdminPage = () => {
     const [userStatus, setUserStatus] = useState('all');
     const [userSort,   setUserSort]   = useState({ field: 'createdAt', order: 'desc' });
     const [userPage,   setUserPage]   = useState(1);
+    const [userPageSize, setUserPageSize] = useState(PAGE_SIZE);
     const [selected,   setSelected]   = useState([]);
 
     // Meetings query state
@@ -74,6 +79,18 @@ const AdminPage = () => {
     const [mtgType,   setMtgType]   = useState('all');
     const [mtgSort,   setMtgSort]   = useState({ field: 'createdAt', order: 'desc' });
     const [mtgPage,   setMtgPage]   = useState(1);
+    const [mtgPageSize, setMtgPageSize] = useState(PAGE_SIZE);
+
+    // IP Logs state
+    const [ipLogs,      setIpLogs]      = useState(EMPTY_PAGE);
+    const [ipLoading,   setIpLoading]   = useState(false);
+    const [ipError,     setIpError]     = useState(false);
+    const [ipPage,      setIpPage]      = useState(1);
+    const [ipPageSize,  setIpPageSize]  = useState(50);
+    const [ipFilter,    setIpFilter]    = useState('');
+    const [ipFilterQ,   setIpFilterQ]   = useState('');
+    const [methodFilter, setMethodFilter] = useState('all');
+    const [statusFilter, setStatusFilter] = useState('all');
 
     // Debounced search terms
     const [userSearchQ, setUserSearchQ] = useState('');
@@ -94,10 +111,15 @@ const AdminPage = () => {
         const id = setTimeout(() => { setMtgSearchQ(mtgSearch); setMtgPage(1); }, 350);
         return () => clearTimeout(id);
     }, [mtgSearch]);
+    useEffect(() => {
+        const id = setTimeout(() => { setIpFilterQ(ipFilter); setIpPage(1); }, 400);
+        return () => clearTimeout(id);
+    }, [ipFilter]);
 
     /* ---------- reset page when filters change ---------- */
     useEffect(() => { setUserPage(1); setSelected([]); }, [userRole, userStatus, userSort]);
     useEffect(() => { setMtgPage(1); }, [mtgStatus, mtgType, mtgSort]);
+    useEffect(() => { setIpPage(1); }, [methodFilter, statusFilter]);
 
     /* ---------- fetchers ---------- */
     const fetchStats = useCallback(async () => {
@@ -113,33 +135,46 @@ const AdminPage = () => {
         setUsersLoading(true); setUsersError(false);
         try {
             const { data } = await API.get(`/api/admin/users${qs({
-                page: userPage, limit: PAGE_SIZE, search: userSearchQ,
+                page: userPage, limit: userPageSize, search: userSearchQ,
                 role: userRole, status: userStatus,
                 sort: userSort.field, order: userSort.order
             })}`);
             setUsers(data);
         } catch { setUsersError(true); }
         finally { setUsersLoading(false); }
-    }, [userPage, userSearchQ, userRole, userStatus, userSort]);
+    }, [userPage, userPageSize, userSearchQ, userRole, userStatus, userSort]);
 
     const fetchMeetings = useCallback(async () => {
         setMtgLoading(true); setMtgError(false);
         try {
             const { data } = await API.get(`/api/admin/meetings${qs({
-                page: mtgPage, limit: PAGE_SIZE, search: mtgSearchQ,
+                page: mtgPage, limit: mtgPageSize, search: mtgSearchQ,
                 status: mtgStatus, type: mtgType,
                 sort: mtgSort.field, order: mtgSort.order
             })}`);
             setMeetings(data);
         } catch { setMtgError(true); }
         finally { setMtgLoading(false); }
-    }, [mtgPage, mtgSearchQ, mtgStatus, mtgType, mtgSort]);
+    }, [mtgPage, mtgPageSize, mtgSearchQ, mtgStatus, mtgType, mtgSort]);
+
+    const fetchIpLogs = useCallback(async () => {
+        setIpLoading(true); setIpError(false);
+        try {
+            const { data } = await API.get(`/api/admin/logs/ips${qs({
+                page: ipPage, limit: ipPageSize,
+                ip: ipFilterQ, method: methodFilter, status: statusFilter
+            })}`);
+            setIpLogs(data);
+        } catch { setIpError(true); }
+        finally { setIpLoading(false); }
+    }, [ipPage, ipPageSize, ipFilterQ, methodFilter, statusFilter]);
 
     useEffect(() => { fetchStats();    }, [fetchStats]);
     useEffect(() => { fetchUsers();    }, [fetchUsers]);
     useEffect(() => { fetchMeetings(); }, [fetchMeetings]);
+    useEffect(() => { if (activeTab === 'iplogs') fetchIpLogs(); }, [fetchIpLogs, activeTab]);
 
-    const refreshAll = () => { fetchStats(); fetchUsers(); fetchMeetings(); };
+    const refreshAll = () => { fetchStats(); fetchUsers(); fetchMeetings(); if (activeTab === 'iplogs') fetchIpLogs(); };
 
     const handleLogout = () => { logout(); navigate('/login', { replace: true }); };
 
@@ -292,6 +327,8 @@ const AdminPage = () => {
                             error={usersError}
                             page={userPage}
                             onPage={setUserPage}
+                            pageSize={userPageSize}
+                            onPageSize={setUserPageSize}
                             search={userSearch}
                             role={userRole}
                             status={userStatus}
@@ -320,6 +357,8 @@ const AdminPage = () => {
                             error={mtgError}
                             page={mtgPage}
                             onPage={setMtgPage}
+                            pageSize={mtgPageSize}
+                            onPageSize={setMtgPageSize}
                             search={mtgSearch}
                             status={mtgStatus}
                             type={mtgType}
@@ -332,6 +371,36 @@ const AdminPage = () => {
                             onRetry={fetchMeetings}
                             t={t}
                         />
+                    )}
+
+                    {activeTab === 'iplogs' && (
+                        <IpLogsTab
+                            data={ipLogs}
+                            loading={ipLoading}
+                            error={ipError}
+                            page={ipPage}
+                            onPage={setIpPage}
+                            pageSize={ipPageSize}
+                            onPageSize={setIpPageSize}
+                            ipFilter={ipFilter}
+                            setIpFilter={setIpFilter}
+                            methodFilter={methodFilter}
+                            setMethodFilter={setMethodFilter}
+                            statusFilter={statusFilter}
+                            setStatusFilter={setStatusFilter}
+                        />
+                    )}
+
+                    {activeTab === 'roles' && (
+                        <RolesTab t={t} />
+                    )}
+
+                    {activeTab === 'settings' && (
+                        <SettingsTab t={t} />
+                    )}
+
+                    {activeTab === 'reports' && (
+                        <ReportsTab stats={stats} chart={chart} t={t} />
                     )}
                 </main>
             </div>

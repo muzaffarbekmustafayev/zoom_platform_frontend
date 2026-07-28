@@ -141,6 +141,89 @@ const UserModal = ({ editMode, user, saving, onChange, onSubmit, onClose, t }) =
                         </div>
                     </Field>
 
+                    {/* Registration info — edit mode only */}
+                    {editMode && (user.registrationIp || user.registrationAt || user.createdAt) && (
+                        <div className="rounded-xl border border-orange-200/60 dark:border-orange-500/20 bg-orange-50/60 dark:bg-orange-500/5 p-4 space-y-3">
+                            <p className="text-[10px] font-bold text-orange-600/80 dark:text-orange-400/70 uppercase tracking-widest flex items-center gap-1.5">
+                                <span>🌐</span> Ro'yxatdan o'tish ma'lumotlari
+                            </p>
+
+                            {/* Exact datetime */}
+                            <div className="grid grid-cols-2 gap-2.5">
+                                <div>
+                                    <p className="text-[10px] text-gray-400 dark:text-gray-600 mb-0.5">Aniq vaqt</p>
+                                    <p className="text-[11px] font-mono font-semibold text-gray-800 dark:text-gray-200">
+                                        {user.registrationAt
+                                            ? new Date(user.registrationAt).toLocaleString('uz-UZ', {
+                                                year: 'numeric', month: '2-digit', day: '2-digit',
+                                                hour: '2-digit', minute: '2-digit', second: '2-digit',
+                                              })
+                                            : new Date(user.createdAt).toLocaleString('uz-UZ', {
+                                                year: 'numeric', month: '2-digit', day: '2-digit',
+                                                hour: '2-digit', minute: '2-digit', second: '2-digit',
+                                              })
+                                        }
+                                    </p>
+                                </div>
+                                <div>
+                                    <p className="text-[10px] text-gray-400 dark:text-gray-600 mb-0.5">Usul</p>
+                                    <p className="text-[11px] font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-1">
+                                        {user.registrationMethod === 'google'
+                                            ? <><span>🔵</span> Google</>
+                                            : <><span>📧</span> Email</>}
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* IP address */}
+                            {user.registrationIp && (
+                                <div>
+                                    <p className="text-[10px] text-gray-400 dark:text-gray-600 mb-0.5">IP manzil</p>
+                                    <div className="flex items-center gap-2">
+                                        <p className="text-[12px] font-mono font-bold text-orange-700 dark:text-orange-300 bg-orange-100 dark:bg-orange-500/10 px-2 py-0.5 rounded">
+                                            {user.registrationIp}
+                                        </p>
+                                        <button
+                                            type="button"
+                                            onClick={() => navigator.clipboard.writeText(user.registrationIp)}
+                                            className="text-gray-400 hover:text-orange-500 transition-colors"
+                                            title="Nusxa olish"
+                                        >
+                                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Device */}
+                            {user.registrationDevice && (
+                                <div>
+                                    <p className="text-[10px] text-gray-400 dark:text-gray-600 mb-0.5">Qurilma</p>
+                                    <p className="text-[11px] font-semibold text-gray-700 dark:text-gray-300 capitalize flex items-center gap-1">
+                                        {user.registrationDevice === 'mobile'  && <><span>📱</span> Mobil</>}
+                                        {user.registrationDevice === 'tablet'  && <><span>📟</span> Planshet</>}
+                                        {user.registrationDevice === 'desktop' && <><span>🖥️</span> Kompyuter</>}
+                                        {user.registrationDevice === 'bot'     && <><span>🤖</span> Bot</>}
+                                        {user.registrationDevice === 'unknown' && <><span>❓</span> Noma'lum</>}
+                                    </p>
+                                </div>
+                            )}
+
+                            {/* User Agent */}
+                            {user.registrationUserAgent && (
+                                <div>
+                                    <p className="text-[10px] text-gray-400 dark:text-gray-600 mb-0.5">Brauzer / User-Agent</p>
+                                    <p className="text-[10px] font-mono text-gray-500 dark:text-gray-500 break-all leading-relaxed line-clamp-3" title={user.registrationUserAgent}>
+                                        {user.registrationUserAgent}
+                                    </p>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+
                     {/* Footer */}
                     <div className="flex gap-2.5 pt-2">
                         <button

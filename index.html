@@ -22,6 +22,12 @@
       } catch (e) {}
     })();
   </script>
+  <!-- Google reCAPTCHA v3 — invisible, programmatic token generation -->
+  <script src="https://www.google.com/recaptcha/api.js?render=%VITE_RECAPTCHA_SITE_KEY%" async defer></script>
+  <style>
+    /* Hide reCAPTCHA badge (per Google policy, credit must appear in form text) */
+    .grecaptcha-badge { visibility: hidden !important; }
+  </style>
 </head>
 
 <body>
@@ -29,4 +35,4 @@
   <script type="module" src="/src/main.jsx"></script>
 </body>
 
-</html>
+</html>

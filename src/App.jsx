@@ -15,6 +15,14 @@ const Spinner = () => (
     </div>
 )
 
+const RequireRoomAuth = ({ user, children }) => {
+    const location = window.location;
+    if (!user) {
+        return <Navigate to={`/login?returnUrl=${encodeURIComponent(location.pathname)}`} replace />;
+    }
+    return children;
+};
+
 function AppRoutes() {
     const { user } = useAuth()
 
@@ -33,7 +41,10 @@ function AppRoutes() {
             <Route path="/login"    element={!user ? <AuthPage /> : <Navigate to="/" replace />} />
             <Route path="/register" element={!user ? <AuthPage /> : <Navigate to="/" replace />} />
             <Route path="/room/:id" element={
-                user && user.role !== 'admin' ? <RoomPage /> : <Navigate to="/" replace />
+                <RequireRoomAuth user={user}><RoomPage /></RequireRoomAuth>
+            } />
+            <Route path="/room" element={
+                <RequireRoomAuth user={user}><RoomPage /></RequireRoomAuth>
             } />
             <Route path="/admin" element={
                 user?.role === 'admin' ? <AdminPage /> : <Navigate to="/" replace />

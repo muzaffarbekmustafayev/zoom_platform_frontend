@@ -2,7 +2,7 @@ import React, { useContext, useEffect, useRef, useState } from 'react';
 import {
     Mic, MicOff, Video as VideoIcon, VideoOff, MonitorUp, MonitorOff,
     Circle, StopCircle, Hand, Settings, MessageSquare,
-    Users, PhoneOff, MoreHorizontal, Copy, Check, FileText,
+    Users, PhoneOff, MoreHorizontal, Copy, Check, FileText, Share2, Link, Clock, Wifi
 } from 'lucide-react';
 import { ThemeLanguageContext } from '../../context/ThemeLanguageContext';
 
@@ -31,9 +31,12 @@ const RoomBottomControls = ({
     onHoldToTalkEnd,
     mobileMenuOpen,
     setMobileMenuOpen,
+    meetingElapsed,
+    networkInfo,
 }) => {
     const { t, theme } = useContext(ThemeLanguageContext);
     const isDark = theme === 'dark';
+    const [linkCopied, setLinkCopied] = useState(false);
 
     // ── Mic hold-to-talk ──
     const holdTimerRef = useRef(null);
@@ -120,18 +123,18 @@ const RoomBottomControls = ({
             : 'w-11 h-11 sm:w-12 sm:h-12 rounded-2xl';
 
         const bgClass = red
-            ? 'bg-red-600 hover:bg-red-500 shadow-lg shadow-red-900/30'
+            ? 'bg-red-600 hover:bg-red-500 shadow-[0_4px_12px_rgba(220,38,38,0.4)] border border-red-500/50'
             : danger
-                ? 'bg-red-500/90 hover:bg-red-400 shadow-lg shadow-red-900/30 ring-2 ring-red-500/25'
+                ? 'bg-red-500 hover:bg-red-400 shadow-[0_4px_12px_rgba(239,68,68,0.4)] border border-red-400/50'
                 : active
-                    ? 'bg-blue-600/25 hover:bg-blue-600/35 ring-1 ring-blue-500/40'
-                    : isDark ? 'bg-white/10 hover:bg-white/16' : 'bg-gray-100 hover:bg-gray-200';
+                    ? 'bg-blue-600 hover:bg-blue-500 shadow-[0_4px_12px_rgba(37,99,235,0.4)] border border-blue-500/50'
+                    : isDark ? 'bg-white/[0.06] hover:bg-white/[0.12] border border-white/[0.05] shadow-inner backdrop-blur-md' : 'bg-white hover:bg-gray-50 border border-gray-200 shadow-sm';
 
-        const iconColor = red || danger ? 'text-white' : active ? 'text-blue-400' : isDark ? 'text-gray-300' : 'text-gray-600';
-        const labelColor = red ? 'text-red-400' : danger ? 'text-red-400' : active ? 'text-blue-400' : isDark ? 'text-gray-500' : 'text-gray-500';
+        const iconColor = red || danger || active ? 'text-white' : isDark ? 'text-gray-200 group-hover:text-white' : 'text-gray-700 group-hover:text-gray-900';
+        const labelColor = red || danger || active ? 'text-white/90' : isDark ? 'text-gray-400 group-hover:text-gray-300' : 'text-gray-500 group-hover:text-gray-700';
 
         return (
-            <div className="flex flex-col items-center gap-1">
+            <div className="flex flex-col items-center gap-1.5 group cursor-pointer">
                 <button
                     onClick={onClick}
                     onMouseDown={onStart}
@@ -144,21 +147,21 @@ const RoomBottomControls = ({
                     aria-label={titleProp}
                     aria-pressed={active}
                     className={`relative ${btnSize} flex items-center justify-center
-                        transition-all duration-150 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed
+                        transition-all duration-300 active:scale-90 disabled:opacity-40 disabled:cursor-not-allowed
                         ${bgClass}`}
                 >
-                    <span className={`${iconColor} transition-colors`}>{icon}</span>
+                    <span className={`${iconColor} transition-colors duration-300`}>{icon}</span>
                     {pulse && (
-                        <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full animate-ping opacity-75" />
+                        <span className="absolute top-0 right-0 w-2.5 h-2.5 bg-red-500 rounded-full animate-ping opacity-75" />
                     )}
                     {badge > 0 && (
-                        <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 bg-red-500 text-[9px] font-black rounded-full flex items-center justify-center text-white leading-none shadow">
+                        <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-4.5 px-1 bg-red-500 text-[10px] font-black rounded-full flex items-center justify-center text-white leading-none shadow-md border border-red-400/30">
                             {badge > 9 ? '9+' : badge}
                         </span>
                     )}
                 </button>
                 {label && (
-                    <span className={`text-[9px] xs:text-[10px] font-semibold whitespace-nowrap select-none leading-none ${labelColor}`}>
+                    <span className={`text-[10px] font-medium whitespace-nowrap select-none leading-none transition-colors duration-300 ${labelColor}`}>
                         {label}
                     </span>
                 )}
@@ -167,13 +170,13 @@ const RoomBottomControls = ({
     };
 
     return (
-        <div className={`relative z-50 shrink-0 ${isDark ? 'bg-[#13151c] border-t border-white/[0.06]' : 'bg-white border-t border-gray-200'}`}>
+        <div className={`relative z-50 shrink-0 transition-colors duration-500 ${isDark ? 'bg-[#0f111a]/80 backdrop-blur-2xl border-t border-white/[0.05] shadow-[0_-10px_40px_rgba(0,0,0,0.5)]' : 'bg-white/80 backdrop-blur-2xl border-t border-gray-200/50 shadow-[0_-10px_40px_rgba(0,0,0,0.05)]'}`}>
 
             {/* ── Desktop / Tablet bar ── */}
             <div className="hidden sm:flex items-center justify-between px-4 lg:px-6 py-3">
 
-                {/* Left: Meeting ID */}
-                <div className="w-[160px] lg:w-[200px] flex items-center">
+                {/* Left: Meeting ID, Time, Ping */}
+                <div className="w-auto lg:min-w-[280px] flex items-center gap-2 lg:gap-3">
                     <button
                         type="button"
                         onClick={() => { navigator.clipboard.writeText(roomID); setCopied(true); setTimeout(() => setCopied(false), 2000); }}
@@ -185,11 +188,49 @@ const RoomBottomControls = ({
                         }
                         <div className="flex flex-col items-start min-w-0">
                             <span className="text-[8px] font-bold uppercase tracking-widest text-gray-600">{t('ctl_meeting_id') || 'Meeting ID'}</span>
-                            <span className={`text-[11px] font-mono font-bold tracking-wider truncate transition-colors max-w-[100px] ${copied ? 'text-emerald-400' : isDark ? 'text-gray-400 group-hover:text-white' : 'text-gray-600 group-hover:text-gray-900'}`}>
+                            <span className={`text-[11px] font-mono font-bold tracking-wider truncate transition-colors max-w-[80px] lg:max-w-[100px] ${copied ? 'text-emerald-400' : isDark ? 'text-gray-400 group-hover:text-white' : 'text-gray-600 group-hover:text-gray-900'}`}>
                                 {copied ? (t('ctl_copied') || 'Copied!') : roomID}
                             </span>
                         </div>
                     </button>
+
+                    <button
+                        type="button"
+                        title={t('ctl_share_link') || "Havolani nusxalash"}
+                        onClick={() => {
+                            const link = window.location.href;
+                            navigator.clipboard.writeText(link);
+                            setLinkCopied(true);
+                            setTimeout(() => setLinkCopied(false), 2000);
+                        }}
+                        className={`p-2.5 rounded-xl transition-all flex items-center justify-center ${
+                            linkCopied 
+                                ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20'
+                                : isDark 
+                                    ? 'bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/20' 
+                                    : 'bg-blue-50 hover:bg-blue-100 text-blue-600 border border-blue-200'
+                        }`}
+                    >
+                        {linkCopied ? <Check size={16} /> : <Share2 size={16} />}
+                    </button>
+
+                    <div className={`hidden lg:flex w-px h-8 mx-1 ${isDark ? 'bg-white/10' : 'bg-gray-200'}`} />
+                    
+                    {/* Timer & Ping (moved from top bar) */}
+                    <div className="hidden lg:flex items-center gap-2">
+                        {meetingElapsed && (
+                            <div className={`flex items-center gap-1.5 px-2 py-1.5 rounded-xl ${isDark ? 'bg-white/5 border border-white/5' : 'bg-gray-100 border border-gray-200'}`}>
+                                <Clock size={12} className="text-gray-500" />
+                                <span className="text-[11px] font-mono font-semibold text-gray-400 tabular-nums">{meetingElapsed}</span>
+                            </div>
+                        )}
+                        {networkInfo && (
+                            <div className={`flex items-center gap-1.5 px-2 py-1.5 rounded-xl ${isDark ? 'bg-white/5 border border-white/5' : 'bg-gray-100 border border-gray-200'} ${networkInfo.tone}`}>
+                                <Wifi size={12} />
+                                <span className="text-[11px] font-semibold">{networkInfo.ping}ms</span>
+                            </div>
+                        )}
+                    </div>
                 </div>
 
                 {/* Center: Media controls */}
