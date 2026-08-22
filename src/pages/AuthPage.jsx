@@ -3,7 +3,7 @@ import { useNavigate, Link, useLocation } from 'react-router-dom';
 import API from '../api';
 import { ThemeLanguageContext } from '../context/ThemeLanguageContext';
 import { useAuth } from '../context/AuthContext';
-import { User, Mail, Lock, Eye, EyeOff, ArrowLeft, Video, Shield, Zap, Users } from 'lucide-react';
+import { User, Mail, Lock, Eye, EyeOff, ArrowLeft, Video, Shield, Zap, Users, RefreshCw, Calculator } from 'lucide-react';
 
 const APP_NAME = import.meta.env.VITE_APP_NAME || 'SamMeet';
 
@@ -44,6 +44,9 @@ const txt = {
         sentOk: 'Havola emailingizga yuborildi.',
         loginTab: 'Kirish',
         registerTab: "Ro'yxat",
+        captchaLabel: 'Xavfsizlik tekshiruvi',
+        captchaHint: 'Hisob natijasini kiriting',
+        captchaRefresh: 'Yangi misol',
     },
     ru: {
         loginTitle: 'С возвращением',
@@ -81,6 +84,9 @@ const txt = {
         sentOk: 'Ссылка отправлена на ваш email.',
         loginTab: 'Войти',
         registerTab: 'Регистрация',
+        captchaLabel: 'Проверка безопасности',
+        captchaHint: 'Введите результат',
+        captchaRefresh: 'Новый пример',
     },
     en: {
         loginTitle: 'Welcome back',
@@ -118,6 +124,9 @@ const txt = {
         sentOk: 'Reset link sent to your inbox.',
         loginTab: 'Sign in',
         registerTab: 'Register',
+        captchaLabel: 'Security check',
+        captchaHint: 'Enter the answer',
+        captchaRefresh: 'New challenge',
     },
 };
 
@@ -308,6 +317,9 @@ const AuthPage = () => {
         const nextIsLogin = location.pathname !== '/register';
         setIsLogin(nextIsLogin);
         setError('');
+        // Sahifa almashganda CAPTCHA yangilanadi
+        fetchCaptcha();
+        setCaptchaValue('');
     }, [location.pathname]);
 
     const toggle = () => {
@@ -373,11 +385,10 @@ const AuthPage = () => {
 
     const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
     const hasGoogleAuth = googleClientId && googleClientId !== 'your_google_client_id_here';
-    const gsiInitialized = useRef(false);
 
     const renderGsiButton = () => {
         if (!window.google) return;
-        if (!gsiInitialized.current) {
+        if (!window.__gsiInitialized) {
             window.google.accounts.id.initialize({
                 client_id: googleClientId,
                 callback: (response) => {
@@ -386,7 +397,7 @@ const AuthPage = () => {
                 auto_select: false,
                 cancel_on_tap_outside: true,
             });
-            gsiInitialized.current = true;
+            window.__gsiInitialized = true;
         }
         const el = document.getElementById('google-signin-button');
         if (!el) return;
@@ -419,7 +430,7 @@ const AuthPage = () => {
     }, []);
 
     useEffect(() => {
-        if (!hasGoogleAuth || !gsiInitialized.current) return;
+        if (!hasGoogleAuth || !window.__gsiInitialized) return;
         renderGsiButton();
     }, [lang, isDark, isLogin]);
 
@@ -604,26 +615,49 @@ const AuthPage = () => {
                         </div>
 
                         {/* CAPTCHA */}
-                        <div className="space-y-1.5 pt-1">
-                            <label className="text-[11px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Xavfsizlik kodi (CAPTCHA)</label>
-                            <div className="flex flex-col sm:flex-row gap-3">
-                                {captchaData?.svg && (
-                                    <div 
-                                        className="h-11 w-[150px] bg-white border border-gray-200 dark:border-white/8 rounded-xl overflow-hidden cursor-pointer flex-shrink-0 flex items-center justify-center [&>svg]:w-full [&>svg]:h-full" 
-                                        onClick={fetchCaptcha}
-                                        title="Yangi kod olish uchun bosing"
-                                        dangerouslySetInnerHTML={{ __html: captchaData.svg }} 
-                                    />
-                                )}
+                        <div className="space-y-1.5 pt-0.5">
+                            <div className="flex items-center justify-between">
+                                <label className="text-[11px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
+                                    <Calculator size={11} className="text-gray-400" />
+                                    {l.captchaLabel || 'Security check'}
+                                </label>
+                                <button
+                                    type="button"
+                                    onClick={fetchCaptcha}
+                                    className="flex items-center gap-1 text-[10px] font-semibold text-blue-500 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors group"
+                                    title={l.captchaRefresh || 'New challenge'}
+                                >
+                                    <RefreshCw size={10} className="group-hover:rotate-180 transition-transform duration-300" />
+                                    {l.captchaRefresh || 'New challenge'}
+                                </button>
+                            </div>
+                            <div className="flex items-stretch gap-2">
+                                {/* Math SVG display */}
+                                <div
+                                    className="flex-shrink-0 h-[42px] w-[140px] rounded-xl overflow-hidden border-2 border-gray-200 dark:border-white/10 bg-white cursor-pointer hover:border-blue-400 dark:hover:border-blue-500/50 transition-colors shadow-sm [&>svg]:w-full [&>svg]:h-full"
+                                    onClick={fetchCaptcha}
+                                    title={l.captchaRefresh || 'Click to refresh'}
+                                >
+                                    {captchaData?.svg ? (
+                                        <div dangerouslySetInnerHTML={{ __html: captchaData.svg }} className="w-full h-full" />
+                                    ) : (
+                                        <div className="w-full h-full flex items-center justify-center">
+                                            <Spinner size={16} />
+                                        </div>
+                                    )}
+                                </div>
+                                {/* Answer input */}
                                 <div className="relative flex-1">
-                                    <Shield size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
                                     <input
-                                        type="text"
-                                        placeholder="Misolning javobini kiriting"
+                                        type="number"
+                                        inputMode="numeric"
+                                        placeholder={l.captchaHint || 'Answer'}
                                         value={captchaValue}
                                         onChange={e => setCaptchaValue(e.target.value)}
-                                        className={`${inp} pl-10`}
+                                        className={`${inp} pl-4 pr-4 text-center font-bold text-lg tracking-widest [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none`}
                                         required
+                                        min="0"
+                                        max="99"
                                     />
                                 </div>
                             </div>

@@ -16,8 +16,8 @@ const RoomHeader = ({
     const { t } = useContext(ThemeLanguageContext);
 
     return (
-        <header className={`h-11 sm:h-14 flex items-center justify-between px-2 sm:px-5 z-40 shrink-0 ${isDark ? 'bg-[#13151c] border-b border-white/[0.06]' : 'bg-white border-b border-gray-200'}`}>
-
+        <div className="w-full px-2 sm:px-4 pt-3 sm:pt-4 pb-1 z-40 shrink-0 relative">
+            <header className={`h-12 sm:h-14 flex items-center justify-between px-4 sm:px-6 rounded-full premium-card ${isDark ? 'glass text-white' : 'bg-white/70 backdrop-blur-xl border border-white/60 shadow-[0_4px_24px_rgba(0,0,0,0.04)] text-gray-900'}`}>
             {/* Left */}
             <div className="flex items-center gap-2 overflow-hidden min-w-0">
                 {/* Room title */}
@@ -101,6 +101,7 @@ const RoomHeader = ({
                 <LanguageToggle compact />
             </div>
         </header>
+        </div>
     );
 };
 

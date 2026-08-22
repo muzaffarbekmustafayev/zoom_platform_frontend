@@ -5,6 +5,7 @@ import {
     Users, PhoneOff, MoreHorizontal, Copy, Check, FileText, Share2, Link, Clock, Wifi
 } from 'lucide-react';
 import { ThemeLanguageContext } from '../../context/ThemeLanguageContext';
+import TranslateButton, { TranslateButtonMobile } from './TranslateButton';
 
 const HOLD_TO_TALK_MS = 250;
 
@@ -32,6 +33,7 @@ const RoomBottomControls = ({
     mobileMenuOpen,
     setMobileMenuOpen,
     meetingElapsed,
+    translateProps,
     networkInfo,
 }) => {
     const { t, theme } = useContext(ThemeLanguageContext);
@@ -134,7 +136,7 @@ const RoomBottomControls = ({
         const labelColor = red || danger || active ? 'text-white/90' : isDark ? 'text-gray-400 group-hover:text-gray-300' : 'text-gray-500 group-hover:text-gray-700';
 
         return (
-            <div className="flex flex-col items-center gap-1.5 group cursor-pointer">
+            <div className="flex flex-col items-center gap-1.5 group cursor-pointer shrink-0">
                 <button
                     onClick={onClick}
                     onMouseDown={onStart}
@@ -147,7 +149,7 @@ const RoomBottomControls = ({
                     aria-label={titleProp}
                     aria-pressed={active}
                     className={`relative ${btnSize} flex items-center justify-center
-                        transition-all duration-300 active:scale-90 disabled:opacity-40 disabled:cursor-not-allowed
+                        transition-colors transition-transform duration-300 active:scale-90 disabled:opacity-40 disabled:cursor-not-allowed
                         ${bgClass}`}
                 >
                     <span className={`${iconColor} transition-colors duration-300`}>{icon}</span>
@@ -170,13 +172,13 @@ const RoomBottomControls = ({
     };
 
     return (
-        <div className={`relative z-50 shrink-0 transition-colors duration-500 ${isDark ? 'bg-[#0f111a]/80 backdrop-blur-2xl border-t border-white/[0.05] shadow-[0_-10px_40px_rgba(0,0,0,0.5)]' : 'bg-white/80 backdrop-blur-2xl border-t border-gray-200/50 shadow-[0_-10px_40px_rgba(0,0,0,0.05)]'}`}>
+        <div className={`relative sm:absolute sm:bottom-6 sm:left-1/2 sm:-translate-x-1/2 z-50 shrink-0 transition-all duration-500 rounded-none sm:rounded-[2rem] sm:border premium-card ${isDark ? 'sm:glass bg-[#0f111a]/90 sm:bg-transparent backdrop-blur-2xl border-t sm:border-white/10 shadow-[0_-10px_40px_rgba(0,0,0,0.5)] sm:shadow-[0_20px_50px_rgba(0,0,0,0.5)]' : 'sm:glass bg-white/90 sm:bg-transparent backdrop-blur-2xl border-t sm:border-white/50 shadow-[0_-10px_40px_rgba(0,0,0,0.05)] sm:shadow-[0_20px_50px_rgba(0,0,0,0.1)]'}`}>
 
             {/* ── Desktop / Tablet bar ── */}
-            <div className="hidden sm:flex items-center justify-between px-4 lg:px-6 py-3">
+            <div className="hidden sm:flex items-center justify-center gap-4 md:gap-8 lg:gap-16 px-4 lg:px-6 py-2.5">
 
                 {/* Left: Meeting ID, Time, Ping */}
-                <div className="w-auto lg:min-w-[280px] flex items-center gap-2 lg:gap-3">
+                <div className="flex items-center gap-2 lg:gap-3 shrink-0">
                     <button
                         type="button"
                         onClick={() => { navigator.clipboard.writeText(roomID); setCopied(true); setTimeout(() => setCopied(false), 2000); }}
@@ -297,7 +299,10 @@ const RoomBottomControls = ({
                 </div>
 
                 {/* Right: Panel + Leave */}
-                <div className="w-[160px] lg:w-[200px] flex items-center justify-end gap-1.5">
+                <div className="flex items-center gap-2 shrink-0">
+                    {translateProps && (
+                        <TranslateButton {...translateProps} />
+                    )}
                     <Btn
                         icon={<Settings size={16} />}
                         label={t('ctl_settings') || 'Settings'}
@@ -558,6 +563,23 @@ const RoomBottomControls = ({
                                         </div>
                                     </div>
                                 </button>
+                            )}
+
+                            {translateProps && (
+                                <TranslateButtonMobile
+                                    isTranslating={translateProps.isTranslating}
+                                    isConnecting={translateProps.isConnecting}
+                                    targetLang={translateProps.targetLang}
+                                    error={translateProps.error}
+                                    onToggle={() => {
+                                        if (translateProps.isTranslating || translateProps.isConnecting) {
+                                            translateProps.onStop();
+                                        } else {
+                                            translateProps.onStart();
+                                        }
+                                        setMobileMenuOpen(false);
+                                    }}
+                                />
                             )}
 
                             <button

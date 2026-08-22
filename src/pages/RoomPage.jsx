@@ -18,19 +18,29 @@ import RoomPasswordModal        from '../components/room/RoomPasswordModal';
 import RoomDocShare             from '../components/room/RoomDocShare';
 import { AccessDenied, WaitingRoom } from '../components/room/RoomScreens';
 import WaitingToasts from '../components/room/WaitingToasts';
+import useGeminiTranslate from '../hooks/useGeminiTranslate';
 
 // ── ICE configuration ──────────────────────────────────────────────────────────
 // STUN topadi, TURN esa NAT/firewall ortidagi foydalanuvchilar uchun relay —
 // TURN'siz ko'p tarmoqlarda media umuman ulanmaydi.
 const ICE_CONFIG = {
     iceServers: [
-        { urls: import.meta.env.VITE_STUN_URL || 'stun:stun.l.google.com:19302' },
+        { urls: 'stun:stun.l.google.com:19302' },
+        { urls: 'stun:stun1.l.google.com:19302' },
+        { urls: 'stun:stun2.l.google.com:19302' },
+        { urls: 'stun:stun3.l.google.com:19302' },
+        { urls: 'stun:stun4.l.google.com:19302' },
+        { urls: 'stun:stun.stunprotocol.org:3478' },
+        ...(import.meta.env.VITE_STUN_URL ? [{ urls: import.meta.env.VITE_STUN_URL }] : []),
         ...(import.meta.env.VITE_TURN_URL ? [{
             urls: import.meta.env.VITE_TURN_URL,
             username: import.meta.env.VITE_TURN_USERNAME,
             credential: import.meta.env.VITE_TURN_CREDENTIAL,
         }] : []),
     ],
+    iceCandidatePoolSize: 10,
+    bundlePolicy: 'max-bundle',
+    rtcpMuxPolicy: 'require',
 };
 
 // Opus kodek sozlamalari (SDP orqali):
@@ -39,10 +49,23 @@ const ICE_CONFIG = {
 // maxaveragebitrate=256000 — nutq va musiqa uchun yuqori sifat, stereo=1 — stereo ovoz
 // video bitrate 4000 kbps ga ko'tarildi
 const tuneSdp = (sdp) => {
+    // Opus audio: FEC, stereo, yuqori sifat
     let s = sdp.replace(/(a=fmtp:\d+ minptime=10;useinbandfec=1)/g,
         '$1;usedtx=1;maxaveragebitrate=256000;stereo=1;cbr=0');
-    // b=AS:4000 video tezligini 4 Mbps ga cheklaydi (juda yuqori sifat)
-    s = s.replace(/(m=video.*?\r\n)/g, '$1b=AS:4000\r\n');
+    // Video bitrate: AS + TIAS qo'llab-quvvatlanadi (TIAS aniqroq)
+    s = s.replace(/(m=video.*?\r\n)/g, '$1b=AS:8000\r\n');
+    // VP9 va H264 birinchi bo'lsin — sifatli kodeklar
+    const vp9Prefer = (block) => {
+        const payloads = [...block.matchAll(/a=rtpmap:(\d+) VP9\//g)].map(m => m[1]);
+        if (!payloads.length) return block;
+        const mLine = block.match(/^m=video \S+ \S+ ([\d ]+)/m);
+        if (!mLine) return block;
+        const existing = mLine[1].trim().split(' ');
+        const reordered = [...payloads, ...existing.filter(p => !payloads.includes(p))].join(' ');
+        return block.replace(mLine[1].trim(), reordered);
+    };
+    // Video blokini topib qayta tartiblaymiz
+    s = s.replace(/(m=video[\s\S]*?)(?=\nm=|$)/, (match) => vp9Prefer(match));
     return s;
 };
 
@@ -152,6 +175,21 @@ const RoomPage = () => {
     const [roomSettings, setRoomSettings] = useState({
         isChatEnabled: true, isWaitingRoomEnabled: false, muteAllOnEntry: false, allowScreenSharing: true,
     });
+
+    // ── Gemini Live Translate ────────────────────────────────────────────────
+    const translate = useGeminiTranslate();
+
+    const translateProps = {
+        isTranslating: translate.isTranslating,
+        isConnecting: translate.isConnecting,
+        targetLang: translate.targetLang,
+        setTargetLang: translate.setTargetLang,
+        showSubtitles: translate.showSubtitles,
+        setShowSubtitles: translate.setShowSubtitles,
+        error: translate.error,
+        onStart: () => translate.startTranslation(remoteStreams),
+        onStop: translate.stopTranslation,
+    };
 
     // ── Refs ───────────────────────────────────────────────────────────────────
     const mediaRecorderRef    = useRef(null);
@@ -407,19 +445,47 @@ const RoomPage = () => {
     // trickle: true — ICE kandidatlar tayyor bo'lishi bilan yuboriladi,
     // ulanish bir necha soniyaga tezlashadi va muvaffaqiyat darajasi oshadi.
     function createPeer(userToSignal, callerID, stream, callerUserId, socket) {
-        const peer = new Peer({ initiator: true, trickle: true, stream, config: ICE_CONFIG, sdpTransform: tuneSdp });
+        const peer = new Peer({
+            initiator: true,
+            trickle: true,
+            stream,
+            config: ICE_CONFIG,
+            sdpTransform: tuneSdp,
+            // Qo'shimcha kanal uchun DataChannel yoqilsin
+            offerOptions: { offerToReceiveAudio: true, offerToReceiveVideo: true },
+        });
         peer.on('signal', signal => socket.emit('sending-signal', { userToSignal, callerID, signal, callerUserId }));
         peer.on('stream', s => registerRemoteStream(userToSignal, s));
-        peer.on('error', () => toast.error(lang === 'uz' ? 'Ulanishda xatolik.' : lang === 'ru' ? 'Ошибка подключения.' : 'Connection error.'));
+        peer.on('track', (track, stream) => registerRemoteStream(userToSignal, stream));
+        peer.on('error', (err) => {
+            console.warn('Peer error (initiator):', err.message);
+            // Peer bog'liq bo'lmasa qayta urinmaymiz — user-disconnected avtomatik tozalaydi
+        });
+        peer.on('close', () => {
+            console.info('Peer closed:', userToSignal);
+        });
         attachScreenOnConnect(peer);
         return peer;
     }
 
     function addPeer(incomingSignal, callerID, stream, socket) {
-        const peer = new Peer({ initiator: false, trickle: true, stream, config: ICE_CONFIG, sdpTransform: tuneSdp });
+        const peer = new Peer({
+            initiator: false,
+            trickle: true,
+            stream,
+            config: ICE_CONFIG,
+            sdpTransform: tuneSdp,
+            answerOptions: { offerToReceiveAudio: true, offerToReceiveVideo: true },
+        });
         peer.on('signal', signal => socket.emit('returning-signal', { signal, callerID }));
         peer.on('stream', s => registerRemoteStream(callerID, s));
-        peer.on('error', () => toast.error(lang === 'uz' ? 'Ulanishda xatolik.' : lang === 'ru' ? 'Ошибка подключения.' : 'Connection error.'));
+        peer.on('track', (track, stream) => registerRemoteStream(callerID, stream));
+        peer.on('error', (err) => {
+            console.warn('Peer error (receiver):', err.message);
+        });
+        peer.on('close', () => {
+            console.info('Peer closed:', callerID);
+        });
         attachScreenOnConnect(peer);
         peer.signal(incomingSignal);
         return peer;
@@ -428,17 +494,21 @@ const RoomPage = () => {
     // ── Socket + media init ───────────────────────────────────────────────────
     useEffect(() => {
         joinStartedRef.current = false;
+        let isMounted = true;
         const socket = io(import.meta.env.VITE_BACKEND_URL || 'http://localhost:5005', {
             auth: { token: userInfo?.token || null },
-            // FAQAT polling. Apache reverse-proxy websocket upgrade'ni 101 qiladi-yu,
-            // keyin uzib, ishlayotgan polling ulanishini ham buzyapti. upgrade'ni
-            // o'chirsak ulanish barqaror bo'ladi (media baribir P2P/WebRTC ketadi).
-            transports: ['polling'],
-            upgrade: false,
+            transports: ['websocket', 'polling'],
             reconnectionDelay: 500,
             reconnectionDelayMax: 3000,
-            timeout: 8000,
+            timeout: 10000,
+            autoConnect: false
         });
+        
+        // React StrictMode dagi darhol unmount'ni chetlab o'tish uchun kichik kechikish
+        setTimeout(() => {
+            if (isMounted) socket.connect();
+        }, 50);
+
         socketRef.current = socket;
         setMessages([]); setPeers([]); setShareRequests([]); setIsShareApproved(false); setRequestPending(false);
 
@@ -604,12 +674,29 @@ const RoomPage = () => {
                 for (const sid of Object.keys(prev)) if (valid.has(sid)) next[sid] = prev[sid];
                 return next;
             });
-            users.forEach(u => {
-                if (peersRef.current.some(p => p.peerID === u.socketId)) return;
-                const peer = createPeer(u.socketId, socket.id, streamRef.current, userInfo._id, socket);
-                peersRef.current.push({ peerID: u.socketId, userId: u.userId, peer });
-            });
-            setPeers([...peersRef.current]);
+
+            const connectToPeers = (currentStream) => {
+                users.forEach(u => {
+                    if (peersRef.current.some(p => p.peerID === u.socketId)) return;
+                    const peer = createPeer(u.socketId, socket.id, currentStream, userInfo._id, socket);
+                    peersRef.current.push({ peerID: u.socketId, userId: u.userId, peer });
+                });
+                setPeers([...peersRef.current]);
+            };
+
+            // Stream hali tayyor bo'lmagan bo'lishi mumkin — tayyor bo'lguncha kutamiz
+            if (streamRef.current) {
+                connectToPeers(streamRef.current);
+            } else {
+                const waitForStream = setInterval(() => {
+                    if (streamRef.current) {
+                        clearInterval(waitForStream);
+                        connectToPeers(streamRef.current);
+                    }
+                }, 200);
+                // 10 soniyadan ko'p kutmaymiz
+                setTimeout(() => clearInterval(waitForStream), 10000);
+            }
         });
         socket.io.on('reconnect', () => socket.emit('reconnect-room', roomID, userInfo._id, userInfo.name));
         socket.on('user-joined', payload => {
@@ -617,10 +704,25 @@ const RoomPage = () => {
             // mavjud peer'ga forward qilamiz, tashlab yubormaymiz (aks holda ICE kandidatlar yo'qoladi)
             const existing = peersRef.current.find(p => p.peerID === payload.callerID);
             if (existing) { try { existing.peer.signal(payload.signal); } catch (_) {} return; }
-            const peer = addPeer(payload.signal, payload.callerID, streamRef.current, socket);
-            const obj = { peerID: payload.callerID, userId: payload.callerUserId, peer };
-            peersRef.current.push(obj);
-            setPeers(prev => [...prev, obj]);
+
+            const connectPeer = (currentStream) => {
+                const peer = addPeer(payload.signal, payload.callerID, currentStream, socket);
+                const obj = { peerID: payload.callerID, userId: payload.callerUserId, peer };
+                peersRef.current.push(obj);
+                setPeers(prev => [...prev, obj]);
+            };
+
+            if (streamRef.current) {
+                connectPeer(streamRef.current);
+            } else {
+                const waitForStream = setInterval(() => {
+                    if (streamRef.current) {
+                        clearInterval(waitForStream);
+                        connectPeer(streamRef.current);
+                    }
+                }, 200);
+                setTimeout(() => clearInterval(waitForStream), 10000);
+            }
         });
         socket.on('receiving-returned-signal', payload => {
             const item = peersRef.current.find(p => p.peerID === payload.id);
@@ -631,8 +733,21 @@ const RoomPage = () => {
         const initMedia = async (pw = '') => {
             try {
                 const cur = await navigator.mediaDevices.getUserMedia({
-                    video: { width: { ideal: 1920 }, height: { ideal: 1080 }, frameRate: { ideal: 60, min: 24 }, facingMode: 'user' },
-                    audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true, channelCount: 2, sampleRate: 48000, sampleSize: 16 }
+                    video: {
+                        width: { ideal: 1280, max: 1920 },
+                        height: { ideal: 720, max: 1080 },
+                        frameRate: { ideal: 30, max: 60 },
+                        facingMode: 'user',
+                    },
+                    audio: {
+                        echoCancellation: true,
+                        noiseSuppression: true,
+                        autoGainControl: true,
+                        channelCount: 2,
+                        sampleRate: 48000,
+                        sampleSize: 16,
+                        latency: 0,  // minimal kechikish
+                    }
                 });
                 const micOn   = sessionStorage.getItem(`mic-${roomID}`)   === 'true';
                 const videoOn = sessionStorage.getItem(`video-${roomID}`) === 'true';
@@ -676,6 +791,7 @@ const RoomPage = () => {
         initMediaRef.current = initMedia;
 
         return () => {
+            isMounted = false;
             if (socketRef.current) { socket.emit('leave-room'); socket.disconnect(); socketRef.current = null; }
             if (speakingRafRef.current) cancelAnimationFrame(speakingRafRef.current);
             Object.values(remoteAnalysersRef.current).forEach(({ source }) => { try { source.disconnect(); } catch (_) {} });
@@ -1057,7 +1173,7 @@ const RoomPage = () => {
 
     // ── Render ────────────────────────────────────────────────────────────────
     return (
-        <div className={`flex flex-col room-fullheight font-sans overflow-hidden ${isDark ? 'bg-[#0f111a] bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-[#1a1d2d] via-[#0f111a] to-[#0a0b10] text-white' : 'bg-gray-50 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-white via-gray-50 to-gray-200 text-gray-900'}`}>
+        <div className={`flex flex-col room-fullheight font-sans overflow-hidden room-premium-bg text-slate-900 dark:text-white transition-colors duration-500`}>
 
             {/* Kutish xonasi — host/cohost uchun qabul/rad toast'lari */}
             {canModerate && (
@@ -1110,6 +1226,21 @@ const RoomPage = () => {
                         setPinnedSocketId={setPinnedSocketId}
                         totalParticipantCount={totalParticipantCount}
                     />
+
+                    {/* Translate subtitle overlay */}
+                    {translate.isTranslating && translate.showSubtitles && translate.subtitleText && (
+                        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-30 max-w-[85%] sm:max-w-[70%] pointer-events-none">
+                            <div className={`px-5 py-3 rounded-2xl backdrop-blur-xl shadow-2xl border transition-all animate-in fade-in slide-in-from-bottom-2 duration-300
+                                ${isDark
+                                    ? 'bg-black/70 border-white/10 text-white'
+                                    : 'bg-white/85 border-gray-200/50 text-gray-900'
+                                }`}>
+                                <p className="text-sm sm:text-base font-medium leading-relaxed text-center">
+                                    {translate.subtitleText}
+                                </p>
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 {/* Sidebar overlay (mobile) */}
@@ -1118,14 +1249,13 @@ const RoomPage = () => {
                         onClick={() => { setShowChat(false); setShowParticipants(false); }} />
                 )}
 
-                {/* Sidebar */}
                 {(showChat || showParticipants) && (
-                    <aside className={`absolute inset-y-0 right-0 w-full xs:w-[320px] z-50 tablet:static tablet:w-[300px] lg:w-[360px] shrink-0 h-full flex flex-col shadow-[0_0_50px_rgba(0,0,0,0.6)] animate-in slide-in-from-right-full duration-250 ease-out
-                        ${isDark ? 'bg-[#0d0f15] border-l border-white/6' : 'bg-white border-l border-gray-200'}`}>
+                    <aside className={`absolute inset-y-0 right-0 w-full xs:w-[320px] z-50 tablet:static tablet:w-[300px] lg:w-[360px] shrink-0 h-full flex flex-col shadow-[-10px_0_40px_rgba(0,0,0,0.3)] animate-in slide-in-from-right-full duration-250 ease-out
+                        ${isDark ? 'glass bg-[#0f111a]/80 border-l border-white/10' : 'glass bg-white/90 border-l border-white/50'}`}>
 
                         {showParticipants && (
                             <>
-                                <div className={`shrink-0 flex items-center justify-between px-4 h-14 border-b ${isDark ? 'border-white/6' : 'border-gray-200'}`}>
+                                <div className={`shrink-0 flex items-center justify-between px-4 h-14 border-b ${isDark ? 'border-white/10' : 'border-gray-200/50'}`}>
                                     <h2 className={`text-sm font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
                                         {t('ctl_people')} <span className="text-gray-500 font-medium">({roomUsers.length})</span>
                                     </h2>
@@ -1196,6 +1326,7 @@ const RoomPage = () => {
                 isHost={isHost} onHoldToTalkStart={handleHoldToTalkStart} onHoldToTalkEnd={handleHoldToTalkEnd}
                 mobileMenuOpen={mobileToolsOpen} setMobileMenuOpen={setMobileToolsOpen}
                 meetingElapsed={meetingElapsed} networkInfo={networkInfo}
+                translateProps={translateProps}
             />
 
             {showSettings && (

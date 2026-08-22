@@ -162,6 +162,15 @@ const Video = ({ stream, userName, role, hasTurn, isStage, isLocal, isScreen = f
                             : 'hidden'
                         }`}
                         style={isLocal && !isScreen ? { transform: 'scaleX(-1)' } : undefined}
+                        disablePictureInPicture={false}
+                        // Low-latency: eng kichik buffer, deyarli real vaqt uzatish
+                        onLoadedMetadata={e => {
+                            if (!isLocal && e.target) {
+                                e.target.playbackRate = 1.0;
+                                // video tayyor bo'lishi bilan darhol ijro boshlaydi
+                                e.target.play().catch(() => {});
+                            }
+                        }}
                     />
                     {!showVideo && <AvatarFallback />}
                 </>

@@ -171,12 +171,12 @@ const RoomVideoGrid = ({
                 animate-in fade-in zoom-in-95 duration-400`}>
 
                 {/* Local tile */}
-                <div className={`relative min-h-[120px] xs:min-h-[150px] sm:min-h-0 rounded-xl overflow-hidden transition-all duration-300 group bg-[#0d1018]
-                    ${activeSpeakers.has('__local__') ? 'ring-2 ring-emerald-400/70 shadow-[0_0_16px_rgba(52,211,153,0.2)]'
-                    : isHost ? 'ring-2 ring-blue-500/40 shadow-[0_4px_20px_rgba(0,0,0,0.5)]'
-                    : isCoHost ? 'ring-2 ring-emerald-500/40 shadow-[0_4px_20px_rgba(0,0,0,0.5)]'
-                    : isDark ? 'ring-1 ring-white/8 shadow-[0_4px_20px_rgba(0,0,0,0.4)]'
-                    : 'ring-1 ring-gray-500/30 shadow-[0_4px_20px_rgba(0,0,0,0.3)]'}`}>
+                <div className={`relative min-h-[120px] xs:min-h-[150px] sm:min-h-0 rounded-2xl overflow-hidden transition-all duration-300 group bg-black/40 backdrop-blur-sm
+                    ${activeSpeakers.has('__local__') ? 'speaker-glow ring-1 ring-blue-500/50'
+                    : isHost ? 'ring-1 ring-blue-500/30 shadow-[0_4px_24px_rgba(0,0,0,0.15)]'
+                    : isCoHost ? 'ring-1 ring-emerald-500/30 shadow-[0_4px_24px_rgba(0,0,0,0.15)]'
+                    : isDark ? 'ring-1 ring-white/10 shadow-[0_4px_24px_rgba(0,0,0,0.15)]'
+                    : 'ring-1 ring-gray-200 shadow-[0_4px_16px_rgba(0,0,0,0.05)]'}`}>
                     <Video stream={stream} userName={`${userInfo.name} (You)`} role={myRole}
                         isLocal isSpeaking={activeSpeakers.has('__local__')} userVideoStatus={!isVideoOff} />
                     <div className="absolute top-2 left-2 flex items-center gap-1 z-20">
@@ -206,13 +206,13 @@ const RoomVideoGrid = ({
                     const spk = activeSpeakers.has(peerObj.peerID);
                     return (
                         <div key={peerObj.peerID || idx}
-                            className={`relative min-h-[120px] xs:min-h-[150px] sm:min-h-0 rounded-xl overflow-hidden transition-all duration-300 group animate-in fade-in zoom-in-95 duration-400 bg-[#0d1018]
-                                ${spk ? 'ring-2 ring-emerald-400/70 shadow-[0_0_16px_rgba(52,211,153,0.2)]'
-                                : isUserHost ? 'ring-2 ring-blue-500/40 shadow-[0_4px_20px_rgba(0,0,0,0.5)]'
-                                : isUserCoHost ? 'ring-2 ring-emerald-500/40 shadow-[0_4px_20px_rgba(0,0,0,0.5)]'
-                                : hasTurn ? 'ring-2 ring-amber-500/50 shadow-[0_4px_20px_rgba(0,0,0,0.5)]'
-                                : isDark ? 'ring-1 ring-white/8 shadow-[0_4px_20px_rgba(0,0,0,0.4)]'
-                                : 'ring-1 ring-gray-500/30 shadow-[0_4px_20px_rgba(0,0,0,0.3)]'}`}>
+                            className={`relative min-h-[120px] xs:min-h-[150px] sm:min-h-0 rounded-2xl overflow-hidden transition-all duration-300 group animate-in fade-in zoom-in-95 duration-400 bg-black/40 backdrop-blur-sm
+                                ${spk ? 'speaker-glow ring-1 ring-blue-500/50'
+                                : isUserHost ? 'ring-1 ring-blue-500/30 shadow-[0_4px_24px_rgba(0,0,0,0.15)]'
+                                : isUserCoHost ? 'ring-1 ring-emerald-500/30 shadow-[0_4px_24px_rgba(0,0,0,0.15)]'
+                                : hasTurn ? 'ring-1 ring-amber-500/40 shadow-[0_4px_24px_rgba(0,0,0,0.15)]'
+                                : isDark ? 'ring-1 ring-white/10 shadow-[0_4px_24px_rgba(0,0,0,0.15)]'
+                                : 'ring-1 ring-gray-200 shadow-[0_4px_16px_rgba(0,0,0,0.05)]'}`}>
                             <Video stream={remoteStreams[peerObj.peerID]} userName={user?.userName || 'Participant'}
                                 role={user?.role} hasTurn={hasTurn} isSpeaking={spk}
                                 isLocal={false} userVideoStatus={user?.videoStatus !== false} />
