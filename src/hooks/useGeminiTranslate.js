@@ -78,11 +78,13 @@ function downsample(buffer, fromRate, toRate) {
  */
 export default function useGeminiTranslate() {
     const [isTranslating, setIsTranslating] = useState(false);
-    const [targetLang, setTargetLang] = useState('uz');
+    const [sourceLang, setSourceLang] = useState('ru'); // Qaysi tilda gapirilmoqda
+    const [targetLang, setTargetLang] = useState('uz'); // Qaysi tilga tarjima qilinmoqda
     const [subtitleText, setSubtitleText] = useState('');
     const [showSubtitles, setShowSubtitles] = useState(true);
     const [error, setError] = useState(null);
     const [isConnecting, setIsConnecting] = useState(false);
+    const [translatedStream, setTranslatedStream] = useState(null); // Tarjima qilingan WebRTC audio oqimi
 
     const wsRef = useRef(null);
     const audioCtxRef = useRef(null);
@@ -96,12 +98,13 @@ export default function useGeminiTranslate() {
     const setupDoneRef = useRef(false);
 
     // ── System instruction yaratish ──
-    const buildSystemInstruction = useCallback((lang) => {
-        const fullName = langFullName[lang] || lang;
+    const buildSystemInstruction = useCallback((src, tgt) => {
+        const srcName = langFullName[src] || src;
+        const tgtName = langFullName[tgt] || tgt;
         return `You are a professional real-time interpreter.
-Your ONLY task is to immediately translate incoming speech into ${fullName}.
+Your ONLY task is to immediately translate incoming speech from ${srcName} into ${tgtName}.
 Follow these strict rules:
-1. Translate the spoken audio into fluent, natural ${fullName}.
+1. Translate the spoken audio into fluent, natural ${tgtName}.
 2. Output ONLY the translated audio and text. Do not add any conversational filler, greetings, or explanations.
 3. If the audio is silent or contains only background noise, you MUST remain completely silent and DO NOT hallucinate words.
 4. Maintain the tone and urgency of the original speaker.
@@ -126,7 +129,13 @@ Follow these strict rules:
 
             const source = ctx.createBufferSource();
             source.buffer = audioBuffer;
-            source.connect(ctx.destination);
+            // Eshitish o'rniga, tarjimani WebRTC oqimiga (destination node) yuboramiz
+            // playbackCtxRef.current.destinationNode ni ishlatamiz
+            if (ctx.streamDestination) {
+                source.connect(ctx.streamDestination);
+            } else {
+                source.connect(ctx.destination);
+            }
             
             // Vaqt orqada qolib ketsa to'g'rilash (kichik bufer bilan)
             if (nextPlayTimeRef.current < ctx.currentTime) {
@@ -184,14 +193,14 @@ Follow these strict rules:
     }, [schedulePlayback]);
 
     // ── Tarjimani boshlash ──
-    const startTranslation = useCallback((remoteStreams) => {
+    const startTranslation = useCallback((localStream) => {
         if (!GEMINI_API_KEY || GEMINI_API_KEY === 'your_gemini_api_key_here') {
             setError('VITE_GEMINI_API_KEY sozlanmagan. .env faylga API kalitini qo\'shing.');
             return;
         }
 
-        if (!remoteStreams || Object.keys(remoteStreams).length === 0) {
-            setError('Tarjima qilish uchun boshqa ishtirokchilar kerak.');
+        if (!localStream || localStream.getAudioTracks().length === 0) {
+            setError('Mikrofon oqimi topilmadi.');
             return;
         }
 
@@ -201,9 +210,11 @@ Follow these strict rules:
         setupDoneRef.current = false;
 
         try {
-            // 1. Playback AudioContext
+            // 1. Playback AudioContext (WebRTC uchun)
             const PlayCtx = window.AudioContext || window.webkitAudioContext;
             playbackCtxRef.current = new PlayCtx({ sampleRate: OUTPUT_SAMPLE_RATE });
+            playbackCtxRef.current.streamDestination = playbackCtxRef.current.createMediaStreamDestination();
+            setTranslatedStream(playbackCtxRef.current.streamDestination.stream);
             playbackQueueRef.current = [];
             isPlayingRef.current = false;
             nextPlayTimeRef.current = 0;
@@ -230,7 +241,7 @@ Follow these strict rules:
                         },
                         systemInstruction: {
                             parts: [{
-                                text: buildSystemInstruction(targetLang)
+                                text: buildSystemInstruction(sourceLang, targetLang)
                             }]
                         }
                     }
@@ -250,12 +261,11 @@ Follow these strict rules:
             ws.onclose = (e) => {
                 console.log('[Translate] WebSocket closed:', e.code, e.reason);
                 setIsConnecting(false);
-                // Agar normal yopilmagan bo'lsa va isTranslating true bo'lsa, qayta ulanishga harakat qilish
                 if (e.code !== 1000 && isTranslating) {
                     console.warn('[Translate] Kutilmagan uzilish, 1 soniyadan so\'ng qayta ulanadi...');
                     setTimeout(() => {
                         if (isTranslating && !wsRef.current) {
-                            startTranslation(remoteStreams);
+                            startTranslation(localStream);
                         }
                     }, 1000);
                 } else {
@@ -263,30 +273,25 @@ Follow these strict rules:
                 }
             };
 
-            // 3. Remote audio streams ni mix qilish va Gemini ga yuborish
+            // 3. Local audio stream ni Gemini ga yuborish
             const RecordCtx = window.AudioContext || window.webkitAudioContext;
             const audioCtx = new RecordCtx({ sampleRate: INPUT_SAMPLE_RATE });
             audioCtxRef.current = audioCtx;
 
-            // Barcha remote tracklarni bitta mono qilib birlashtirish (GainNode yordamida)
             const mixer = audioCtx.createGain();
-            const sources = [];
+            let source = null;
 
-            Object.values(remoteStreams).forEach(stream => {
-                if (!stream || !stream.getAudioTracks || stream.getAudioTracks().length === 0) return;
-                try {
-                    const source = audioCtx.createMediaStreamSource(stream);
-                    source.connect(mixer);
-                    sources.push(source);
-                } catch (err) {
-                    console.warn('[Translate] Skipping stream:', err);
-                }
-            });
+            try {
+                source = audioCtx.createMediaStreamSource(localStream);
+                source.connect(mixer);
+            } catch (err) {
+                console.warn('[Translate] Local stream connect error:', err);
+            }
 
-            sourceNodesRef.current = sources;
+            sourceNodesRef.current = source ? [source] : [];
 
-            if (sources.length === 0) {
-                setError('Audio oqim topilmadi.');
+            if (!source) {
+                setError('Mikrofon oqimiga ulanib bo\'lmadi.');
                 setIsConnecting(false);
                 ws.close();
                 audioCtx.close();
@@ -358,6 +363,7 @@ Follow these strict rules:
                 playbackQueueRef.current = [];
                 isPlayingRef.current = false;
                 setupDoneRef.current = false;
+                setTranslatedStream(null);
             };
 
         } catch (err) {
@@ -366,7 +372,7 @@ Follow these strict rules:
             setIsTranslating(false);
             setIsConnecting(false);
         }
-    }, [targetLang, buildSystemInstruction, handleWsMessage]);
+    }, [sourceLang, targetLang, buildSystemInstruction, handleWsMessage]);
 
     // ── Tarjimani to'xtatish ──
     const stopTranslation = useCallback(() => {
@@ -375,13 +381,7 @@ Follow these strict rules:
         setIsTranslating(false);
         setIsConnecting(false);
         setSubtitleText('');
-    }, []);
-
-    // ── Til o'zgarganda qayta ulanish ──
-    const changeTargetLang = useCallback((newLang) => {
-        setTargetLang(newLang);
-        // Agar tarjima faol bo'lsa — qayta ulanish kerak emas,
-        // chunki keyingi startTranslation da yangi til ishlatiladi
+        setTranslatedStream(null);
     }, []);
 
     // ── Component unmount bo'lganda cleanup ──
@@ -394,13 +394,16 @@ Follow these strict rules:
     return {
         isTranslating,
         isConnecting,
+        sourceLang,
+        setSourceLang,
         targetLang,
-        setTargetLang: changeTargetLang,
+        setTargetLang,
         subtitleText,
         showSubtitles,
         setShowSubtitles,
         startTranslation,
         stopTranslation,
         error,
+        translatedStream,
     };
 }

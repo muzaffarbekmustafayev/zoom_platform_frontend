@@ -14,6 +14,8 @@ import { TRANSLATE_LANGS } from '../../hooks/useGeminiTranslate';
 const TranslateButton = ({
     isTranslating,
     isConnecting,
+    sourceLang,
+    setSourceLang,
     targetLang,
     setTargetLang,
     showSubtitles,
@@ -52,12 +54,13 @@ const TranslateButton = ({
         }
     };
 
-    const handleLangSelect = (langCode) => {
-        setTargetLang(langCode);
+    const handleLangSelect = (type, langCode) => {
+        if (type === 'source') setSourceLang(langCode);
+        else setTargetLang(langCode);
+
         // Agar tarjima faol bo'lsa — qayta boshlash
         if (isTranslating) {
             onStop();
-            // Kichik kutish kerak cleanup uchun, keyin yangi til bilan boshlash
             setTimeout(() => onStart(), 300);
         }
     };
@@ -144,28 +147,55 @@ const TranslateButton = ({
                         </div>
                     )}
 
-                    {/* Til tanlash */}
+                    {/* Source Til tanlash */}
                     <div className="px-3 pt-3 pb-1">
                         <p className={`text-[10px] font-bold uppercase tracking-widest mb-2 px-1 ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
-                            {t('ctl_translate_lang') || 'Translation language'}
+                            {t('ctl_translate_source') || 'Sizning tilingiz (Source)'}
                         </p>
-                        <div className="grid grid-cols-2 gap-1 max-h-48 overflow-y-auto scrollbar-thin">
+                        <div className="grid grid-cols-3 gap-1">
                             {TRANSLATE_LANGS.map(lang => (
                                 <button
-                                    key={lang.code}
-                                    onClick={() => handleLangSelect(lang.code)}
-                                    className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold transition-colors transition-transform ${
+                                    key={`src-${lang.code}`}
+                                    onClick={() => handleLangSelect('source', lang.code)}
+                                    className={`flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg text-xs font-semibold transition-colors transition-transform ${
+                                        sourceLang === lang.code
+                                            ? isDark
+                                                ? 'bg-blue-500/15 text-blue-400 border border-blue-500/25'
+                                                : 'bg-blue-50 text-blue-700 border border-blue-200'
+                                            : isDark
+                                                ? 'text-gray-400 hover:bg-white/8 border border-transparent'
+                                                : 'text-gray-600 hover:bg-gray-50 border border-transparent'
+                                    }`}
+                                >
+                                    <span className="text-sm leading-none">{lang.flag}</span>
+                                    <span className="uppercase text-[10px]">{lang.code}</span>
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Target Til tanlash */}
+                    <div className="px-3 pt-2 pb-1">
+                        <p className={`text-[10px] font-bold uppercase tracking-widest mb-2 px-1 ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
+                            {t('ctl_translate_target') || 'Tarjima tili (Target)'}
+                        </p>
+                        <div className="grid grid-cols-3 gap-1">
+                            {TRANSLATE_LANGS.map(lang => (
+                                <button
+                                    key={`tgt-${lang.code}`}
+                                    onClick={() => handleLangSelect('target', lang.code)}
+                                    className={`flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg text-xs font-semibold transition-colors transition-transform ${
                                         targetLang === lang.code
                                             ? isDark
                                                 ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/25'
                                                 : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                                             : isDark
-                                                ? 'text-gray-300 hover:bg-white/8 border border-transparent'
-                                                : 'text-gray-700 hover:bg-gray-50 border border-transparent'
+                                                ? 'text-gray-400 hover:bg-white/8 border border-transparent'
+                                                : 'text-gray-600 hover:bg-gray-50 border border-transparent'
                                     }`}
                                 >
-                                    <span className="text-base leading-none">{lang.flag}</span>
-                                    <span className="truncate">{lang.label}</span>
+                                    <span className="text-sm leading-none">{lang.flag}</span>
+                                    <span className="uppercase text-[10px]">{lang.code}</span>
                                 </button>
                             ))}
                         </div>

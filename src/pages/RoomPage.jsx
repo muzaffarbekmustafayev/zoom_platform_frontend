@@ -182,14 +182,49 @@ const RoomPage = () => {
     const translateProps = {
         isTranslating: translate.isTranslating,
         isConnecting: translate.isConnecting,
+        sourceLang: translate.sourceLang,
+        setSourceLang: translate.setSourceLang,
         targetLang: translate.targetLang,
         setTargetLang: translate.setTargetLang,
         showSubtitles: translate.showSubtitles,
         setShowSubtitles: translate.setShowSubtitles,
         error: translate.error,
-        onStart: () => translate.startTranslation(remoteStreams),
+        onStart: () => {
+            if (stream) translate.startTranslation(stream);
+        },
         onStop: translate.stopTranslation,
     };
+
+    // ── Ovoz almashinuvi (Local -> Translated yoki Translated -> Local) ──
+    useEffect(() => {
+        if (!peersRef.current || peersRef.current.length === 0) return;
+        
+        const originalAudioTrack = stream ? stream.getAudioTracks()[0] : null;
+        const translatedAudioTrack = translate.translatedStream ? translate.translatedStream.getAudioTracks()[0] : null;
+        
+        // Agar translate yoniq bo'lsa va track tayyor bo'lsa, translatedTrack ni beramiz
+        const activeTrack = translatedAudioTrack || originalAudioTrack;
+        
+        if (!activeTrack) return;
+        
+        peersRef.current.forEach(p => {
+            if (!p.peer || p.peer.destroyed) return;
+            try {
+                const senders = p.peer._pc?.getSenders();
+                if (senders) {
+                    const audioSender = senders.find(s => s.track && s.track.kind === 'audio');
+                    if (audioSender && audioSender.track !== activeTrack) {
+                        audioSender.replaceTrack(activeTrack).catch(e => console.warn('replaceTrack error:', e));
+                    }
+                } else if (originalAudioTrack && activeTrack !== originalAudioTrack) {
+                     // simple-peer fallback
+                     p.peer.replaceTrack(originalAudioTrack, activeTrack, stream);
+                }
+            } catch (err) {
+                console.warn('Track almashishda xatolik:', err);
+            }
+        });
+    }, [translate.translatedStream, stream]);
 
     // ── Refs ───────────────────────────────────────────────────────────────────
     const mediaRecorderRef    = useRef(null);
