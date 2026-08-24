@@ -52,7 +52,7 @@ const RoomHeader = ({
                 <div className="relative" ref={viewMenuRef}>
                     <button
                         onClick={() => setViewMenuOpen(v => !v)}
-                        className={`flex items-center gap-1.5 h-8 sm:h-9 px-2 sm:px-3 rounded-xl transition-all ${isDark ? 'bg-white/5 border border-white/8 text-gray-300 hover:bg-white/10' : 'bg-gray-100 border border-gray-200 text-gray-700 hover:bg-gray-200'}`}>
+                        className={`flex items-center gap-1.5 h-8 sm:h-9 px-2 sm:px-3 rounded-xl transition-colors transition-transform ${isDark ? 'bg-white/5 border border-white/8 text-gray-300 hover:bg-white/10' : 'bg-gray-100 border border-gray-200 text-gray-700 hover:bg-gray-200'}`}>
                         {viewMode === 'speaker'
                             ? <Presentation size={13} className="text-blue-400" />
                             : viewMode === 'sidebar'
@@ -85,7 +85,7 @@ const RoomHeader = ({
                                     <div className="px-2 grid grid-cols-2 gap-1">
                                         {['auto', '1x1', '2x2', '3x3'].map(sz => (
                                             <button key={sz} onClick={() => { setGridSize(sz); setViewMenuOpen(false); }}
-                                                className={`px-2 py-1.5 rounded-lg text-[10px] font-bold text-center border transition-all
+                                                className={`px-2 py-1.5 rounded-lg text-[10px] font-bold text-center border transition-colors transition-transform
                                                     ${gridSize === sz ? 'bg-blue-600/20 border-blue-500/40 text-blue-400' : isDark ? 'bg-white/5 border-transparent text-gray-400 hover:bg-white/8 hover:text-white' : 'bg-gray-100 border-transparent text-gray-500 hover:bg-gray-200 hover:text-gray-900'}`}>
                                                 {sz.toUpperCase()}
                                             </button>

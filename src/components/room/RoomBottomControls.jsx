@@ -172,7 +172,7 @@ const RoomBottomControls = ({
     };
 
     return (
-        <div className={`relative sm:absolute sm:bottom-6 sm:left-1/2 sm:-translate-x-1/2 z-50 shrink-0 transition-all duration-500 rounded-none sm:rounded-[2rem] sm:border premium-card ${isDark ? 'sm:glass bg-[#0f111a]/90 sm:bg-transparent backdrop-blur-2xl border-t sm:border-white/10 shadow-[0_-10px_40px_rgba(0,0,0,0.5)] sm:shadow-[0_20px_50px_rgba(0,0,0,0.5)]' : 'sm:glass bg-white/90 sm:bg-transparent backdrop-blur-2xl border-t sm:border-white/50 shadow-[0_-10px_40px_rgba(0,0,0,0.05)] sm:shadow-[0_20px_50px_rgba(0,0,0,0.1)]'}`}>
+        <div className={`relative sm:absolute sm:bottom-6 sm:left-1/2 sm:-translate-x-1/2 z-50 shrink-0 transition-colors transition-transform duration-500 rounded-none sm:rounded-[2rem] sm:border premium-card ${isDark ? 'sm:glass bg-[#0f111a]/90 sm:bg-transparent backdrop-blur-2xl border-t sm:border-white/10 shadow-[0_-10px_40px_rgba(0,0,0,0.5)] sm:shadow-[0_20px_50px_rgba(0,0,0,0.5)]' : 'sm:glass bg-white/90 sm:bg-transparent backdrop-blur-2xl border-t sm:border-white/50 shadow-[0_-10px_40px_rgba(0,0,0,0.05)] sm:shadow-[0_20px_50px_rgba(0,0,0,0.1)]'}`}>
 
             {/* ── Desktop / Tablet bar ── */}
             <div className="hidden sm:flex items-center justify-center gap-4 md:gap-8 lg:gap-16 px-4 lg:px-6 py-2.5">
@@ -182,7 +182,7 @@ const RoomBottomControls = ({
                     <button
                         type="button"
                         onClick={() => { navigator.clipboard.writeText(roomID); setCopied(true); setTimeout(() => setCopied(false), 2000); }}
-                        className={`flex items-center gap-2 px-3 py-2 rounded-xl transition-all group ${isDark ? 'bg-white/5 hover:bg-white/8 border border-white/8' : 'bg-gray-100 hover:bg-gray-200 border border-gray-200'}`}
+                        className={`flex items-center gap-2 px-3 py-2 rounded-xl transition-colors transition-transform group ${isDark ? 'bg-white/5 hover:bg-white/8 border border-white/8' : 'bg-gray-100 hover:bg-gray-200 border border-gray-200'}`}
                     >
                         {copied
                             ? <Check size={13} className="text-emerald-400 shrink-0" />
@@ -205,7 +205,7 @@ const RoomBottomControls = ({
                             setLinkCopied(true);
                             setTimeout(() => setLinkCopied(false), 2000);
                         }}
-                        className={`p-2.5 rounded-xl transition-all flex items-center justify-center ${
+                        className={`p-2.5 rounded-xl transition-colors transition-transform flex items-center justify-center ${
                             linkCopied 
                                 ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20'
                                 : isDark 
@@ -330,7 +330,7 @@ const RoomBottomControls = ({
                     <div className="relative" ref={leaveWrapRef}>
                         <button
                             onClick={handleLeaveClick}
-                            className="flex items-center gap-2 px-3 lg:px-4 py-2.5 rounded-2xl bg-red-600 hover:bg-red-500 active:scale-95 text-white font-bold text-sm transition-all shadow-lg shadow-red-900/30"
+                            className="flex items-center gap-2 px-3 lg:px-4 py-2.5 rounded-2xl bg-red-600 hover:bg-red-500 active:scale-95 text-white font-bold text-sm transition-colors transition-transform shadow-lg shadow-red-900/30"
                         >
                             <PhoneOff size={16} />
                             <span className="hidden lg:inline">{t('ctl_leave') || 'Leave'}</span>
@@ -443,7 +443,7 @@ const RoomBottomControls = ({
                         <div className="flex flex-col items-center gap-1">
                             <button
                                 onClick={handleLeaveClick}
-                                className="w-11 h-11 rounded-2xl bg-red-600 hover:bg-red-500 flex items-center justify-center transition-all active:scale-95 shadow-lg shadow-red-900/30"
+                                className="w-11 h-11 rounded-2xl bg-red-600 hover:bg-red-500 flex items-center justify-center transition-colors transition-transform active:scale-95 shadow-lg shadow-red-900/30"
                                 aria-label="Leave meeting"
                             >
                                 <PhoneOff size={20} className="text-white" />

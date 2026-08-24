@@ -143,7 +143,7 @@ const Video = ({ stream, userName, role, hasTurn, isStage, isLocal, isScreen = f
     );
 
     return (
-        <div className={`relative w-full h-full overflow-hidden group transition-all duration-300 ${tileBg} flex items-center justify-center
+        <div className={`relative w-full h-full overflow-hidden group transition-colors transition-transform duration-300 ${tileBg} flex items-center justify-center
             ${!isStage ? `rounded-2xl border ${
                 isSpeaking ? 'border-emerald-400/60 shadow-[0_0_14px_rgba(52,211,153,0.18)]'
                 : hasTurn ? 'border-emerald-500/50 shadow-[0_0_16px_rgba(16,185,129,0.12)]'
@@ -157,7 +157,7 @@ const Video = ({ stream, userName, role, hasTurn, isStage, isLocal, isScreen = f
                 <>
                     <video
                         playsInline autoPlay muted={isLocal} ref={ref}
-                        className={`w-full h-full transition-all duration-500 ${showVideo
+                        className={`w-full h-full transition-colors transition-transform duration-500 ${showVideo
                             ? (isStage ? 'object-contain block' : 'object-cover block')
                             : 'hidden'
                         }`}
@@ -215,7 +215,7 @@ const Video = ({ stream, userName, role, hasTurn, isStage, isLocal, isScreen = f
                     {showVideo && (
                         <button
                             onClick={toggleFullScreen}
-                            className="p-1 bg-white/10 hover:bg-white/20 backdrop-blur-sm rounded-lg border border-white/10 text-white/60 hover:text-white transition-all shrink-0 opacity-0 group-hover:opacity-100 hidden sm:block"
+                            className="p-1 bg-white/10 hover:bg-white/20 backdrop-blur-sm rounded-lg border border-white/10 text-white/60 hover:text-white transition-colors transition-transform shrink-0 opacity-0 group-hover:opacity-100 hidden sm:block"
                         >
                             {isFullScreen ? <Minimize2 size={10} /> : <Maximize2 size={10} />}
                         </button>

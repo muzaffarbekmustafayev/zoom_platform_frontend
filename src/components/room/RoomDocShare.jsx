@@ -314,7 +314,7 @@ const RoomDocShare = ({ open, onClose, isSharingScreen, onStart, onStop }) => {
                                             className="p-2 rounded-lg bg-white/10 hover:bg-white/20 text-white disabled:opacity-30"><ChevronRight size={15} /></button>
                                     </div>
                                     <button onClick={startPresenting}
-                                        className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 active:scale-95 text-white text-xs font-bold transition-all shadow-lg">
+                                        className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 active:scale-95 text-white text-xs font-bold transition-colors transition-transform shadow-lg">
                                         <Play size={14} />
                                         {L('Taqdimotni boshlash', 'Начать презентацию', 'Start presenting')}
                                     </button>
@@ -337,7 +337,7 @@ const RoomDocShare = ({ open, onClose, isSharingScreen, onStart, onStop }) => {
                     <button onClick={next} disabled={pageNum >= (doc?.pageCount || 1)}
                         className="p-2 rounded-lg bg-white/10 hover:bg-white/20 text-white disabled:opacity-30"><ChevronRight size={14} /></button>
                     <button onClick={stopPresenting}
-                        className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-red-600 hover:bg-red-500 text-white text-[11px] font-bold transition-all">
+                        className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-red-600 hover:bg-red-500 text-white text-[11px] font-bold transition-colors transition-transform">
                         <Square size={12} />
                         {L("To'xtatish", 'Стоп', 'Stop')}
                     </button>

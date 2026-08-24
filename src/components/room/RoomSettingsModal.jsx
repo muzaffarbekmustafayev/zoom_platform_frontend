@@ -162,7 +162,7 @@ const RoomSettingsModal = ({
                             { id: 'room',    label: 'Xona',       icon: <Lock size={13} /> },
                         ].map(tab => (
                             <button key={tab.id} onClick={() => setActiveTab(tab.id)}
-                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all
+                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors transition-transform
                                     ${activeTab === tab.id
                                         ? 'bg-blue-500/15 text-blue-500 dark:bg-blue-500/20 dark:text-blue-400'
                                         : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5'}`}>
@@ -196,7 +196,7 @@ const RoomSettingsModal = ({
                                             <p className="text-[11px] text-gray-400 dark:text-gray-500 truncate">{desc}</p>
                                         </div>
                                         <span className={`relative w-9 h-5 rounded-full transition-colors shrink-0 ${on ? 'bg-blue-500' : 'bg-gray-300 dark:bg-white/15'}`}>
-                                            <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-all ${on ? 'left-[18px]' : 'left-0.5'}`} />
+                                            <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-colors transition-transform ${on ? 'left-[18px]' : 'left-0.5'}`} />
                                         </span>
                                     </button>
                                 ))}
@@ -221,7 +221,7 @@ const RoomSettingsModal = ({
                                         value={newPassword}
                                         onChange={e => setNewPassword(e.target.value)}
                                         placeholder="Yangi parol (bo'sh = ochiq xona)"
-                                        className="w-full bg-gray-50 dark:bg-[#161b22] border border-gray-200 dark:border-white/8 rounded-xl px-4 pr-10 py-2.5 text-sm text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-600 focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20 transition-all"
+                                        className="w-full bg-gray-50 dark:bg-[#161b22] border border-gray-200 dark:border-white/8 rounded-xl px-4 pr-10 py-2.5 text-sm text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-600 focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20 transition-colors transition-transform"
                                     />
                                     <button type="button" onClick={() => setShowNewPw(v => !v)}
                                         className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
@@ -340,7 +340,7 @@ const RoomSettingsModal = ({
                             <Volume2 size={13} className="text-gray-400 dark:text-gray-500 shrink-0" />
                             <div className="flex-1 h-2 rounded-full bg-gray-100 dark:bg-white/8 overflow-hidden">
                                 <div
-                                    className="h-full rounded-full transition-all duration-75"
+                                    className="h-full rounded-full transition-colors transition-transform duration-75"
                                     style={{
                                         width: `${micLevel}%`,
                                         background: micLevel > 70

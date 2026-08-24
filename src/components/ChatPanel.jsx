@@ -70,7 +70,7 @@ const MessageBubble = ({ msg, isOwn, prevMsg, onEdit, onDelete, canAct }) => {
 
                 {/* Actions — fayl uchun faqat o'chirish (tahrirlab bo'lmaydi) */}
                 {isOwn && canAct && msg._id && (
-                    <div className={`flex items-center gap-0.5 self-end mb-1 transition-all duration-150
+                    <div className={`flex items-center gap-0.5 self-end mb-1 transition-colors transition-transform duration-150
                         ${hovered ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
                         {!msg.file && (
                             <button
@@ -254,7 +254,7 @@ const ChatPanel = ({
                 <button
                     onClick={() => { messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }); setAtBottom(true); }}
                     aria-label={t('chat_scroll_bottom') || 'Pastga'}
-                    className="absolute bottom-3 right-3 z-20 w-9 h-9 flex items-center justify-center rounded-full bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-600/30 transition-all duration-150 active:scale-90 animate-in fade-in zoom-in-90"
+                    className="absolute bottom-3 right-3 z-20 w-9 h-9 flex items-center justify-center rounded-full bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-600/30 transition-colors transition-transform duration-150 active:scale-90 animate-in fade-in zoom-in-90"
                 >
                     <ChevronDown size={18} />
                 </button>
@@ -293,7 +293,7 @@ const ChatPanel = ({
                             </label>
 
                             {/* Input pill */}
-                            <div className="flex-1 flex items-center bg-gray-100 dark:bg-[#1a2235] border border-gray-200 dark:border-white/[0.07] rounded-2xl px-4 py-2.5 gap-2 transition-all focus-within:border-blue-400 dark:focus-within:border-blue-500/50 focus-within:ring-2 focus-within:ring-blue-500/10">
+                            <div className="flex-1 flex items-center bg-gray-100 dark:bg-[#1a2235] border border-gray-200 dark:border-white/[0.07] rounded-2xl px-4 py-2.5 gap-2 transition-colors transition-transform focus-within:border-blue-400 dark:focus-within:border-blue-500/50 focus-within:ring-2 focus-within:ring-blue-500/10">
                                 <input
                                     ref={inputRef}
                                     type="text"
@@ -310,7 +310,7 @@ const ChatPanel = ({
                                 type="submit"
                                 disabled={!newMessage.trim()}
                                 title={t('chat_send')}
-                                className={`w-9 h-9 flex items-center justify-center rounded-xl shrink-0 transition-all duration-150 active:scale-90
+                                className={`w-9 h-9 flex items-center justify-center rounded-xl shrink-0 transition-colors transition-transform duration-150 active:scale-90
                                     ${newMessage.trim()
                                         ? editingMessageId
                                             ? 'bg-amber-500 hover:bg-amber-600 text-white shadow-md shadow-amber-500/25'

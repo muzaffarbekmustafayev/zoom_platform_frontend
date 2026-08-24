@@ -41,7 +41,7 @@ const ComingSoonModal = ({ onClose, featureName }) => {
 
                     <button
                         onClick={onClose}
-                        className="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-4 rounded-2xl text-sm tracking-[0.2em] uppercase transition-all shadow-xl shadow-blue-600/20 active:scale-95"
+                        className="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-4 rounded-2xl text-sm tracking-[0.2em] uppercase transition-colors transition-transform shadow-xl shadow-blue-600/20 active:scale-95"
                     >
                         Tushunarli
                     </button>

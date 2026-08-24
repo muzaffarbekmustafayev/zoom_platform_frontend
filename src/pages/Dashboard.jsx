@@ -73,7 +73,7 @@ const JoinView = ({ t }) => {
                             placeholder="580-616-615 yoki havola..."
                             value={inputValue}
                             onChange={e => setInputValue(e.target.value)}
-                            className="w-full bg-gray-50 dark:bg-[#1e2430] border border-gray-200 dark:border-white/8 rounded-xl px-5 py-3.5 text-sm font-medium text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
+                            className="w-full bg-gray-50 dark:bg-[#1e2430] border border-gray-200 dark:border-white/8 rounded-xl px-5 py-3.5 text-sm font-medium text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-colors transition-transform"
                         />
                     </div>
 
@@ -81,7 +81,7 @@ const JoinView = ({ t }) => {
                         <button
                             type="button"
                             onClick={handlePasteAndJoin}
-                            className="px-4 py-3.5 rounded-xl text-xs font-semibold bg-gray-100 dark:bg-white/8 hover:bg-gray-200 dark:hover:bg-white/12 text-gray-700 dark:text-gray-300 transition-all flex items-center gap-1.5 shrink-0"
+                            className="px-4 py-3.5 rounded-xl text-xs font-semibold bg-gray-100 dark:bg-white/8 hover:bg-gray-200 dark:hover:bg-white/12 text-gray-700 dark:text-gray-300 transition-colors transition-transform flex items-center gap-1.5 shrink-0"
                             title="Nusxalangan havoladan kirish"
                         >
                             📋 Nusxadan
@@ -89,7 +89,7 @@ const JoinView = ({ t }) => {
                         <button
                             type="submit"
                             disabled={!cleanCode}
-                            className={`flex-1 py-3.5 rounded-xl font-bold text-sm transition-all ${
+                            className={`flex-1 py-3.5 rounded-xl font-bold text-sm transition-colors transition-transform ${
                                 cleanCode
                                     ? 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg shadow-blue-500/25 hover:scale-[1.02] active:scale-[0.98]'
                                     : 'bg-gray-100 dark:bg-[#161B22] text-gray-400 cursor-not-allowed border border-transparent'
@@ -120,7 +120,7 @@ const ScheduleView = ({ t, lang }) => {
     const navigate = useNavigate();
     const toast = useToast();
 
-    const inp = 'w-full bg-gray-50 dark:bg-[#1e2430] border border-gray-200 dark:border-white/8 rounded-lg px-4 py-2.5 text-sm text-gray-900 dark:text-white focus:outline-none focus:border-blue-500 focus:bg-white dark:focus:bg-[#272c3d] transition-all';
+    const inp = 'w-full bg-gray-50 dark:bg-[#1e2430] border border-gray-200 dark:border-white/8 rounded-lg px-4 py-2.5 text-sm text-gray-900 dark:text-white focus:outline-none focus:border-blue-500 focus:bg-white dark:focus:bg-[#272c3d] transition-colors transition-transform';
 
     const generatePin = () => {
         const arr = new Uint32Array(1);
@@ -270,12 +270,12 @@ const ScheduleView = ({ t, lang }) => {
                             </label>
                             <div className="grid grid-cols-2 gap-2 w-full">
                                 <button type="button" onClick={() => { setRoomType('public'); setPassword(''); }}
-                                    className={`flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-semibold border-2 transition-all ${roomType === 'public' ? 'bg-blue-50 dark:bg-blue-900/30 border-blue-500 text-blue-600 dark:text-blue-400' : 'bg-gray-50 dark:bg-[#161B22] border-gray-200 dark:border-white/8 text-gray-500 dark:text-gray-400 hover:border-blue-300'}`}>
+                                    className={`flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-semibold border-2 transition-colors transition-transform ${roomType === 'public' ? 'bg-blue-50 dark:bg-blue-900/30 border-blue-500 text-blue-600 dark:text-blue-400' : 'bg-gray-50 dark:bg-[#161B22] border-gray-200 dark:border-white/8 text-gray-500 dark:text-gray-400 hover:border-blue-300'}`}>
                                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
                                     {lang === 'uz' ? 'Ommaviy' : lang === 'ru' ? 'Публичный' : 'Public'}
                                 </button>
                                 <button type="button" onClick={() => setRoomType('private')}
-                                    className={`flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-semibold border-2 transition-all ${roomType === 'private' ? 'bg-purple-50 dark:bg-purple-900/30 border-purple-500 text-purple-600 dark:text-purple-400' : 'bg-gray-50 dark:bg-[#161B22] border-gray-200 dark:border-white/8 text-gray-500 dark:text-gray-400 hover:border-purple-300'}`}>
+                                    className={`flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-semibold border-2 transition-colors transition-transform ${roomType === 'private' ? 'bg-purple-50 dark:bg-purple-900/30 border-purple-500 text-purple-600 dark:text-purple-400' : 'bg-gray-50 dark:bg-[#161B22] border-gray-200 dark:border-white/8 text-gray-500 dark:text-gray-400 hover:border-purple-300'}`}>
                                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
                                     {lang === 'uz' ? 'Shaxsiy' : lang === 'ru' ? 'Приватный' : 'Private'}
                                 </button>
@@ -343,7 +343,7 @@ const ScheduleView = ({ t, lang }) => {
                             {lang === 'uz' ? 'Bekor qilish' : lang === 'ru' ? 'Отмена' : 'Cancel'}
                         </button>
                         <button type="submit" disabled={loading || !isPasswordValid}
-                            className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-semibold rounded-lg transition-all shadow-sm flex items-center gap-2">
+                            className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-semibold rounded-lg transition-colors transition-transform shadow-sm flex items-center gap-2">
                             {loading && <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
                             {lang === 'uz' ? 'Rejalashtirish' : lang === 'ru' ? 'Запланировать' : 'Schedule'}
                         </button>
@@ -489,11 +489,11 @@ const LandingView = ({ t, lang }) => {
 
                     <div className="flex flex-col sm:flex-row items-center gap-3">
                         <Link to="/register"
-                            className="px-8 py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg shadow-blue-600/30 hover:shadow-blue-600/50 transition-all active:scale-95 text-sm">
+                            className="px-8 py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg shadow-blue-600/30 hover:shadow-blue-600/50 transition-colors transition-transform active:scale-95 text-sm">
                             {l.cta}
                         </Link>
                         <Link to="/login"
-                            className="px-8 py-3.5 bg-white dark:bg-white/6 hover:bg-gray-50 dark:hover:bg-white/10 border border-gray-200 dark:border-white/10 text-gray-700 dark:text-gray-200 font-bold rounded-xl transition-all active:scale-95 text-sm flex items-center gap-1.5">
+                            className="px-8 py-3.5 bg-white dark:bg-white/6 hover:bg-gray-50 dark:hover:bg-white/10 border border-gray-200 dark:border-white/10 text-gray-700 dark:text-gray-200 font-bold rounded-xl transition-colors transition-transform active:scale-95 text-sm flex items-center gap-1.5">
                             {l.ctaLogin}
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
                         </Link>
@@ -526,7 +526,7 @@ const LandingView = ({ t, lang }) => {
                         {l.f.map((f, i) => {
                             const c = featureColors[f.c];
                             return (
-                                <div key={i} className={`group p-6 bg-white dark:bg-[#111318] rounded-2xl border border-gray-100 dark:border-white/6 hover:shadow-lg dark:hover:shadow-black/30 transition-all ${c.border}`}>
+                                <div key={i} className={`group p-6 bg-white dark:bg-[#111318] rounded-2xl border border-gray-100 dark:border-white/6 hover:shadow-lg dark:hover:shadow-black/30 transition-colors transition-transform ${c.border}`}>
                                     <div className={`w-12 h-12 ${c.bg} rounded-xl flex items-center justify-center mb-5 ${c.icon}`}>
                                         {featureIcons[i]}
                                     </div>
@@ -572,7 +572,7 @@ const LandingView = ({ t, lang }) => {
                     <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight mb-4">{l.ctaTitle}</h2>
                     <p className="text-blue-100/80 text-base mb-8">{l.ctaSub}</p>
                     <Link to="/register"
-                        className="inline-flex items-center gap-2 px-8 py-3.5 bg-white hover:bg-blue-50 text-blue-700 font-bold rounded-xl shadow-xl shadow-black/20 transition-all active:scale-95 text-sm">
+                        className="inline-flex items-center gap-2 px-8 py-3.5 bg-white hover:bg-blue-50 text-blue-700 font-bold rounded-xl shadow-xl shadow-black/20 transition-colors transition-transform active:scale-95 text-sm">
                         {l.ctaBtn}
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
                     </Link>
@@ -826,7 +826,7 @@ const HomeView = ({ t, lang, userInfo, onNav, history = [] }) => {
                         <button
                             key={action.id}
                             onClick={() => handleActionClick(action.id)}
-                            className="group flex flex-col items-center gap-2.5 p-5 sm:p-6 bg-white dark:bg-[#161b22] rounded-2xl hover:bg-gray-50 dark:hover:bg-[#1c222d] hover:shadow-lg dark:hover:shadow-black/40 border border-transparent hover:border-gray-100 dark:hover:border-white/8 transition-all duration-200 active:scale-[0.97]"
+                            className="group flex flex-col items-center gap-2.5 p-5 sm:p-6 bg-white dark:bg-[#161b22] rounded-2xl hover:bg-gray-50 dark:hover:bg-[#1c222d] hover:shadow-lg dark:hover:shadow-black/40 border border-transparent hover:border-gray-100 dark:hover:border-white/8 transition-colors transition-transform duration-200 active:scale-[0.97]"
                         >
                             <div className={`w-14 h-14 ${action.color} shadow-lg ${action.shadow} rounded-2xl flex items-center justify-center group-hover:scale-105 transition-transform duration-200`}>
                                 <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -861,7 +861,7 @@ const HomeView = ({ t, lang, userInfo, onNav, history = [] }) => {
                                     placeholder={t('meeting_topic')}
                                     value={meetingTitle}
                                     onChange={e => setMeetingTitle(e.target.value)}
-                                    className="w-full bg-gray-50/50 dark:bg-[#1e2430] border border-gray-200 dark:border-white/8 rounded-2xl px-6 py-5 text-lg font-semibold text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all shadow-inner"
+                                    className="w-full bg-gray-50/50 dark:bg-[#1e2430] border border-gray-200 dark:border-white/8 rounded-2xl px-6 py-5 text-lg font-semibold text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-colors transition-transform shadow-inner"
                                 />
                             </div>
 
@@ -869,7 +869,7 @@ const HomeView = ({ t, lang, userInfo, onNav, history = [] }) => {
                             <div className="grid grid-cols-2 gap-4">
                                 <button
                                     onClick={() => { setRoomType('public'); setRoomPassword(''); }}
-                                    className={`p-4 rounded-2xl font-bold text-sm transition-all border-2 ${roomType === 'public' 
+                                    className={`p-4 rounded-2xl font-bold text-sm transition-colors transition-transform border-2 ${roomType === 'public' 
                                         ? 'bg-blue-50 dark:bg-blue-900/30 border-blue-500 text-blue-600 dark:text-blue-400' 
                                         : 'bg-gray-50/50 dark:bg-[#1e2430] border-gray-200 dark:border-white/8 text-gray-600 dark:text-gray-400 hover:border-blue-300'
                                     }`}
@@ -881,7 +881,7 @@ const HomeView = ({ t, lang, userInfo, onNav, history = [] }) => {
                                 </button>
                                 <button
                                     onClick={() => { setRoomType('private'); if (!roomPassword) generatePassword(); }}
-                                    className={`p-4 rounded-2xl font-bold text-sm transition-all border-2 ${roomType === 'private'
+                                    className={`p-4 rounded-2xl font-bold text-sm transition-colors transition-transform border-2 ${roomType === 'private'
                                         ? 'bg-purple-50 dark:bg-purple-900/30 border-purple-500 text-purple-600 dark:text-purple-400' 
                                         : 'bg-gray-50/50 dark:bg-[#1e2430] border-gray-200 dark:border-white/8 text-gray-600 dark:text-gray-400 hover:border-purple-300'
                                     }`}
@@ -913,14 +913,14 @@ const HomeView = ({ t, lang, userInfo, onNav, history = [] }) => {
                                                 onChange={e => setRoomPassword(e.target.value.replace(/\D/g, '').slice(0, 6))}
                                                 inputMode="numeric"
                                                 maxLength={6}
-                                                className="flex-1 bg-gray-50/50 dark:bg-[#1e2430] border border-gray-200 dark:border-white/8 rounded-2xl px-6 py-4 text-base font-mono tracking-widest text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:border-purple-500 focus:ring-4 focus:ring-purple-500/10 transition-all shadow-inner"
+                                                className="flex-1 bg-gray-50/50 dark:bg-[#1e2430] border border-gray-200 dark:border-white/8 rounded-2xl px-6 py-4 text-base font-mono tracking-widest text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:border-purple-500 focus:ring-4 focus:ring-purple-500/10 transition-colors transition-transform shadow-inner"
                                             />
                                             
                                             {/* Show/Hide Toggle */}
                                             <button
                                                 type="button"
                                                 onClick={() => setShowPassword(!showPassword)}
-                                                className="px-3 py-3 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-100/50 dark:hover:bg-white/6/50 rounded-xl transition-all"
+                                                className="px-3 py-3 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-100/50 dark:hover:bg-white/6/50 rounded-xl transition-colors transition-transform"
                                                 title={showPassword ? 'Hide' : 'Show'}
                                             >
                                                 {showPassword ? (
@@ -939,7 +939,7 @@ const HomeView = ({ t, lang, userInfo, onNav, history = [] }) => {
                                                         setPasswordCopied(true);
                                                         setTimeout(() => setPasswordCopied(false), 2000);
                                                     }}
-                                                    className="px-3 py-3 text-gray-500 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-purple-50/50 dark:hover:bg-purple-900/20 rounded-xl transition-all"
+                                                    className="px-3 py-3 text-gray-500 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-purple-50/50 dark:hover:bg-purple-900/20 rounded-xl transition-colors transition-transform"
                                                     title={lang === 'uz' ? 'Nusxalash' : 'Copy'}
                                                 >
                                                     {passwordCopied ? (
@@ -992,7 +992,7 @@ const HomeView = ({ t, lang, userInfo, onNav, history = [] }) => {
                                         <button
                                             type="button"
                                             onClick={generatePassword}
-                                            className="flex-1 px-4 py-3 bg-gradient-to-r from-purple-500/10 to-indigo-500/10 dark:from-purple-900/20 dark:to-indigo-900/20 border border-purple-200 dark:border-purple-800/50 text-purple-600 dark:text-purple-400 font-bold text-sm rounded-xl hover:from-purple-500/20 hover:to-indigo-500/20 transition-all active:scale-95"
+                                            className="flex-1 px-4 py-3 bg-gradient-to-r from-purple-500/10 to-indigo-500/10 dark:from-purple-900/20 dark:to-indigo-900/20 border border-purple-200 dark:border-purple-800/50 text-purple-600 dark:text-purple-400 font-bold text-sm rounded-xl hover:from-purple-500/20 hover:to-indigo-500/20 transition-colors transition-transform active:scale-95"
                                         >
                                             <div className="flex items-center justify-center gap-2">
                                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
@@ -1003,7 +1003,7 @@ const HomeView = ({ t, lang, userInfo, onNav, history = [] }) => {
                                             <button
                                                 type="button"
                                                 onClick={() => setRoomPassword('')}
-                                                className="px-4 py-3 bg-gray-100/50 dark:bg-[#161B22]/70 border border-gray-200 dark:border-white/8 text-gray-600 dark:text-gray-400 font-bold text-sm rounded-xl hover:bg-gray-100 dark:hover:bg-white/6 transition-all active:scale-95"
+                                                className="px-4 py-3 bg-gray-100/50 dark:bg-[#161B22]/70 border border-gray-200 dark:border-white/8 text-gray-600 dark:text-gray-400 font-bold text-sm rounded-xl hover:bg-gray-100 dark:hover:bg-white/6 transition-colors transition-transform active:scale-95"
                                             >
                                                 {lang === 'uz' ? 'Tozalash' : lang === 'ru' ? 'Очистить' : 'Clear'}
                                             </button>
@@ -1015,11 +1015,11 @@ const HomeView = ({ t, lang, userInfo, onNav, history = [] }) => {
                             {/* Action Buttons */}
                             <div className="flex gap-4 pt-4">
                                 <button onClick={resetNewMeeting}
-                                    className="px-8 py-4 text-sm font-bold text-gray-500 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-white/8/50 rounded-2xl transition-all flex-1 active:scale-95">
+                                    className="px-8 py-4 text-sm font-bold text-gray-500 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-white/8/50 rounded-2xl transition-colors transition-transform flex-1 active:scale-95">
                                     {lang === 'uz' ? 'Bekor' : lang === 'ru' ? 'Отмена' : 'Cancel'}
                                 </button>
                                 <button onClick={handleCreateRoom} disabled={loading || (roomType === 'private' && (!roomPassword.trim() || !passwordStrength.valid))}
-                                    className="px-10 py-4 gradient-blue text-white text-sm font-black rounded-2xl transition-all shadow-xl shadow-blue-500/30 disabled:opacity-50 disabled:cursor-not-allowed flex-1 active:scale-95">
+                                    className="px-10 py-4 gradient-blue text-white text-sm font-black rounded-2xl transition-colors transition-transform shadow-xl shadow-blue-500/30 disabled:opacity-50 disabled:cursor-not-allowed flex-1 active:scale-95">
                                     {loading ? t('starting') : t('start_meeting')}
                                 </button>
                             </div>
@@ -1059,7 +1059,7 @@ const HomeView = ({ t, lang, userInfo, onNav, history = [] }) => {
                                 </div>
                                 <button
                                     onClick={() => { navigator.clipboard.writeText(createdRoom.code); setCodeCopied(true); setTimeout(() => setCodeCopied(false), 2000); }}
-                                    className={`shrink-0 w-10 h-10 rounded-xl flex items-center justify-center transition-all ${codeCopied ? 'bg-green-100 dark:bg-green-900/30 text-green-600' : 'bg-gray-200 dark:bg-white/10 text-gray-600 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-white/15'}`}
+                                    className={`shrink-0 w-10 h-10 rounded-xl flex items-center justify-center transition-colors transition-transform ${codeCopied ? 'bg-green-100 dark:bg-green-900/30 text-green-600' : 'bg-gray-200 dark:bg-white/10 text-gray-600 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-white/15'}`}
                                 >
                                     {codeCopied
                                         ? <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7"/></svg>
@@ -1080,7 +1080,7 @@ const HomeView = ({ t, lang, userInfo, onNav, history = [] }) => {
                                 </div>
                                 <button
                                     onClick={() => { navigator.clipboard.writeText(createdRoom.password); setPasswordCopied(true); setTimeout(() => setPasswordCopied(false), 2000); }}
-                                    className={`shrink-0 w-10 h-10 rounded-xl flex items-center justify-center transition-all ${passwordCopied ? 'bg-green-100 dark:bg-green-900/30 text-green-600' : 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 hover:bg-purple-200 dark:hover:bg-purple-900/50'}`}
+                                    className={`shrink-0 w-10 h-10 rounded-xl flex items-center justify-center transition-colors transition-transform ${passwordCopied ? 'bg-green-100 dark:bg-green-900/30 text-green-600' : 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 hover:bg-purple-200 dark:hover:bg-purple-900/50'}`}
                                 >
                                     {passwordCopied
                                         ? <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7"/></svg>
@@ -1100,7 +1100,7 @@ const HomeView = ({ t, lang, userInfo, onNav, history = [] }) => {
                                     navigator.clipboard.writeText(text);
                                     toast.success(lang === 'uz' ? 'Nusxalandi!' : lang === 'ru' ? 'Скопировано!' : 'Copied!');
                                 }}
-                                className="w-full py-2.5 text-xs font-bold text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 border border-dashed border-gray-300 dark:border-white/12 rounded-xl hover:border-gray-400 dark:hover:border-white/25 transition-all"
+                                className="w-full py-2.5 text-xs font-bold text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 border border-dashed border-gray-300 dark:border-white/12 rounded-xl hover:border-gray-400 dark:hover:border-white/25 transition-colors transition-transform"
                             >
                                 {lang === 'uz' ? '📋 Ikkalasini nusxalash' : lang === 'ru' ? '📋 Скопировать оба' : '📋 Copy both'}
                             </button>
@@ -1113,7 +1113,7 @@ const HomeView = ({ t, lang, userInfo, onNav, history = [] }) => {
                                 {lang === 'uz' ? 'Yopish' : lang === 'ru' ? 'Закрыть' : 'Close'}
                             </button>
                             <button onClick={() => { resetNewMeeting(); navigate(`/room/${createdRoom.code}`); }}
-                                className="flex-1 py-3 text-sm font-black text-white bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 rounded-2xl shadow-lg shadow-purple-500/30 transition-all active:scale-95">
+                                className="flex-1 py-3 text-sm font-black text-white bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 rounded-2xl shadow-lg shadow-purple-500/30 transition-colors transition-transform active:scale-95">
                                 {lang === 'uz' ? 'Boshlash →' : lang === 'ru' ? 'Начать →' : 'Start →'}
                             </button>
                         </div>
@@ -1164,7 +1164,7 @@ const HomeView = ({ t, lang, userInfo, onNav, history = [] }) => {
                                             <p className="text-xs text-gray-400 mt-0.5 font-mono">{m.meetingCode}</p>
                                         </div>
                                         <span className="shrink-0 text-xs text-gray-400 font-medium">{timeStr}</span>
-                                        <svg className="w-4 h-4 text-gray-300 group-hover:text-blue-500 group-hover:translate-x-0.5 transition-all shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7"/></svg>
+                                        <svg className="w-4 h-4 text-gray-300 group-hover:text-blue-500 group-hover:translate-x-0.5 transition-colors transition-transform shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7"/></svg>
                                     </div>
                                 );
                             })}
@@ -1197,7 +1197,7 @@ const HomeView = ({ t, lang, userInfo, onNav, history = [] }) => {
                             <p className="text-white/70 text-sm mb-5 leading-relaxed">
                                 {lang === 'uz' ? 'Cheksiz vaqt va yuqori sifat.' : lang === 'ru' ? 'Неограниченное время и высокое качество.' : 'Unlimited meetings & HD video.'}
                             </p>
-                            <button className="w-full py-2.5 bg-white text-violet-700 rounded-xl font-bold text-sm hover:bg-gray-50 transition-all active:scale-95">
+                            <button className="w-full py-2.5 bg-white text-violet-700 rounded-xl font-bold text-sm hover:bg-gray-50 transition-colors transition-transform active:scale-95">
                                 {lang === 'uz' ? 'Batafsil' : lang === 'ru' ? 'Подробнее' : 'Learn More'}
                             </button>
                         </div>
@@ -1372,13 +1372,13 @@ const ProfileView = ({ t, lang, userInfo: authInfo }) => {
                                     {lang === 'uz' ? 'Ism' : lang === 'ru' ? 'Имя' : 'Name'}
                                 </label>
                                 <input type="text" value={editForm.name} onChange={(e) => setEditForm({...editForm, name: e.target.value})}
-                                    className="w-full px-4 py-3 border border-gray-200 dark:border-white/8 rounded-xl bg-gray-50 dark:bg-[#161B22]/70 text-gray-900 dark:text-white text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all" required />
+                                    className="w-full px-4 py-3 border border-gray-200 dark:border-white/8 rounded-xl bg-gray-50 dark:bg-[#161B22]/70 text-gray-900 dark:text-white text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-colors transition-transform" required />
                             </div>
                             <div>
                                 <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Bio</label>
                                 <textarea value={editForm.bio} onChange={(e) => setEditForm({...editForm, bio: e.target.value})} rows="3"
                                     placeholder={lang === 'uz' ? 'O\'zingiz haqingizda yozing...' : lang === 'ru' ? 'Напишите о себе...' : 'Write something about yourself...'}
-                                    className="w-full px-4 py-3 border border-gray-200 dark:border-white/8 rounded-xl bg-gray-50 dark:bg-[#161B22]/70 text-gray-900 dark:text-white text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all resize-none" />
+                                    className="w-full px-4 py-3 border border-gray-200 dark:border-white/8 rounded-xl bg-gray-50 dark:bg-[#161B22]/70 text-gray-900 dark:text-white text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-colors transition-transform resize-none" />
                             </div>
                             <div>
                                 <div className="flex justify-between items-center mb-2">
@@ -1396,9 +1396,9 @@ const ProfileView = ({ t, lang, userInfo: authInfo }) => {
                                         <div key={idx} className="flex gap-2 items-center p-3 bg-gray-50 dark:bg-[#161B22]/70 rounded-xl border border-gray-100 dark:border-white/8">
                                             <div className="flex-1 flex gap-2">
                                                 <input type="text" placeholder="GitHub" value={link.title} onChange={(e) => updateLink(idx, 'title', e.target.value)}
-                                                    className="w-24 shrink-0 px-2.5 py-1.5 text-xs border border-gray-200 dark:border-white/8 rounded-lg bg-white dark:bg-white/10 text-gray-900 dark:text-white focus:outline-none focus:border-blue-500 transition-all" />
+                                                    className="w-24 shrink-0 px-2.5 py-1.5 text-xs border border-gray-200 dark:border-white/8 rounded-lg bg-white dark:bg-white/10 text-gray-900 dark:text-white focus:outline-none focus:border-blue-500 transition-colors transition-transform" />
                                                 <input type="url" placeholder="https://..." value={link.url} onChange={(e) => updateLink(idx, 'url', e.target.value)}
-                                                    className="flex-1 min-w-0 px-2.5 py-1.5 text-xs border border-gray-200 dark:border-white/8 rounded-lg bg-white dark:bg-white/10 text-gray-900 dark:text-white focus:outline-none focus:border-blue-500 transition-all" />
+                                                    className="flex-1 min-w-0 px-2.5 py-1.5 text-xs border border-gray-200 dark:border-white/8 rounded-lg bg-white dark:bg-white/10 text-gray-900 dark:text-white focus:outline-none focus:border-blue-500 transition-colors transition-transform" />
                                             </div>
                                             <button type="button" onClick={() => removeLink(idx)} className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors shrink-0">
                                                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
@@ -1500,7 +1500,7 @@ const ProfileView = ({ t, lang, userInfo: authInfo }) => {
                         {pinnedMeetings.length > 0 ? (
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 {pinnedMeetings.map((room, i) => (
-                                    <div key={i} className="p-4 border border-gray-200 dark:border-white/8 rounded-xl hover:shadow-md dark:hover:border-white/20 bg-white dark:bg-[#161B22] transition-all flex flex-col h-32 justify-between group">
+                                    <div key={i} className="p-4 border border-gray-200 dark:border-white/8 rounded-xl hover:shadow-md dark:hover:border-white/20 bg-white dark:bg-[#161B22] transition-colors transition-transform flex flex-col h-32 justify-between group">
                                         <div>
                                             <div className="flex items-center justify-between mb-1">
                                                 <h3 onClick={() => navigate(`/room/${room.meetingCode}`)} className="text-sm font-bold text-blue-600 dark:text-blue-400 group-hover:underline cursor-pointer flex items-center gap-2 truncate">
@@ -1913,7 +1913,7 @@ const Dashboard = () => {
                     <nav className="hidden md:flex items-center gap-0.5">
                         {navLinks.map(link => (
                             <button key={link.id} onClick={() => setView(link.id)}
-                                className={`px-3.5 py-1.5 text-[13px] font-semibold rounded-lg transition-all duration-200 ${
+                                className={`px-3.5 py-1.5 text-[13px] font-semibold rounded-lg transition-colors transition-transform duration-200 ${
                                     view === link.id
                                         ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30'
                                         : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/6/60'
@@ -1928,7 +1928,7 @@ const Dashboard = () => {
                 <div className="flex items-center gap-1.5 sm:gap-2">
                     {/* Quick Join button */}
                     {userInfo && (
-                        <button onClick={() => setView('join')} className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${view === 'join' ? 'bg-blue-600 text-white shadow-md shadow-blue-600/25' : 'bg-blue-50 dark:bg-blue-900/25 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/40 border border-blue-200/60 dark:border-blue-800/50'}`}>
+                        <button onClick={() => setView('join')} className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg transition-colors transition-transform ${view === 'join' ? 'bg-blue-600 text-white shadow-md shadow-blue-600/25' : 'bg-blue-50 dark:bg-blue-900/25 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/40 border border-blue-200/60 dark:border-blue-800/50'}`}>
                             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 4v16m8-8H4" /></svg>
                             <span className="hidden sm:inline">{t('join_meeting')}</span>
                         </button>
@@ -1990,7 +1990,7 @@ const Dashboard = () => {
                             <Link to="/login" className="px-3.5 py-1.5 text-xs font-semibold text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-white/6 rounded-lg transition-colors">
                                 {lang === 'uz' ? 'Kirish' : lang === 'ru' ? 'Войти' : 'Log in'}
                             </Link>
-                            <Link to="/register" className="px-3.5 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-all shadow-sm">
+                            <Link to="/register" className="px-3.5 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors transition-transform shadow-sm">
                                 {lang === 'uz' ? "Ro'yxatdan o'tish" : lang === 'ru' ? 'Регистрация' : 'Register'}
                             </Link>
                         </div>

@@ -46,7 +46,7 @@ const LanguageToggle = ({ compact = false }) => {
                 onClick={() => setIsOpen(!isOpen)}
                 aria-haspopup="listbox"
                 aria-expanded={isOpen}
-                className={`flex items-center gap-2 rounded-xl transition-all duration-200 active:scale-[0.97]
+                className={`flex items-center gap-2 rounded-xl transition-colors transition-transform duration-200 active:scale-[0.97]
                     ${compact ? 'h-9 px-2.5' : 'px-4 py-2'}
                     ${isDark
                         ? 'bg-white/5 hover:bg-white/10 text-gray-200 border border-white/10'

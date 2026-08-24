@@ -83,7 +83,7 @@ const RoomPasswordModal = ({ roomID, joinStartedRef, initMediaRef, onSuccess }) 
                             autoComplete="current-password"
                             inputMode="numeric"
                             maxLength={6}
-                            className={`w-full px-4 py-3.5 pr-12 rounded-xl border text-base font-mono tracking-widest bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 transition-all
+                            className={`w-full px-4 py-3.5 pr-12 rounded-xl border text-base font-mono tracking-widest bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 transition-colors transition-transform
                                 ${error ? 'border-red-400 focus:ring-red-400/30' : 'border-gray-200 dark:border-gray-700 focus:ring-purple-500/30 focus:border-purple-500'}`}
                         />
                         <button type="button" onClick={() => setShowText(v => !v)}
@@ -103,7 +103,7 @@ const RoomPasswordModal = ({ roomID, joinStartedRef, initMediaRef, onSuccess }) 
                     )}
 
                     <button type="submit" disabled={!input.trim() || loading}
-                        className="w-full py-3.5 bg-purple-600 hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold rounded-xl transition-all flex items-center justify-center gap-2">
+                        className="w-full py-3.5 bg-purple-600 hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold rounded-xl transition-colors transition-transform flex items-center justify-center gap-2">
                         {loading
                             ? <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                                 {uz ? 'Tekshirilmoqda...' : ru ? 'Проверка...' : 'Checking...'}</>

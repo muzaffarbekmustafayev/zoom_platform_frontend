@@ -70,7 +70,7 @@ const RoomParticipantsSidebar = ({
                     placeholder={t('find_participant')}
                     value={searchQuery}
                     onChange={e => setSearchQuery(e.target.value)}
-                    className={`w-full rounded-xl py-2.5 pl-9 pr-3 text-[11px] font-bold focus:outline-none focus:border-blue-500/40 focus:ring-1 focus:ring-blue-500/20 transition-all
+                    className={`w-full rounded-xl py-2.5 pl-9 pr-3 text-[11px] font-bold focus:outline-none focus:border-blue-500/40 focus:ring-1 focus:ring-blue-500/20 transition-colors transition-transform
                         ${isDark ? 'bg-white/5 border border-white/10 text-white placeholder:text-gray-600' : 'bg-gray-50 border border-gray-200 text-gray-900 placeholder:text-gray-400'}`}
                 />
             </div>
@@ -81,14 +81,14 @@ const RoomParticipantsSidebar = ({
                     const isMe = String(user.userId) === String(userInfo._id);
                     const isSpotlit = user.userId === currentTurnUserId;
                     return (
-                        <div key={idx} className={`group flex items-center gap-3 px-3 py-2.5 rounded-2xl border transition-all duration-200 cursor-default
+                        <div key={idx} className={`group flex items-center gap-3 px-3 py-2.5 rounded-2xl border transition-colors transition-transform duration-200 cursor-default
                             ${isSpotlit ? 'bg-blue-500/10 border-blue-500/25'
                             : isDark ? 'bg-white/4 border-white/5 hover:bg-white/8 hover:border-white/10'
                             : 'bg-gray-50 border-gray-200 hover:bg-gray-100'}`}>
 
                             {/* Avatar + presence/mic indikator */}
                             <div className="relative shrink-0">
-                                <div className={`w-9 h-9 rounded-xl bg-gradient-to-br ${getGrad(user.userName)} flex items-center justify-center text-[11px] font-black text-white shadow-md select-none ring-2 transition-all duration-200 ${isSpotlit ? 'ring-blue-400/70' : 'ring-transparent'}`}>
+                                <div className={`w-9 h-9 rounded-xl bg-gradient-to-br ${getGrad(user.userName)} flex items-center justify-center text-[11px] font-black text-white shadow-md select-none ring-2 transition-colors transition-transform duration-200 ${isSpotlit ? 'ring-blue-400/70' : 'ring-transparent'}`}>
                                     {getInitials(user.userName)}
                                 </div>
                                 {user.micStatus && (
@@ -122,24 +122,24 @@ const RoomParticipantsSidebar = ({
                                 {canModerate && !isMe && (
                                     <div className="flex items-center gap-0.5 ml-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-150">
                                         <button onClick={() => giveTurn(user.userId)} title={isSpotlit ? 'Remove Spotlight' : 'Spotlight'}
-                                            className={`p-1.5 rounded-lg transition-all ${isSpotlit ? 'bg-blue-500/20 text-blue-400' : 'hover:bg-white/10 text-gray-500 hover:text-white'}`}>
+                                            className={`p-1.5 rounded-lg transition-colors transition-transform ${isSpotlit ? 'bg-blue-500/20 text-blue-400' : 'hover:bg-white/10 text-gray-500 hover:text-white'}`}>
                                             <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M5 3l14 9-14 9V3z" strokeWidth="2.5" strokeLinejoin="round" /></svg>
                                         </button>
                                         {isHost && (
                                             user.role === 'cohost'
                                                 ? <button onClick={() => demoteCoHost(user.userId, user.socketId)} title="Demote"
-                                                    className="p-1.5 hover:bg-white/10 rounded-lg text-gray-500 hover:text-blue-400 transition-all">
+                                                    className="p-1.5 hover:bg-white/10 rounded-lg text-gray-500 hover:text-blue-400 transition-colors transition-transform">
                                                     <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 12H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" strokeWidth="2" /></svg></button>
                                                 : user.role === 'participant' && <button onClick={() => promoteCoHost(user.userId, user.socketId)} title="Promote Co-host"
-                                                    className="p-1.5 hover:bg-white/10 rounded-lg text-gray-500 hover:text-emerald-400 transition-all">
+                                                    className="p-1.5 hover:bg-white/10 rounded-lg text-gray-500 hover:text-emerald-400 transition-colors transition-transform">
                                                     <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" strokeWidth="2" /></svg></button>
                                         )}
                                         <button onClick={() => kickUser(user.socketId)} title="Kick"
-                                            className="p-1.5 hover:bg-amber-500/10 rounded-lg text-gray-500 hover:text-amber-400 transition-all">
+                                            className="p-1.5 hover:bg-amber-500/10 rounded-lg text-gray-500 hover:text-amber-400 transition-colors transition-transform">
                                             <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
                                         </button>
                                         <button onClick={() => blockUser(user.userId, user.socketId)} title="Block"
-                                            className="p-1.5 hover:bg-red-500/10 rounded-lg text-gray-500 hover:text-red-400 transition-all">
+                                            className="p-1.5 hover:bg-red-500/10 rounded-lg text-gray-500 hover:text-red-400 transition-colors transition-transform">
                                             <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" strokeWidth="2" /></svg>
                                         </button>
                                     </div>

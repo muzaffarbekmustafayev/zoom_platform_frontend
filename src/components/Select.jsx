@@ -122,7 +122,7 @@ const Select = ({
                 onKeyDown={handleKeyDown}
                 aria-haspopup="listbox"
                 aria-expanded={open}
-                className={`w-full flex items-center justify-between gap-2 rounded-xl border transition-all duration-150 font-medium text-left
+                className={`w-full flex items-center justify-between gap-2 rounded-xl border transition-colors transition-transform duration-150 font-medium text-left
                     bg-white dark:bg-[#1e2430]
                     border-gray-200 dark:border-white/10
                     text-gray-800 dark:text-gray-100
@@ -149,7 +149,7 @@ const Select = ({
                     bg-white dark:bg-[#1e2430]
                     border border-gray-200 dark:border-white/10
                     rounded-2xl shadow-2xl shadow-black/10 dark:shadow-black/40
-                    overflow-hidden transition-all duration-200 origin-top
+                    overflow-hidden transition-colors transition-transform duration-200 origin-top
                     ${open ? 'opacity-100 scale-100 translate-y-0 pointer-events-auto' : 'opacity-0 scale-95 -translate-y-1 pointer-events-none'}
                     ${dropdownClass}`}
                 role="listbox"

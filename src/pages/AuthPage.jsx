@@ -436,7 +436,7 @@ const AuthPage = () => {
 
     // Input field style — consistent light + dark
     const inp = [
-        'w-full rounded-xl px-4 py-2.5 text-sm transition-all',
+        'w-full rounded-xl px-4 py-2.5 text-sm transition-colors transition-transform',
         'bg-gray-50 dark:bg-[#0d1117]',
         'border border-gray-200 dark:border-white/8',
         'text-gray-900 dark:text-white',
@@ -698,7 +698,7 @@ const AuthPage = () => {
 
                         {/* Submit */}
                         <button type="submit" disabled={loading}
-                            className="w-full py-3 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-sm font-bold rounded-xl shadow-md shadow-blue-600/25 hover:shadow-blue-600/35 disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-150 flex items-center justify-center gap-2">
+                            className="w-full py-3 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-sm font-bold rounded-xl shadow-md shadow-blue-600/25 hover:shadow-blue-600/35 disabled:opacity-60 disabled:cursor-not-allowed transition-colors transition-transform duration-150 flex items-center justify-center gap-2">
                             {loading ? <><Spinner size={15} />{isLogin ? l.signIn : l.signUp}...</> : (isLogin ? l.signIn : l.signUp)}
                         </button>
 

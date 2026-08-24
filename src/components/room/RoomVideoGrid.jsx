@@ -63,7 +63,7 @@ const RoomVideoGrid = ({
                     {/* Back to presentation button */}
                     {activeSharingUser && !showScreen && (
                         <button onClick={() => setPinnedSocketId(null)}
-                            className="absolute top-2 right-2 sm:top-3 sm:right-3 z-30 flex items-center gap-1.5 px-2.5 py-1.5 sm:px-3 rounded-lg bg-blue-600 hover:bg-blue-500 active:scale-95 text-white text-[10px] sm:text-xs font-bold transition-all shadow-lg border border-blue-400/30">
+                            className="absolute top-2 right-2 sm:top-3 sm:right-3 z-30 flex items-center gap-1.5 px-2.5 py-1.5 sm:px-3 rounded-lg bg-blue-600 hover:bg-blue-500 active:scale-95 text-white text-[10px] sm:text-xs font-bold transition-colors transition-transform shadow-lg border border-blue-400/30">
                             <MonitorUp size={11} />
                             <span className="hidden xs:inline">{lang === 'uz' ? 'Demonstratsiyaga qaytish' : lang === 'ru' ? 'Вернуться к демонстрации' : 'Back to screen'}</span>
                         </button>
@@ -81,7 +81,7 @@ const RoomVideoGrid = ({
                             </div>
                             {activeSharingUser.socketId === socketRef.current?.id && (
                                 <button onClick={stopScreenShare}
-                                    className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-500 active:scale-95 text-white text-[10px] sm:text-xs font-bold transition-all shadow-lg border border-red-400/30">
+                                    className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-500 active:scale-95 text-white text-[10px] sm:text-xs font-bold transition-colors transition-transform shadow-lg border border-red-400/30">
                                     <MonitorOff size={11} />
                                     <span className="hidden xs:inline">Stop</span>
                                 </button>
@@ -111,7 +111,7 @@ const RoomVideoGrid = ({
                     {/* Local tile */}
                     {(showScreen || effectiveStageUser.socketId !== socketRef.current?.id) && (
                         <div onClick={() => setPinnedSocketId(pinnedSocketId === socketRef.current?.id ? null : socketRef.current?.id)}
-                            className={`relative shrink-0 snap-center rounded-xl overflow-hidden cursor-pointer transition-all duration-200 bg-[#0e1016]
+                            className={`relative shrink-0 snap-center rounded-xl overflow-hidden cursor-pointer transition-colors transition-transform duration-200 bg-[#0e1016]
                             ${activeSpeakers.has('__local__') ? 'ring-2 ring-emerald-400/70' : 'ring-1 ring-white/10 hover:ring-blue-400/50'}`}
                             style={isSidebar ? { width: '100%', minWidth: '96px', aspectRatio: '16/9' } : { width: '96px', aspectRatio: '16/9' }}>
                             <Video stream={stream} userName="You" role={myRole} isLocal isSpeaking={activeSpeakers.has('__local__')} userVideoStatus={!isVideoOff} />
@@ -130,7 +130,7 @@ const RoomVideoGrid = ({
                         const spk = activeSpeakers.has(peerObj.peerID);
                         return (
                             <div key={idx} onClick={() => setPinnedSocketId(pinnedSocketId === peerObj.peerID ? null : peerObj.peerID)}
-                                className={`relative shrink-0 snap-center rounded-xl overflow-hidden cursor-pointer transition-all duration-200 bg-[#0e1016]
+                                className={`relative shrink-0 snap-center rounded-xl overflow-hidden cursor-pointer transition-colors transition-transform duration-200 bg-[#0e1016]
                                     ${spk ? 'ring-2 ring-emerald-400/70' : pinnedSocketId === peerObj.peerID ? 'ring-2 ring-blue-500/70' : 'ring-1 ring-white/10 hover:ring-blue-400/50'}`}
                                 style={isSidebar ? { width: '100%', minWidth: '96px', aspectRatio: '16/9' } : { width: '96px', aspectRatio: '16/9' }}>
                                 <Video stream={remoteStreams[peerObj.peerID]} userName={user?.userName || 'Participant'}
@@ -171,7 +171,7 @@ const RoomVideoGrid = ({
                 animate-in fade-in zoom-in-95 duration-400`}>
 
                 {/* Local tile */}
-                <div className={`relative min-h-[120px] xs:min-h-[150px] sm:min-h-0 rounded-2xl overflow-hidden transition-all duration-300 group bg-black/40 backdrop-blur-sm
+                <div className={`relative min-h-[120px] xs:min-h-[150px] sm:min-h-0 rounded-2xl overflow-hidden transition-colors transition-transform duration-300 group bg-black/40 backdrop-blur-sm
                     ${activeSpeakers.has('__local__') ? 'speaker-glow ring-1 ring-blue-500/50'
                     : isHost ? 'ring-1 ring-blue-500/30 shadow-[0_4px_24px_rgba(0,0,0,0.15)]'
                     : isCoHost ? 'ring-1 ring-emerald-500/30 shadow-[0_4px_24px_rgba(0,0,0,0.15)]'
@@ -206,7 +206,7 @@ const RoomVideoGrid = ({
                     const spk = activeSpeakers.has(peerObj.peerID);
                     return (
                         <div key={peerObj.peerID || idx}
-                            className={`relative min-h-[120px] xs:min-h-[150px] sm:min-h-0 rounded-2xl overflow-hidden transition-all duration-300 group animate-in fade-in zoom-in-95 duration-400 bg-black/40 backdrop-blur-sm
+                            className={`relative min-h-[120px] xs:min-h-[150px] sm:min-h-0 rounded-2xl overflow-hidden transition-colors transition-transform duration-300 group animate-in fade-in zoom-in-95 duration-400 bg-black/40 backdrop-blur-sm
                                 ${spk ? 'speaker-glow ring-1 ring-blue-500/50'
                                 : isUserHost ? 'ring-1 ring-blue-500/30 shadow-[0_4px_24px_rgba(0,0,0,0.15)]'
                                 : isUserCoHost ? 'ring-1 ring-emerald-500/30 shadow-[0_4px_24px_rgba(0,0,0,0.15)]'

@@ -13,7 +13,7 @@ const ThemeToggle = ({ compact = false }) => {
                 onClick={toggleTheme}
                 title={isDark ? 'Light modega o\'tish' : 'Dark modega o\'tish'}
                 aria-label="Toggle theme"
-                className={`group relative flex items-center justify-center w-9 h-9 rounded-xl border overflow-hidden transition-all duration-200 active:scale-90
+                className={`group relative flex items-center justify-center w-9 h-9 rounded-xl border overflow-hidden transition-colors transition-transform duration-200 active:scale-90
                     ${isDark
                         ? 'bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20'
                         : 'bg-gray-100 border-gray-200 hover:bg-gray-200 hover:border-gray-300'}`}
@@ -21,8 +21,8 @@ const ThemeToggle = ({ compact = false }) => {
                 {/* Aksent nur — hoverda yoritadi */}
                 <span className={`absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300
                     ${isDark ? 'bg-blue-500/10' : 'bg-amber-400/10'}`} />
-                <Sun  size={15} className={`absolute text-amber-500 transition-all duration-300 ${isDark ? 'opacity-0 -rotate-90 scale-50' : 'opacity-100 rotate-0 scale-100'}`} />
-                <Moon size={15} className={`absolute text-blue-300 transition-all duration-300 ${isDark ? 'opacity-100 rotate-0 scale-100' : 'opacity-0 rotate-90 scale-50'}`} />
+                <Sun  size={15} className={`absolute text-amber-500 transition-colors transition-transform duration-300 ${isDark ? 'opacity-0 -rotate-90 scale-50' : 'opacity-100 rotate-0 scale-100'}`} />
+                <Moon size={15} className={`absolute text-blue-300 transition-colors transition-transform duration-300 ${isDark ? 'opacity-100 rotate-0 scale-100' : 'opacity-0 rotate-90 scale-50'}`} />
             </button>
         );
     }

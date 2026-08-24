@@ -51,9 +51,9 @@ const ICE_CONFIG = {
 const tuneSdp = (sdp) => {
     // Opus audio: FEC, stereo, yuqori sifat
     let s = sdp.replace(/(a=fmtp:\d+ minptime=10;useinbandfec=1)/g,
-        '$1;usedtx=1;maxaveragebitrate=256000;stereo=1;cbr=0');
+        '$1;usedtx=1;maxaveragebitrate=64000;stereo=0;cbr=0');
     // Video bitrate: AS + TIAS qo'llab-quvvatlanadi (TIAS aniqroq)
-    s = s.replace(/(m=video.*?\r\n)/g, '$1b=AS:8000\r\n');
+    s = s.replace(/(m=video.*?\r\n)/g, '$1b=AS:1500\r\n');
     // VP9 va H264 birinchi bo'lsin — sifatli kodeklar
     const vp9Prefer = (block) => {
         const payloads = [...block.matchAll(/a=rtpmap:(\d+) VP9\//g)].map(m => m[1]);
@@ -213,6 +213,7 @@ const RoomPage = () => {
     const isSharingScreenRef  = useRef(false);
     const activeSharingRef    = useRef(null);   // { socketId, streamId } — ekran oqimini kameradan ajratish uchun
     const streamsByPeerRef    = useRef({});     // peerID → Map<streamId, MediaStream>
+    const pendingSignalsRef   = useRef({});     // peerID -> [signals] (stream kutilayotganda)
     const holdToTalkRef       = useRef(false);
     const viewMenuRef         = useRef(null);
     const messagesEndRef      = useRef(null);
@@ -585,6 +586,12 @@ const RoomPage = () => {
             peersRef.current = peersRef.current.filter(p => p.peerID !== id);
             setPeers(peersRef.current);
             delete streamsByPeerRef.current[id];
+            delete pendingSignalsRef.current[id];
+            setRemoteStreams(prev => {
+                const next = { ...prev };
+                delete next[id];
+                return next;
+            });
             if (activeSharingRef.current?.socketId === id) {
                 activeSharingRef.current = null;
                 setActiveSharingUser(null);
@@ -694,22 +701,37 @@ const RoomPage = () => {
                         connectToPeers(streamRef.current);
                     }
                 }, 200);
-                // 10 soniyadan ko'p kutmaymiz
-                setTimeout(() => clearInterval(waitForStream), 10000);
+                // 1 daqiqagacha ruxsat kutamiz
+                setTimeout(() => clearInterval(waitForStream), 60000);
             }
         });
         socket.io.on('reconnect', () => socket.emit('reconnect-room', roomID, userInfo._id, userInfo.name));
         socket.on('user-joined', payload => {
-            // trickle rejimida bitta peer'dan bir nechta signal keladi —
-            // mavjud peer'ga forward qilamiz, tashlab yubormaymiz (aks holda ICE kandidatlar yo'qoladi)
             const existing = peersRef.current.find(p => p.peerID === payload.callerID);
             if (existing) { try { existing.peer.signal(payload.signal); } catch (_) {} return; }
 
+            // Agar oqim kutilayotgan bo'lsa, bu yangi signallarni buferga yig'amiz
+            if (pendingSignalsRef.current[payload.callerID]) {
+                pendingSignalsRef.current[payload.callerID].push(payload.signal);
+                return;
+            }
+            pendingSignalsRef.current[payload.callerID] = [payload.signal];
+
             const connectPeer = (currentStream) => {
-                const peer = addPeer(payload.signal, payload.callerID, currentStream, socket);
+                const signals = pendingSignalsRef.current[payload.callerID];
+                if (!signals || signals.length === 0) return;
+
+                const offerSignal = signals[0];
+                const peer = addPeer(offerSignal, payload.callerID, currentStream, socket);
                 const obj = { peerID: payload.callerID, userId: payload.callerUserId, peer };
                 peersRef.current.push(obj);
                 setPeers(prev => [...prev, obj]);
+
+                // Keyin kelgan ICE kandidatlarni jo'natamiz
+                for (let i = 1; i < signals.length; i++) {
+                    try { peer.signal(signals[i]); } catch (_) {}
+                }
+                delete pendingSignalsRef.current[payload.callerID];
             };
 
             if (streamRef.current) {
@@ -721,7 +743,10 @@ const RoomPage = () => {
                         connectPeer(streamRef.current);
                     }
                 }, 200);
-                setTimeout(() => clearInterval(waitForStream), 10000);
+                setTimeout(() => {
+                    clearInterval(waitForStream);
+                    delete pendingSignalsRef.current[payload.callerID];
+                }, 60000);
             }
         });
         socket.on('receiving-returned-signal', payload => {
@@ -734,16 +759,16 @@ const RoomPage = () => {
             try {
                 const cur = await navigator.mediaDevices.getUserMedia({
                     video: {
-                        width: { ideal: 1280, max: 1920 },
-                        height: { ideal: 720, max: 1080 },
-                        frameRate: { ideal: 30, max: 60 },
+                        width: { ideal: 640, max: 1280 },
+                        height: { ideal: 360, max: 720 },
+                        frameRate: { ideal: 24, max: 30 },
                         facingMode: 'user',
                     },
                     audio: {
                         echoCancellation: true,
                         noiseSuppression: true,
                         autoGainControl: true,
-                        channelCount: 2,
+                        channelCount: 1,
                         sampleRate: 48000,
                         sampleSize: 16,
                         latency: 0,  // minimal kechikish
@@ -1230,7 +1255,7 @@ const RoomPage = () => {
                     {/* Translate subtitle overlay */}
                     {translate.isTranslating && translate.showSubtitles && translate.subtitleText && (
                         <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-30 max-w-[85%] sm:max-w-[70%] pointer-events-none">
-                            <div className={`px-5 py-3 rounded-2xl backdrop-blur-xl shadow-2xl border transition-all animate-in fade-in slide-in-from-bottom-2 duration-300
+                            <div className={`px-5 py-3 rounded-2xl backdrop-blur-xl shadow-2xl border transition-colors transition-transform animate-in fade-in slide-in-from-bottom-2 duration-300
                                 ${isDark
                                     ? 'bg-black/70 border-white/10 text-white'
                                     : 'bg-white/85 border-gray-200/50 text-gray-900'

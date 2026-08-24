@@ -9,13 +9,13 @@ const ConfirmModal = ({ open, message, onConfirm, onCancel, confirmText = 'OK', 
                 <div className="flex justify-end gap-3">
                     <button
                         onClick={onCancel}
-                        className="px-5 py-2.5 rounded-xl text-sm font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all"
+                        className="px-5 py-2.5 rounded-xl text-sm font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors transition-transform"
                     >
                         {cancelText}
                     </button>
                     <button
                         onClick={onConfirm}
-                        className={`px-5 py-2.5 rounded-xl text-sm font-bold text-white transition-all ${danger ? 'bg-red-500 hover:bg-red-600' : 'bg-blue-600 hover:bg-blue-700'}`}
+                        className={`px-5 py-2.5 rounded-xl text-sm font-bold text-white transition-colors transition-transform ${danger ? 'bg-red-500 hover:bg-red-600' : 'bg-blue-600 hover:bg-blue-700'}`}
                     >
                         {confirmText}
                     </button>
