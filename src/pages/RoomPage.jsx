@@ -1310,8 +1310,11 @@ const RoomPage = () => {
                 )}
 
                 {(showChat || showParticipants) && (
-                    <aside className={`absolute inset-y-0 right-0 w-full xs:w-[320px] z-50 tablet:static tablet:w-[300px] lg:w-[360px] shrink-0 h-full flex flex-col shadow-[-10px_0_40px_rgba(0,0,0,0.3)] animate-in slide-in-from-right-full duration-250 ease-out
-                        ${isDark ? 'glass bg-[#0f111a]/80 border-l border-white/10' : 'glass bg-white/90 border-l border-white/50'}`}>
+                    <aside className={`absolute z-50 right-0 top-0 bottom-0 tablet:static flex flex-col shrink-0 animate-in slide-in-from-right-full duration-300 ease-out
+                        w-full xs:w-[320px] tablet:w-[300px] lg:w-[360px] 
+                        xs:right-3 xs:top-3 xs:bottom-3 xs:h-auto tablet:m-3
+                        xs:rounded-3xl border shadow-2xl overflow-hidden
+                        ${isDark ? 'bg-[#0f111a]/75 backdrop-blur-2xl border-white/10' : 'bg-white/85 backdrop-blur-2xl border-white/60'}`}>
 
                         {showParticipants && (
                             <>
