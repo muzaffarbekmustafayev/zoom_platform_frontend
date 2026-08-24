@@ -43,7 +43,10 @@ const Video = ({ stream, userName, role, hasTurn, isStage, isLocal, isScreen = f
 
     useEffect(() => {
         if (!stream) { setVideoEnabled(false); setAudioEnabled(false); return; }
-        if (ref.current) ref.current.srcObject = stream;
+        if (ref.current) {
+            ref.current.srcObject = stream;
+            ref.current.play().catch(() => {});
+        }
         syncTrackState();
 
         const allTracks = stream.getTracks();
@@ -59,8 +62,11 @@ const Video = ({ stream, userName, role, hasTurn, isStage, isLocal, isScreen = f
 
         const onAddTrack = () => {
             syncTrackState();
-            if (ref.current) ref.current.srcObject = null;
-            if (ref.current) ref.current.srcObject = stream;
+            if (ref.current) {
+                ref.current.srcObject = null;
+                ref.current.srcObject = stream;
+                ref.current.play().catch(() => {});
+            }
         };
         const onRemoveTrack = () => syncTrackState();
         stream.addEventListener('addtrack', onAddTrack);
