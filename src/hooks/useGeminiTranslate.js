@@ -98,20 +98,26 @@ export default function useGeminiTranslate() {
     // ── System instruction yaratish ──
     const buildSystemInstruction = useCallback((lang) => {
         const fullName = langFullName[lang] || lang;
-        return `You are a real-time speech-to-speech interpreter.
-Your task:
-1. Listen to the incoming continuous speech. The source language will mostly be Uzbek, Russian, or English, but could be other languages.
-2. Instantly translate it into natural, fluent ${fullName}.
-3. Output the translated response ONLY as synthesized ${fullName} speech.
-4. Do not add any greetings, confirmations, or conversational filler of your own. Translate directly what is being said.
-5. If the speaker pauses, wait silently until they continue. Do not hallucinate translations from background noise.
-6. Maintain the tone and style of the original speech as closely as possible.`;
+        return `You are a professional real-time interpreter.
+Your ONLY task is to immediately translate incoming speech into ${fullName}.
+Follow these strict rules:
+1. Translate the spoken audio into fluent, natural ${fullName}.
+2. Output ONLY the translated audio and text. Do not add any conversational filler, greetings, or explanations.
+3. If the audio is silent or contains only background noise, you MUST remain completely silent and DO NOT hallucinate words.
+4. Maintain the tone and urgency of the original speaker.
+5. Translate fragment by fragment as immediately as possible.`;
     }, []);
 
     // ── Audio playback (chiqish) ──
     const schedulePlayback = useCallback(() => {
         const ctx = playbackCtxRef.current;
         if (!ctx || ctx.state === 'closed') return;
+
+        // Xavfsizlik: agar vaqt juda orqada qolgan bo'lsa (masalan 1 sekund),
+        // audio navbatini tozalab tashlaymiz yoki nextPlayTime ni to'g'rilaymiz
+        if (nextPlayTimeRef.current < ctx.currentTime - 0.5) {
+            nextPlayTimeRef.current = ctx.currentTime;
+        }
 
         while (playbackQueueRef.current.length > 0) {
             const pcmData = playbackQueueRef.current.shift();
@@ -122,9 +128,9 @@ Your task:
             source.buffer = audioBuffer;
             source.connect(ctx.destination);
             
-            // Vaqt orqada qolib ketsa to'g'rilash (50ms buffer qo'shamiz)
+            // Vaqt orqada qolib ketsa to'g'rilash (kichik bufer bilan)
             if (nextPlayTimeRef.current < ctx.currentTime) {
-                nextPlayTimeRef.current = ctx.currentTime + 0.05;
+                nextPlayTimeRef.current = ctx.currentTime + 0.03;
             }
             
             source.start(nextPlayTimeRef.current);
@@ -243,10 +249,18 @@ Your task:
 
             ws.onclose = (e) => {
                 console.log('[Translate] WebSocket closed:', e.code, e.reason);
-                if (isTranslating) {
+                setIsConnecting(false);
+                // Agar normal yopilmagan bo'lsa va isTranslating true bo'lsa, qayta ulanishga harakat qilish
+                if (e.code !== 1000 && isTranslating) {
+                    console.warn('[Translate] Kutilmagan uzilish, 1 soniyadan so\'ng qayta ulanadi...');
+                    setTimeout(() => {
+                        if (isTranslating && !wsRef.current) {
+                            startTranslation(remoteStreams);
+                        }
+                    }, 1000);
+                } else {
                     setIsTranslating(false);
                 }
-                setIsConnecting(false);
             };
 
             // 3. Remote audio streams ni mix qilish va Gemini ga yuborish
@@ -280,18 +294,34 @@ Your task:
             }
 
             // ScriptProcessor — PCM chunklash (AudioWorklet o'rniga — keng qo'llab-quvvatlash uchun)
-            const bufferSize = 4096;
+            const bufferSize = 1024; // Oldin 4096 edi (256ms kechikish). 1024 = 64ms tezlik
             const processor = audioCtx.createScriptProcessor(bufferSize, 1, 1);
             processorRef.current = processor;
 
             mixer.connect(processor);
             processor.connect(audioCtx.destination); // ScriptProcessor connect bo'lishi shart
 
+            let silenceTimeout = null;
+
             processor.onaudioprocess = (e) => {
                 if (!setupDoneRef.current || !wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) return;
 
                 const inputData = e.inputBuffer.getChannelData(0);
-                // Downsample qilish kerak emas — audioCtx allaqachon 16kHz da
+                
+                // VAD (Voice Activity Detection) - Shovqinni filtr qilish
+                let sumSquare = 0;
+                for (let i = 0; i < inputData.length; i++) {
+                    sumSquare += inputData[i] * inputData[i];
+                }
+                const rms = Math.sqrt(sumSquare / inputData.length);
+                const VAD_THRESHOLD = 0.005; // RMS chegarasi
+                
+                if (rms < VAD_THRESHOLD) {
+                    // Jimjitlik
+                    return;
+                }
+
+                // Agar ovoz bo'lsa
                 const pcm16Base64 = float32ToBase64Pcm16(inputData);
 
                 // Real-time audio yuborish
